@@ -52,6 +52,10 @@ public enum ErrorType {
     INVALID_IMAGE_TYPE_ERROR(HttpStatus.BAD_REQUEST, 40045, "유효하지 않은 imageType입니다."),
     INVALID_NICKNAME_ERROR(HttpStatus.BAD_REQUEST, 40051, "닉네임이 조건을 만족하지 않습니다."),
     INVALID_BIRTH_DATE_ERROR(HttpStatus.BAD_REQUEST, 40053, "유효하지 않은 생년월일입니다."),
+    INVALID_VERIFIED_AREA_ERROR(HttpStatus.BAD_REQUEST, 40054, "유효하지 않은 인증 동네입니다."),
+
+    /* 404 Not Found */
+    NOT_FOUND_VERIFIED_AREA_ERROR(HttpStatus.NOT_FOUND, 40404, "존재하지 않는 인증 동네입니다."),
 
     /* 409 Conflict */
     DUPLICATED_NICKNAME_ERROR(HttpStatus.CONFLICT, 40901, "이미 사용 중인 닉네임입니다."),

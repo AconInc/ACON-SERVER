@@ -27,13 +27,16 @@ import com.acon.server.spot.domain.enums.SpotType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Positive;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -70,7 +73,6 @@ public class MemberController {
     public ResponseEntity<VerifiedAreaResponse> postVerifiedArea(
             @Valid @RequestBody final VerifiedAreaRequest request
     ) {
-
         return ResponseEntity.ok(
                 memberService.createVerifiedArea(request.latitude(), request.longitude())
         );
@@ -79,10 +81,19 @@ public class MemberController {
     @GetMapping(path = "/members/verified-areas", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<VerifiedAreaListResponse> getVerifiedAreaList(
     ) {
-
         return ResponseEntity.ok(
                 memberService.fetchVerifiedAreaList()
         );
+    }
+
+    @DeleteMapping(path = "/members/verified-areas/{verifiedAreaId}")
+    public ResponseEntity<Void> deleteVerifiedArea(
+            @Positive(message = "verifiedAreaId는 양수여야 합니다.")
+            @PathVariable(name = "verifiedAreaId") final Long verifiedAreaId
+    ) {
+        memberService.deleteVerifiedArea(verifiedAreaId);
+
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping(path = "/area", produces = MediaType.APPLICATION_JSON_VALUE)

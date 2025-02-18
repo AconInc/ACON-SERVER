@@ -14,7 +14,8 @@ public interface MemberRepository extends JpaRepository<MemberEntity, Long> {
     boolean existsByNickname(String nickname);
 
     default MemberEntity findByIdOrElseThrow(Long id) {
-        return findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorType.NOT_FOUND_MEMBER_ERROR));
+        return findById(id).orElseThrow(
+                () -> new BusinessException(ErrorType.NOT_FOUND_MEMBER_ERROR)
+        );
     }
 }

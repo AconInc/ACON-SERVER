@@ -62,6 +62,7 @@ public class MemberService {
     private static final char[] CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.".toCharArray();
     private static final int MAX_NICKNAME_LENGTH = 16;
     private static final String NICKNAME_PATTERN = "^[a-zA-Z0-9_.가-힣]+$";
+    private static final int MIN_VERIFIED_AREA_SIZE = 1;
     private static final int MAX_VERIFIED_AREA_SIZE = 5;
 
     private final GuidedSpotRepository guidedSpotRepository;
@@ -163,10 +164,7 @@ public class MemberService {
     ) {
         MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
 
-        List<VerifiedAreaEntity> verifiedAreaEntityList = verifiedAreaRepository.findAllByMemberId(
-                memberEntity.getId());
-
-        if (verifiedAreaEntityList.size() >= MAX_VERIFIED_AREA_SIZE) {
+        if (verifiedAreaRepository.countByMemberId(memberEntity.getId()) >= MAX_VERIFIED_AREA_SIZE) {
             throw new BusinessException(ErrorType.INVALID_AREA_SIZE_ERROR);
         }
 
@@ -193,7 +191,22 @@ public class MemberService {
                 .toList();
 
         return new VerifiedAreaListResponse(verifiedAreaList);
+    }
 
+    @Transactional
+    public void deleteVerifiedArea(final Long verifiedAreaId) {
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        VerifiedAreaEntity verifiedAreaEntity = verifiedAreaRepository.findByIdOrElseThrow(verifiedAreaId);
+
+        if (!verifiedAreaEntity.getMemberId().equals(memberEntity.getId())) {
+            throw new BusinessException(ErrorType.INVALID_VERIFIED_AREA_ERROR);
+        }
+
+        if (verifiedAreaRepository.countByMemberId(memberEntity.getId()) <= MIN_VERIFIED_AREA_SIZE) {
+            throw new BusinessException(ErrorType.INVALID_AREA_SIZE_ERROR);
+        }
+
+        verifiedAreaRepository.deleteById(verifiedAreaId);
     }
 
     private VerifiedAreaEntity updateVerifiedAreaEntity(
