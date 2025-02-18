@@ -109,7 +109,9 @@ public class S3Adapter {
     }
 
     public void deleteFile(String fileUrl) {
-        amazonS3.deleteObject(bucketName, getFileKey(fileUrl));
+        if (!fileUrl.equals(basicProfileImageUrl)) {
+            amazonS3.deleteObject(bucketName, getFileKey(fileUrl));
+        }
     }
 
     private String getFileKey(String fileUrl) {
