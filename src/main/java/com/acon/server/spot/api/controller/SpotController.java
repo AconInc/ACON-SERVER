@@ -39,8 +39,11 @@ public class SpotController {
     public ResponseEntity<SpotListResponse> getRecommendedSpotList(
             @Valid @RequestBody final SpotListRequest request
     ) {
+        // TODO: QA를 위한 임시 위치 정보 할당-1, 추후 삭제 요망
+        SpotListRequest spotListRequest = new SpotListRequest(37.559115, 126.921976, request.condition());
+
         return ResponseEntity.ok(
-                spotService.fetchRecommendedSpotList(request)
+                spotService.fetchRecommendedSpotList(spotListRequest)
         );
     }
 
@@ -96,8 +99,9 @@ public class SpotController {
             @Validated @RequestParam(name = "longitude") final Double longitude,
             @Validated @RequestParam(name = "latitude") final Double latitude
     ) {
+        // TODO: QA를 위한 임시 위치 정보 할당-2, 추후 삭제 요망
         return ResponseEntity.ok(
-                new VerifiedSpotResponse(spotService.verifySpot(spotId, longitude, latitude))
+                new VerifiedSpotResponse(spotService.verifySpot(spotId, 126.921976, 37.559115))
         );
     }
 }

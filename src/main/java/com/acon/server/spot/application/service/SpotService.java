@@ -132,6 +132,7 @@ public class SpotService {
 
     @Transactional(readOnly = true)
     public SpotListResponse fetchRecommendedSpotList(final SpotListRequest request) {
+
         if (principalHandler.isGuestUser()) { // TODO: 메서드화 (게스트 유저와 온보딩 건너뛴 유저)
             List<SpotEntity> filteredSpotList = filterSpotList(request);
             List<SpotEntity> mutableList = new ArrayList<>(filteredSpotList);
