@@ -61,7 +61,7 @@ public class MemberService {
 
     private static final char[] CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.".toCharArray();
     private static final int MAX_NICKNAME_LENGTH = 16;
-    private static final String NICKNAME_PATTERN = "^[a-zA-Z0-9_.가-힣]+$";
+    private static final String NICKNAME_PATTERN = "^[a-zA-Z0-9_.ㄱ-ㅎㅏ-ㅣ가-힣]+$";
     private static final int MIN_VERIFIED_AREA_SIZE = 1;
     private static final int MAX_VERIFIED_AREA_SIZE = 5;
 
