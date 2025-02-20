@@ -62,6 +62,7 @@ public class MemberService {
     private static final char[] CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.".toCharArray();
     private static final int MAX_NICKNAME_LENGTH = 16;
     private static final String NICKNAME_PATTERN = "^[a-zA-Z0-9_.ㄱ-ㅎㅏ-ㅣ가-힣]+$";
+    private static final DateTimeFormatter BIRTH_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy.MM.dd");
     private static final int MIN_VERIFIED_AREA_SIZE = 1;
     private static final int MAX_VERIFIED_AREA_SIZE = 5;
 
@@ -309,7 +310,11 @@ public class MemberService {
         return ProfileResponse.builder().
                 image(memberEntity.getProfileImage())
                 .nickname(memberEntity.getNickname())
-                .birthDate(memberEntity.getBirthDate() != null ? memberEntity.getBirthDate().toString() : null)
+                .birthDate(
+                        memberEntity.getBirthDate() != null
+                                ? memberEntity.getBirthDate().format(BIRTH_DATE_FORMATTER)
+                                : null
+                )
                 .leftAcornCount(memberEntity.getLeftAcornCount())
                 .verifiedAreaList(verifiedAreaEntityList.stream()
                         .map(verifiedAreaEntity -> new ProfileResponse.VerifiedArea(verifiedAreaEntity.getId(),
@@ -423,7 +428,7 @@ public class MemberService {
         try {
             LocalDate parsedDate = LocalDate.parse(
                     birthDate,
-                    DateTimeFormatter.ofPattern("yyyy.MM.dd").withResolverStyle(ResolverStyle.SMART)
+                    BIRTH_DATE_FORMATTER.withResolverStyle(ResolverStyle.SMART)
             );
 
             if (parsedDate.isAfter(LocalDate.now())) {
