@@ -252,6 +252,10 @@ public class MemberService {
             final double latitude,
             final double longitude
     ) {
+        if (isOutOfServiceArea(latitude, longitude)) {
+            throw new BusinessException(ErrorType.UNAVAILABLE_SERVICE_AREA_ERROR);
+        }
+
         String area = naverMapsAdapter.getReverseGeoCodingResult(latitude, longitude);
 
         return AreaResponse.of(area);
