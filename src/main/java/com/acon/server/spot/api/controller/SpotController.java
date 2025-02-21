@@ -53,6 +53,7 @@ public class SpotController {
 
     @GetMapping(path = "/spots/{spotId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SpotDetailResponse> getSpotDetail(
+            @NotNull(message = "spotId는 필수입니다.")
             @Positive(message = "spotId는 양수여야 합니다.")
             @Validated @PathVariable(name = "spotId") final Long spotId
     ) {
@@ -63,6 +64,7 @@ public class SpotController {
 
     @GetMapping(path = "/spots/{spotId}/menus", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<MenuListResponse> getMenus(
+            @NotNull(message = "spotId는 필수입니다.")
             @Positive(message = "spotId는 양수여야 합니다.")
             @Validated @PathVariable(name = "spotId") final Long spotId
     ) {
@@ -101,10 +103,13 @@ public class SpotController {
     // TODO: 메서드 네이밍 수정 필요
     @GetMapping(path = "/spots/verify", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<VerifiedSpotResponse> verifySpot(
+            @NotNull(message = "spotId는 필수입니다.")
             @Positive(message = "spotId는 양수여야 합니다.")
             @Validated @RequestParam(name = "spotId") final Long spotId,
-            @Validated @RequestParam(name = "longitude") final Double longitude,
-            @Validated @RequestParam(name = "latitude") final Double latitude
+            @NotNull(message = "위도는 필수입니다.")
+            @Validated @RequestParam(name = "latitude") Double latitude,
+            @NotNull(message = "경도는 필수입니다.")
+            @Validated @RequestParam(name = "longitude") Double longitude
     ) {
         if (spotService.checkTestUser()) {
             latitude = 37.559115;

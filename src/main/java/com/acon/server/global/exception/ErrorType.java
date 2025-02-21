@@ -74,6 +74,7 @@ public enum ErrorType {
 
     /* 404 Not Found */
     NOT_FOUND_SPOT_ERROR(HttpStatus.NOT_FOUND, 40403, "존재하지 않는 장소입니다."),
+    UNAVAILABLE_SERVICE_AREA_ERROR(HttpStatus.NOT_FOUND, 40405, "서비스를 제공하지 않는 지역입니다."),
 
     /* 500 Internal Server Error */
     NAVER_MAPS_GEOCODING_API_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 50003, "Naver Maps GeoCoding API 호출에 실패했습니다."),

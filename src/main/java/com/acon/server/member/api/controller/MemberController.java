@@ -25,8 +25,7 @@ import com.acon.server.member.domain.enums.SocialType;
 import com.acon.server.member.domain.enums.SpotStyle;
 import com.acon.server.spot.domain.enums.SpotType;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.DecimalMax;
-import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -104,11 +103,9 @@ public class MemberController {
 
     @GetMapping(path = "/area", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<AreaResponse> getArea(
-            @DecimalMin(value = "33.1", message = "위도는 최소 33.1°N 이상이어야 합니다.(대한민국 기준)")
-            @DecimalMax(value = "38.6", message = "위도는 최대 38.6°N 이하이어야 합니다.(대한민국 기준)")
+            @NotNull(message = "위도는 필수입니다.")
             @Validated @RequestParam(name = "latitude") final Double latitude,
-            @DecimalMin(value = "124.6", message = "경도는 최소 124.6°E 이상이어야 합니다.(대한민국 기준)")
-            @DecimalMax(value = "131.9", message = "경도는 최대 131.9°E 이하이어야 합니다.(대한민국 기준)")
+            @NotNull(message = "경도는 필수입니다.")
             @Validated @RequestParam(name = "longitude") final Double longitude
     ) {
         if (memberService.checkTestUser()) {

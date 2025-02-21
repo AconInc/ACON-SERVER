@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 public record ReviewRequest(
-        @NotNull(message = "userId는 필수입니다.")
+        @NotNull(message = "spotId는 필수입니다.")
         @Positive(message = "spotId는 양수여야 합니다.")
         Long spotId,
         @NotNull(message = "acornCount는 필수입니다.")
