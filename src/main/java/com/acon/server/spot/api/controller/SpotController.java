@@ -9,8 +9,7 @@ import com.acon.server.spot.api.response.SpotListResponse;
 import com.acon.server.spot.api.response.VerifiedSpotResponse;
 import com.acon.server.spot.application.service.SpotService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.DecimalMax;
-import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -39,11 +38,16 @@ public class SpotController {
     public ResponseEntity<SpotListResponse> getRecommendedSpotList(
             @Valid @RequestBody final SpotListRequest request
     ) {
-        // TODO: QA를 위한 임시 위치 정보 할당-1, 추후 삭제 요망
-        SpotListRequest spotListRequest = new SpotListRequest(37.559115, 126.921976, request.condition());
+        if (spotService.checkTestUser()) {
+            return ResponseEntity.ok(
+                    spotService.fetchRecommendedSpotList(
+                            new SpotListRequest(37.559115, 126.921976, request.condition())
+                    )
+            );
+        }
 
         return ResponseEntity.ok(
-                spotService.fetchRecommendedSpotList(spotListRequest)
+                spotService.fetchRecommendedSpotList(request)
         );
     }
 
@@ -69,13 +73,16 @@ public class SpotController {
 
     @GetMapping(path = "/search-suggestions", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SearchSuggestionListResponse> getSearchSuggestions(
-            @DecimalMin(value = "33.1", message = "위도는 최소 33.1°N 이상이어야 합니다.(대한민국 기준)")
-            @DecimalMax(value = "38.6", message = "위도는 최대 38.6°N 이하이어야 합니다.(대한민국 기준)")
-            @Validated @RequestParam(name = "latitude") final Double latitude,
-            @DecimalMin(value = "124.6", message = "경도는 최소 124.6°E 이상이어야 합니다.(대한민국 기준)")
-            @DecimalMax(value = "131.9", message = "경도는 최대 131.9°E 이하이어야 합니다.(대한민국 기준)")
-            @Validated @RequestParam(name = "longitude") final Double longitude
+            @NotNull(message = "위도는 필수입니다.")
+            @Validated @RequestParam(name = "latitude") Double latitude,
+            @NotNull(message = "경도는 필수입니다.")
+            @Validated @RequestParam(name = "longitude") Double longitude
     ) {
+        if (spotService.checkTestUser()) {
+            latitude = 37.559115;
+            longitude = 126.921976;
+        }
+
         return ResponseEntity.ok(
                 spotService.fetchSearchSuggestions(latitude, longitude)
         );
@@ -99,9 +106,13 @@ public class SpotController {
             @Validated @RequestParam(name = "longitude") final Double longitude,
             @Validated @RequestParam(name = "latitude") final Double latitude
     ) {
-        // TODO: QA를 위한 임시 위치 정보 할당-2, 추후 삭제 요망
+        if (spotService.checkTestUser()) {
+            latitude = 37.559115;
+            longitude = 126.921976;
+        }
+
         return ResponseEntity.ok(
-                new VerifiedSpotResponse(spotService.verifySpot(spotId, 126.921976, 37.559115))
+                new VerifiedSpotResponse(spotService.verifySpot(spotId, latitude, longitude))
         );
     }
 }

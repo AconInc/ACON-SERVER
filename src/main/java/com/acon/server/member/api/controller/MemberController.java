@@ -73,6 +73,12 @@ public class MemberController {
     public ResponseEntity<VerifiedAreaResponse> postVerifiedArea(
             @Valid @RequestBody final VerifiedAreaRequest request
     ) {
+        if (memberService.checkTestUser()) {
+            return ResponseEntity.ok(
+                    memberService.createVerifiedArea(37.559115, 126.921976)
+            );
+        }
+
         return ResponseEntity.ok(
                 memberService.createVerifiedArea(request.latitude(), request.longitude())
         );
@@ -105,9 +111,15 @@ public class MemberController {
             @DecimalMax(value = "131.9", message = "경도는 최대 131.9°E 이하이어야 합니다.(대한민국 기준)")
             @Validated @RequestParam(name = "longitude") final Double longitude
     ) {
-        String area = memberService.fetchMemberArea(latitude, longitude);
+        if (memberService.checkTestUser()) {
+            return ResponseEntity.ok(
+                    memberService.fetchMemberArea(37.559115, 126.921976)
+            );
+        }
 
-        return ResponseEntity.ok(new AreaResponse(area));
+        return ResponseEntity.ok(
+                memberService.fetchMemberArea(latitude, longitude)
+        );
     }
 
     @PutMapping(path = "/members/preference", consumes = MediaType.APPLICATION_JSON_VALUE)

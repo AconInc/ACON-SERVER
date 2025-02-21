@@ -52,6 +52,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -84,10 +85,14 @@ public class MemberService {
     // TODO: 네이밍 변경
     private final GoogleSocialService googleSocialService;
     private final AppleAuthAdapter appleAuthService;
-
     private final NaverMapsAdapter naverMapsAdapter;
-
     private final S3Adapter s3Adapter;
+
+    @Value("${google.test-account-1}")
+    private String testAccount1;
+
+    @Value("${google.test-account-2}")
+    private String testAccount2;
 
     // TODO: 메서드 순서 정리, TRANSACTION 설정, mapper 사용
     // TODO: @Valid 거친 건 원시타입으로 받기
@@ -481,6 +486,14 @@ public class MemberService {
                         .reason(reason)
                         .build()
         );
+    }
+
+    // TODO: 순환 참조 방지를 위해 같은 메서드를 재선언했으므로, 추후 Facade 패턴을 통한 리팩토링 필요
+    @Transactional(readOnly = true)
+    public boolean checkTestUser() {
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+
+        return memberEntity.getSocialId().equals(testAccount1) || memberEntity.getSocialId().equals(testAccount2);
     }
 
     // TODO: 최근 길 안내 장소 지우는 스케줄러 추가
