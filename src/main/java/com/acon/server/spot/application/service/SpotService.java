@@ -57,6 +57,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -72,6 +73,10 @@ public class SpotService {
     private static final int SUGGESTION_LIMIT = 5;
     private static final int VERIFICATION_DISTANCE = 250;
     private static final int SEARCH_LIMIT = 10;
+    private static final double MIN_LATITUDE = 33.1;
+    private static final double MAX_LATITUDE = 38.6;
+    private static final double MIN_LONGITUDE = 124.6;
+    private static final double MAX_LONGITUDE = 131.9;
 
     private final GuidedSpotCustomRepository guidedSpotCustomRepository;
     private final MemberRepository memberRepository;
@@ -89,6 +94,12 @@ public class SpotService {
     private final PrincipalHandler principalHandler;
 
     private final NaverMapsAdapter naverMapsAdapter;
+
+    @Value("${google.test-account-1}")
+    private String testAccount1;
+
+    @Value("${google.test-account-2}")
+    private String testAccount2;
 
     // 메서드 설명: 위치 정보가 없는 Spot들의 위치 정보를 업데이트한다.
     @Transactional
@@ -132,6 +143,9 @@ public class SpotService {
 
     @Transactional(readOnly = true)
     public SpotListResponse fetchRecommendedSpotList(final SpotListRequest request) {
+        if (isOutOfServiceArea(request.latitude(), request.longitude())) {
+            throw new BusinessException(ErrorType.UNAVAILABLE_SERVICE_AREA_ERROR);
+        }
 
         if (principalHandler.isGuestUser()) { // TODO: 메서드화 (게스트 유저와 온보딩 건너뛴 유저)
             List<SpotEntity> filteredSpotList = filterSpotList(request);
@@ -603,7 +617,14 @@ public class SpotService {
     }
 
     @Transactional(readOnly = true)
-    public SearchSuggestionListResponse fetchSearchSuggestions(final Double latitude, final Double longitude) {
+    public SearchSuggestionListResponse fetchSearchSuggestions(
+            final Double latitude,
+            final Double longitude
+    ) {
+        if (isOutOfServiceArea(latitude, longitude)) {
+            throw new BusinessException(ErrorType.UNAVAILABLE_SERVICE_AREA_ERROR);
+        }
+
         MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
 
         List<SearchSuggestionResponse> recentSpotSuggestion = guidedSpotCustomRepository.findRecentGuidedSpotSuggestions(
@@ -692,20 +713,39 @@ public class SpotService {
 
     @Transactional(readOnly = true)
     public boolean verifySpot(
-            final Long spotId,
-            final Double memberLongitude,
-            final Double memberLatitude
+            final long spotId,
+            final double latitude,
+            final double longitude
     ) {
+        if (isOutOfServiceArea(latitude, longitude)) {
+            throw new BusinessException(ErrorType.UNAVAILABLE_SERVICE_AREA_ERROR);
+        }
+
         if (!spotRepository.existsById(spotId)) {
             throw new BusinessException(ErrorType.NOT_FOUND_SPOT_ERROR);
         }
 
-        Double distance = spotRepository.calculateDistanceFromSpot(spotId, memberLongitude, memberLatitude);
+        Double distance = spotRepository.calculateDistanceFromSpot(spotId, longitude, latitude);
 
         if (distance == null) {
             return false;
         }
 
         return distance <= VERIFICATION_DISTANCE;
+    }
+
+    @Transactional(readOnly = true)
+    public boolean checkTestUser() {
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+
+        return memberEntity.getSocialId().equals(testAccount1) || memberEntity.getSocialId().equals(testAccount2);
+    }
+
+    private boolean isOutOfServiceArea(
+            final double latitude,
+            final double longitude
+    ) {
+        return latitude < MIN_LATITUDE || latitude > MAX_LATITUDE ||
+                longitude < MIN_LONGITUDE || longitude > MAX_LONGITUDE;
     }
 }

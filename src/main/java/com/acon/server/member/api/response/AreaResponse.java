@@ -4,4 +4,7 @@ public record AreaResponse(
         String area
 ) {
 
+    public static AreaResponse of(String area) {
+        return new AreaResponse(area);
+    }
 }

@@ -60,8 +60,8 @@ public interface SpotRepository extends JpaRepository<SpotEntity, Long> {
             WHERE s.id = :spotId
             """, nativeQuery = true)
     Double calculateDistanceFromSpot(
-            @Param("spotId") Long spotId,
-            @Param("longitude") Double longitude,
-            @Param("latitude") Double latitude
+            @Param("spotId") long spotId,
+            @Param("longitude") double longitude,
+            @Param("latitude") double latitude
     );
 }

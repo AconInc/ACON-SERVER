@@ -8,6 +8,7 @@ import com.acon.server.global.exception.ErrorType;
 import com.acon.server.global.external.maps.NaverMapsAdapter;
 import com.acon.server.global.external.s3.S3Adapter;
 import com.acon.server.member.api.response.AcornCountResponse;
+import com.acon.server.member.api.response.AreaResponse;
 import com.acon.server.member.api.response.LoginResponse;
 import com.acon.server.member.api.response.PreSignedUrlResponse;
 import com.acon.server.member.api.response.ProfileResponse;
@@ -52,6 +53,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,6 +67,10 @@ public class MemberService {
     private static final DateTimeFormatter BIRTH_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy.MM.dd");
     private static final int MIN_VERIFIED_AREA_SIZE = 1;
     private static final int MAX_VERIFIED_AREA_SIZE = 5;
+    private static final double MIN_LATITUDE = 33.1;
+    private static final double MAX_LATITUDE = 38.6;
+    private static final double MIN_LONGITUDE = 124.6;
+    private static final double MAX_LONGITUDE = 131.9;
 
     private final GuidedSpotRepository guidedSpotRepository;
     private final MemberRepository memberRepository;
@@ -84,10 +90,14 @@ public class MemberService {
     // TODO: 네이밍 변경
     private final GoogleSocialService googleSocialService;
     private final AppleAuthAdapter appleAuthService;
-
     private final NaverMapsAdapter naverMapsAdapter;
-
     private final S3Adapter s3Adapter;
+
+    @Value("${google.test-account-1}")
+    private String testAccount1;
+
+    @Value("${google.test-account-2}")
+    private String testAccount2;
 
     // TODO: 메서드 순서 정리, TRANSACTION 설정, mapper 사용
     // TODO: @Valid 거친 건 원시타입으로 받기
@@ -160,9 +170,13 @@ public class MemberService {
 
     @Transactional
     public VerifiedAreaResponse createVerifiedArea(
-            final Double latitude,
-            final Double longitude
+            final double latitude,
+            final double longitude
     ) {
+        if (isOutOfServiceArea(latitude, longitude)) {
+            throw new BusinessException(ErrorType.UNAVAILABLE_SERVICE_AREA_ERROR);
+        }
+
         MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
 
         if (verifiedAreaRepository.countByMemberId(memberEntity.getId()) >= MAX_VERIFIED_AREA_SIZE) {
@@ -234,11 +248,13 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public String fetchMemberArea(
-            final Double latitude,
-            final Double longitude
+    public AreaResponse fetchMemberArea(
+            final double latitude,
+            final double longitude
     ) {
-        return naverMapsAdapter.getReverseGeoCodingResult(latitude, longitude);
+        String area = naverMapsAdapter.getReverseGeoCodingResult(latitude, longitude);
+
+        return AreaResponse.of(area);
     }
 
     @Transactional
@@ -481,6 +497,22 @@ public class MemberService {
                         .reason(reason)
                         .build()
         );
+    }
+
+    // TODO: 순환 참조 방지를 위해 같은 메서드를 재선언했으므로, 추후 Facade 패턴을 통한 리팩토링 필요
+    @Transactional(readOnly = true)
+    public boolean checkTestUser() {
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+
+        return memberEntity.getSocialId().equals(testAccount1) || memberEntity.getSocialId().equals(testAccount2);
+    }
+
+    private boolean isOutOfServiceArea(
+            final double latitude,
+            final double longitude
+    ) {
+        return latitude < MIN_LATITUDE || latitude > MAX_LATITUDE ||
+                longitude < MIN_LONGITUDE || longitude > MAX_LONGITUDE;
     }
 
     // TODO: 최근 길 안내 장소 지우는 스케줄러 추가
