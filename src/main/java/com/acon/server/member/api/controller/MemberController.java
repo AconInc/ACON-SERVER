@@ -1,5 +1,6 @@
 package com.acon.server.member.api.controller;
 
+import com.acon.server.global.auth.PrincipalHandler;
 import com.acon.server.member.api.request.GuidedSpotRequest;
 import com.acon.server.member.api.request.LoginRequest;
 import com.acon.server.member.api.request.LogoutRequest;
@@ -49,6 +50,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class MemberController {
 
     private final MemberService memberService;
+    private final PrincipalHandler principalHandler;
 
     @PostMapping(
             path = "/auth/login",
@@ -108,7 +110,7 @@ public class MemberController {
             @NotNull(message = "경도는 필수입니다.")
             @Validated @RequestParam(name = "longitude") final Double longitude
     ) {
-        if (memberService.checkTestUser()) {
+        if (!principalHandler.isGuestUser() && memberService.checkTestUser()) {
             return ResponseEntity.ok(
                     memberService.fetchMemberArea(37.559115, 126.921976)
             );
