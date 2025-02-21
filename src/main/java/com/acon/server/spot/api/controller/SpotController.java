@@ -1,5 +1,6 @@
 package com.acon.server.spot.api.controller;
 
+import com.acon.server.global.auth.PrincipalHandler;
 import com.acon.server.spot.api.request.SpotListRequest;
 import com.acon.server.spot.api.response.MenuListResponse;
 import com.acon.server.spot.api.response.SearchSpotListResponse;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class SpotController {
 
     private final SpotService spotService;
+    private final PrincipalHandler principalHandler;
 
     @PostMapping(
             path = "/spots",
@@ -38,7 +40,8 @@ public class SpotController {
     public ResponseEntity<SpotListResponse> getRecommendedSpotList(
             @Valid @RequestBody final SpotListRequest request
     ) {
-        if (spotService.checkTestUser()) {
+        // TODO: 추후 서비스단에서 검증하도록 변경 요망
+        if (!principalHandler.isGuestUser() && spotService.checkTestUser()) {
             return ResponseEntity.ok(
                     spotService.fetchRecommendedSpotList(
                             new SpotListRequest(37.559115, 126.921976, request.condition())
