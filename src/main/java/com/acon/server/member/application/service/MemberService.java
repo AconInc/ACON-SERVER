@@ -29,6 +29,7 @@ import com.acon.server.member.domain.enums.FavoriteSpot;
 import com.acon.server.member.domain.enums.ImageType;
 import com.acon.server.member.domain.enums.SocialType;
 import com.acon.server.member.domain.enums.SpotStyle;
+import com.acon.server.member.domain.vo.MemberIdentifiersVO;
 import com.acon.server.member.infra.entity.GuidedSpotEntity;
 import com.acon.server.member.infra.entity.MemberEntity;
 import com.acon.server.member.infra.entity.VerifiedAreaEntity;
@@ -117,38 +118,44 @@ public class MemberService {
             throw new BusinessException(ErrorType.INVALID_SOCIAL_TYPE_ERROR);
         }
 
-        Long memberId = fetchMemberId(socialType, socialId);
-        MemberAuthentication memberAuthentication = new MemberAuthentication(memberId, null, null);
+        MemberIdentifiersVO memberIdsVO = fetchMemberIdAndExternalUUID(socialType, socialId);
+        MemberAuthentication memberAuthentication = new MemberAuthentication(memberIdsVO.memberId(), null, null);
         String accessToken = jwtTokenProvider.issueAccessToken(memberAuthentication);
-        String refreshToken = jwtTokenProvider.issueRefreshToken(memberId);
+        String refreshToken = jwtTokenProvider.issueRefreshToken(memberIdsVO.memberId());
 
-        boolean hasVerifiedArea = verifiedAreaRepository.existsByMemberId(memberId);
+        boolean hasVerifiedArea = verifiedAreaRepository.existsByMemberId(memberIdsVO.memberId());
 
-        return LoginResponse.of(accessToken, refreshToken, hasVerifiedArea);
+        return LoginResponse.of(memberIdsVO.externalUUID(), accessToken, refreshToken, hasVerifiedArea);
     }
 
-    private Long fetchMemberId(
+    private MemberIdentifiersVO fetchMemberIdAndExternalUUID(
             final SocialType socialType,
             final String socialId
     ) {
         Optional<MemberEntity> optionalMemberEntity = memberRepository.findBySocialTypeAndSocialId(socialType,
                 socialId);
+
         MemberEntity memberEntity = optionalMemberEntity.orElseGet(() ->
                 memberRepository.save(MemberEntity.builder()
                         .socialType(socialType)
                         .socialId(socialId)
-                        .leftAcornCount(25)
-                        .nickname(generateUniqueNickname())
+                        .externalUUID(generateUUID())
                         .profileImage(s3Adapter.getBasicProfileImageUrl())
+                        .nickname(generateUniqueNickname())
+                        .leftAcornCount(25)
                         .build())
         );
 
         Member member = memberMapper.toDomain(memberEntity);
 
-        return member.getId();
+        return MemberIdentifiersVO.of(member.getId(), member.getExternalUUID());
     }
 
-    public String generateUniqueNickname() {
+    private String generateUUID() {
+        return UUID.randomUUID().toString();
+    }
+
+    private String generateUniqueNickname() {
         String nickname;
         do {
             nickname = generateRandomNickname();

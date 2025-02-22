@@ -14,6 +14,7 @@ public class Member {
     private final Long id;
     private final SocialType socialType;
     private final String socialId;
+    private final String externalUUID;
 
     private Double recentLatitude;
     private Double recentLongitude;
@@ -30,6 +31,7 @@ public class Member {
             Long id,
             SocialType socialType,
             String socialId,
+            String externalUUID,
             Double recentLatitude,
             Double recentLongitude,
             String profileImage,
@@ -43,6 +45,7 @@ public class Member {
         this.id = id;
         this.socialType = socialType;
         this.socialId = socialId;
+        this.externalUUID = externalUUID;
         this.recentLatitude = recentLatitude;
         this.recentLongitude = recentLongitude;
         this.profileImage = profileImage;
