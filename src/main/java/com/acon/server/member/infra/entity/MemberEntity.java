@@ -19,6 +19,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+// TODO: socialType, socialId를 unique로 묶기
 @Table(name = "member")
 public class MemberEntity extends BaseTimeEntity {
 
@@ -33,16 +34,19 @@ public class MemberEntity extends BaseTimeEntity {
     @Column(name = "social_id", nullable = false, unique = true)
     private String socialId;
 
+    @Column(name = "external_uuid", nullable = false, unique = true)
+    private String externalUUID;
+
     @Column(name = "recent_latitude")
     private Double recentLatitude;
 
     @Column(name = "recent_longitude")
     private Double recentLongitude;
 
-    @Column(name = "profile_image")
+    @Column(name = "profile_image", nullable = false)
     private String profileImage;
 
-    @Column(name = "nickname", unique = true, nullable = false)
+    @Column(name = "nickname", nullable = false, unique = true)
     private String nickname;
 
     @Column(name = "nickname_updated_at")
@@ -59,6 +63,7 @@ public class MemberEntity extends BaseTimeEntity {
             Long id,
             SocialType socialType,
             String socialId,
+            String externalUUID,
             Double recentLatitude,
             Double recentLongitude,
             String profileImage,
@@ -70,6 +75,7 @@ public class MemberEntity extends BaseTimeEntity {
         this.id = id;
         this.socialType = socialType;
         this.socialId = socialId;
+        this.externalUUID = externalUUID;
         this.recentLatitude = recentLatitude;
         this.recentLongitude = recentLongitude;
         this.profileImage = profileImage;
@@ -77,6 +83,6 @@ public class MemberEntity extends BaseTimeEntity {
         this.nicknameUpdatedAt = nicknameUpdatedAt;
         this.birthDate = birthDate;
         // TODO: 도메인 로직으로 이동
-        this.leftAcornCount = leftAcornCount != null ? leftAcornCount : 5;
+        this.leftAcornCount = leftAcornCount != null ? leftAcornCount : 25;
     }
 }
