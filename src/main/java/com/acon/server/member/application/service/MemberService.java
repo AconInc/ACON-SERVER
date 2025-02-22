@@ -100,6 +100,12 @@ public class MemberService {
     @Value("${google.test-account-2}")
     private String testAccount2;
 
+    @Value("${google.test-account-3}")
+    private String testAccount3;
+
+    @Value("${google.test-account-4}")
+    private String testAccount4;
+
     // TODO: 메서드 순서 정리, TRANSACTION 설정, mapper 사용
     // TODO: @Valid 거친 건 원시타입으로 받기
 
@@ -515,15 +521,16 @@ public class MemberService {
     public boolean checkTestUser() {
         MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
 
-        return memberEntity.getSocialId().equals(testAccount1) || memberEntity.getSocialId().equals(testAccount2);
+        return memberEntity.getSocialId().equals(testAccount1) || memberEntity.getSocialId().equals(testAccount2)
+                || memberEntity.getSocialId().equals(testAccount3) || memberEntity.getSocialId().equals(testAccount4);
     }
 
     private boolean isOutOfServiceArea(
             final double latitude,
             final double longitude
     ) {
-        return latitude < MIN_LATITUDE || latitude > MAX_LATITUDE ||
-                longitude < MIN_LONGITUDE || longitude > MAX_LONGITUDE;
+        return latitude < MIN_LATITUDE || latitude > MAX_LATITUDE
+                || longitude < MIN_LONGITUDE || longitude > MAX_LONGITUDE;
     }
 
     // TODO: 최근 길 안내 장소 지우는 스케줄러 추가
