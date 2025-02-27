@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- 로그 출력 색상 설정 -->
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+
+    <!-- 로그 출력 패턴 설정 -->
+    <property name="CONSOLE_LOG_PATTERN" value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS, Asia/Seoul}){faint} %clr(%5level){} %clr([%15.15thread] [%X{traceId:-NoTraceID}]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %msg%n"/>
+    <property name="FILE_LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS, Asia/Seoul} %5level [%15.15thread] [%X{traceId:-NoTraceID}] %-40.40logger{39} - %msg%n"/>
+
+    <!-- 로그 파일 경로 설정 -->
+    <springProperty name="LOG_HOME_PATH" source="logging.location"/>
+    <property name="LOG_PATH" value="${LOG_HOME_PATH}/app-logs"/>
+    <property name="LOG_FILE" value="${LOG_PATH}/acon.log"/>
+
+    <!-- 콘솔 로그 출력 설정 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 파일 로그 출력 설정 -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE}</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/acon-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern> <!-- 매일 새로운 파일 생성 -->
+            <maxFileSize>10MB</maxFileSize> <!-- 10MB 단위로 파일 분리 -->
+            <maxHistory>90</maxHistory> <!-- 90일간 보관 -->
+        </rollingPolicy>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 로컬 환경 설정 -->
+    <springProfile name="local">
+        <!-- acon 패키지 logger 레벨 설정 -->
+        <logger name="com.acon.server" level="DEBUG" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+
+        <!-- root logger 레벨 설정 -->
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <!-- 운영 환경 설정 -->
+    <springProfile name="prod">
+        <!-- acon 패키지 logger 레벨 설정 -->
+        <logger name="com.acon.server" level="INFO" additivity="false">
+            <appender-ref ref="FILE"/>
+        </logger>
+
+        <!-- root logger 레벨 설정 -->
+        <root level="INFO">
+            <appender-ref ref="FILE"/>
+        </root>
+    </springProfile>
+</configuration>
