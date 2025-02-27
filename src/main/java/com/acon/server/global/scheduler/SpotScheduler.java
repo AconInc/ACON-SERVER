@@ -16,8 +16,8 @@ public class SpotScheduler {
     // 매 시 정각에 실행
     @Scheduled(cron = "0 0 * * * *")
     public void scheduleUpdateCoordinates() {
-        log.info("스케줄링 작업: 위치 정보가 비어 있는 Spot 데이터 업데이트 시작");
+        log.info("[스케줄링 작업] 위치 정보가 비어 있는 Spot 데이터 업데이트 시작");
         spotService.updateNullCoordinatesForSpots();
-        log.info("스케줄링 작업: Spot 데이터 업데이트 완료");
+        log.info("[스케줄링 작업] Spot 데이터 업데이트 완료");
     }
 }

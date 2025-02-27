@@ -164,5 +164,4 @@ public class JwtTokenProvider {
         validateRefreshToken(refreshToken);
         cache.evict(refreshToken);
     }
-
 }

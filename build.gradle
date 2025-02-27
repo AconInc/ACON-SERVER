@@ -25,9 +25,6 @@ repositories {
 
 dependencies {
     // Spring Web
-    implementation('org.springframework.boot:spring-boot-starter') {
-        exclude group: 'commons-logging', module: 'commons-logging'
-    }
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
     // Lombok
@@ -70,11 +67,11 @@ dependencies {
 
     // Spring Security
     implementation 'org.springframework.boot:spring-boot-starter-security'
-    
+
     // Caffeine Cache
     implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'com.github.ben-manes.caffeine:caffeine'
-    
+
     // AWS
     implementation 'io.awspring.cloud:spring-cloud-starter-aws:2.4.4'
 }

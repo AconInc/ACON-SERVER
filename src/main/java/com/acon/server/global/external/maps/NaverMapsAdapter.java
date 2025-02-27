@@ -28,7 +28,7 @@ public class NaverMapsAdapter {
                         () -> new BusinessException(ErrorType.NAVER_MAPS_GEOCODING_API_ERROR));
     }
 
-    // TODO: 코드 정리하기
+    // TODO: 코드 정리하기, 슬래시 디코딩 방지
     public String getReverseGeoCodingResult(final Double latitude, final Double longitude) {
         Map<String, Object> response = naverMapsClient.getReverseGeocode(longitude + "," + latitude, "legalcode",
                 "json");
