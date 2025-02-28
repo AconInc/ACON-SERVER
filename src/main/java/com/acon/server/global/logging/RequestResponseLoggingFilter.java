@@ -8,6 +8,8 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -78,10 +80,10 @@ public class RequestResponseLoggingFilter implements Filter {
             return "";
         }
 
-        String queryParameters = parameterMap.entrySet().stream()
-                .map(entry -> entry.getKey() + "=" + entry.getValue()[0])
-                .collect(Collectors.joining("&"));
-
+        return parameterMap.entrySet().stream()
+                .flatMap(entry -> Arrays.stream(entry.getValue())
+                        .map(value -> entry.getKey() + "=" + value))
+                .collect(Collectors.joining("&", "?", ""));
     }
 
     private String getResponseBody(ContentCachingResponseWrapper response) {
