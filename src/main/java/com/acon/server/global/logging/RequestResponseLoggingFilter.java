@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.ContentCachingResponseWrapper;
 
 @Component
 @Order(1)
@@ -31,14 +32,14 @@ public class RequestResponseLoggingFilter implements Filter {
             final FilterChain filterChain
     ) throws IOException, ServletException {
         CachedBodyHttpServletRequest request = new CachedBodyHttpServletRequest((HttpServletRequest) servletReq);
-        CachedBodyHttpServletResponse response = new CachedBodyHttpServletResponse((HttpServletResponse) servletRes);
+        ContentCachingResponseWrapper response = new ContentCachingResponseWrapper((HttpServletResponse) servletRes);
 
         try {
             MDC.put(TRACE_ID, UUID.randomUUID().toString());
 
             String requestInfo = request.getMethod() + " | " + request.getRequestURI() + getRequestParams(request);
             String requestLog = "[Request]  " + requestInfo + " | " + getRequestAddr(request);
-            String requestBody = request.getBody().replaceAll("\\s", "");
+            String requestBody = request.getBody();
 
             if (!requestBody.isEmpty()) {
                 requestLog += " | " + requestBody;
@@ -49,8 +50,7 @@ public class RequestResponseLoggingFilter implements Filter {
             filterChain.doFilter(request, response);
 
             String responseLog = "[Response] " + requestInfo + " | " + response.getStatus();
-            // Response Body를 캐싱 후 로깅에 사용
-            String responseBody = response.getBody();
+            String responseBody = getResponseBody(response);
 
             if (!responseBody.isEmpty()) {
                 responseLog += " | " + responseBody;
@@ -58,7 +58,7 @@ public class RequestResponseLoggingFilter implements Filter {
 
             log.info(responseLog);
 
-            // 캐시된 Response Body를 실제 응답 스트림으로 다시 복사
+            // 캐싱된 Response Body를 클라이언트에게 전달하기 위해 실제 응답 스트림으로 다시 복사
             response.copyBodyToResponse();
         } finally {
             MDC.clear();
@@ -82,6 +82,10 @@ public class RequestResponseLoggingFilter implements Filter {
                 .map(entry -> entry.getKey() + "=" + entry.getValue()[0])
                 .collect(Collectors.joining("&"));
 
-        return "?" + queryParameters;
+    }
+
+    private String getResponseBody(ContentCachingResponseWrapper response) {
+        // ContentCachingResponseWrapper에 캐싱된 Response Body를 가져와 UTF-8 문자열로 변환
+        return new String(response.getContentAsByteArray(), StandardCharsets.UTF_8);
     }
 }

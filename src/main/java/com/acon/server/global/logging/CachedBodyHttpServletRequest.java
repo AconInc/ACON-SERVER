@@ -44,6 +44,6 @@ public class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
     }
 
     public String getBody() {
-        return new String(cachedBody, StandardCharsets.UTF_8);
+        return new String(cachedBody, StandardCharsets.UTF_8).replaceAll("\\s", "");
     }
 }
