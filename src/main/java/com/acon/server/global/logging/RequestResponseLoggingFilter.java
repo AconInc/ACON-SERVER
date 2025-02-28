@@ -1,10 +1,7 @@
 package com.acon.server.global.logging;
 
-import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -16,25 +13,27 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.core.annotation.Order;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
 @Component
 @Order(1)
 @Slf4j
-public class RequestResponseLoggingFilter implements Filter {
+public class RequestResponseLoggingFilter extends OncePerRequestFilter {
 
     private static final String TRACE_ID = "traceId";
     private static final String X_FORWARDED_FOR_HEADER = "X-Forwarded-For";
 
     @Override
-    public void doFilter(
-            final ServletRequest servletReq,
-            final ServletResponse servletRes,
-            final FilterChain filterChain
+    protected void doFilterInternal(
+            @NonNull final HttpServletRequest httpServletRequest,
+            @NonNull final HttpServletResponse httpServletResponse,
+            @NonNull final FilterChain filterChain
     ) throws IOException, ServletException {
-        CachedBodyHttpServletRequest request = new CachedBodyHttpServletRequest((HttpServletRequest) servletReq);
-        ContentCachingResponseWrapper response = new ContentCachingResponseWrapper((HttpServletResponse) servletRes);
+        CachedBodyHttpServletRequest request = new CachedBodyHttpServletRequest(httpServletRequest);
+        ContentCachingResponseWrapper response = new ContentCachingResponseWrapper(httpServletResponse);
 
         try {
             MDC.put(TRACE_ID, UUID.randomUUID().toString());
