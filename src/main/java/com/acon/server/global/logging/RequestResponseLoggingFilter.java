@@ -40,7 +40,12 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
 
             String requestInfo = request.getMethod() + " | " + request.getRequestURI() + getRequestParams(request);
             String requestLog = "[Request]  " + requestInfo + " | " + getRequestAddr(request);
-            String requestBody = request.getBody();
+            String requestBody = "";
+
+            // Request의 Content-Type이 JSON인 경우에만 Request Body를 로깅
+            if (isJson(request.getContentType())) {
+                requestBody = request.getBody();
+            }
 
             if (!requestBody.isEmpty()) {
                 requestLog += " | " + requestBody;
@@ -51,7 +56,12 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
 
             String responseLog = "[Response] " + requestInfo + " | " + response.getStatus();
-            String responseBody = getResponseBody(response);
+            String responseBody = "";
+
+            // Response의 Content-Type이 JSON인 경우에만 Response Body를 로깅
+            if (isJson(response.getContentType())) {
+                responseBody = getResponseBody(response);
+            }
 
             if (!responseBody.isEmpty()) {
                 responseLog += " | " + responseBody;
@@ -66,12 +76,6 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
         }
     }
 
-    private String getRequestAddr(final HttpServletRequest request) {
-        String requestAddr = request.getHeader(X_FORWARDED_FOR_HEADER);
-
-        return (requestAddr != null) ? requestAddr : request.getRemoteAddr();
-    }
-
     private String getRequestParams(final HttpServletRequest request) {
         Map<String, String[]> parameterMap = request.getParameterMap();
 
@@ -83,6 +87,16 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
                 .flatMap(entry -> Arrays.stream(entry.getValue())
                         .map(value -> entry.getKey() + "=" + value))
                 .collect(Collectors.joining("&", "?", ""));
+    }
+
+    private String getRequestAddr(final HttpServletRequest request) {
+        String requestAddr = request.getHeader(X_FORWARDED_FOR_HEADER);
+
+        return (requestAddr != null) ? requestAddr : request.getRemoteAddr();
+    }
+
+    private boolean isJson(String contentType) {
+        return contentType != null && contentType.toLowerCase().contains("application/json");
     }
 
     private String getResponseBody(ContentCachingResponseWrapper response) {
