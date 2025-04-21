@@ -34,7 +34,7 @@ public class SpotNativeQueryRepository {
         if (spotType != null && !spotType.trim().isEmpty()) {
             sb.append("AND s.spot_type = :spotType ");
         }
-        if (priceRange != null && priceRange != -1) {
+        if (priceRange != null) {
             sb.append("AND EXISTS ( ")
                     .append("SELECT 1 FROM menu m WHERE m.spot_id = s.id AND m.main_menu = TRUE AND m.price <= :priceRange) ");
         }
@@ -68,7 +68,7 @@ public class SpotNativeQueryRepository {
             query.setParameter("spotType", spotType);
         }
 
-        if (priceRange != null && priceRange != -1) {
+        if (priceRange != null) {
             query.setParameter("priceRange", priceRange);
         }
 

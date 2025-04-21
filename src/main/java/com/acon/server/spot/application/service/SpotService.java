@@ -262,8 +262,8 @@ public class SpotService {
         );
     }
 
-    private double calculateDistanceFromWalkingTime(final int walkingTime) {
-        if (walkingTime == -1) {
+    private double calculateDistanceFromWalkingTime(final Integer walkingTime) {
+        if (walkingTime == null) {
             return 2000.0;
         }
         // TODO: 매직 넘버 yml로 옮기기
