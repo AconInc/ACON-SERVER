@@ -17,7 +17,6 @@ public record SpotListRequest(
     public record Condition(
             String spotType,
             @Valid List<Filter> filterList,
-            @NotNull(message = "도보 가능 거리는 필수입니다.")
             @Positive(message = "도보 가능 거리는 양수여야 합니다.")
             Integer walkingTime,
             @Positive(message = "가격대는 양수여야 합니다.")
