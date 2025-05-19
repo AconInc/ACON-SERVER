@@ -39,14 +39,14 @@ public class ReviewService {
         MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
         SpotEntity spotEntity = spotRepository.findByIdOrElseThrow(spotId);
 
-        validateAcornAvailability(memberEntity.getLeftAcornCount(), acornCount);
+//        validateAcornAvailability(memberEntity.getLeftAcornCount(), acornCount); // Acon 2.0 정책: 도토리 무제한
 
         Member member = memberMapper.toDomain(memberEntity);
         Spot spot = spotMapper.toDomain(spotEntity);
 
         boolean isLocal = isVerifiedArea(member.getId(), spot.getLegalDong());
 
-        member.useAcorn(acornCount);
+//        member.useAcorn(acornCount); // Acon 2.0 정책: 도토리 무제한
         spot.addAcorn(acornCount, isLocal);
 
         Review review = Review.builder()
