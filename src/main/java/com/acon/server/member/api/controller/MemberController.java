@@ -67,7 +67,7 @@ public class MemberController {
         );
     }
 
-    @PostMapping(path = "/members/verified-areas",
+    @PostMapping(path = "/verified-areas",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
@@ -85,7 +85,7 @@ public class MemberController {
         );
     }
 
-    @GetMapping(path = "/members/verified-areas", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/verified-areas", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<VerifiedAreaListResponse> getVerifiedAreaList(
     ) {
         return ResponseEntity.ok(
@@ -93,7 +93,7 @@ public class MemberController {
         );
     }
 
-    @DeleteMapping(path = "/members/verified-areas/{verifiedAreaId}")
+    @DeleteMapping(path = "/verified-areas/{verifiedAreaId}")
     public ResponseEntity<Void> deleteVerifiedArea(
             @Positive(message = "verifiedAreaId는 양수여야 합니다.")
             @PathVariable(name = "verifiedAreaId") final Long verifiedAreaId
@@ -121,7 +121,7 @@ public class MemberController {
         );
     }
 
-    @PutMapping(path = "/members/preference", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(path = "/preference", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> putPreference(
             @Valid @RequestBody final PreferenceRequest request
     ) {
@@ -138,7 +138,7 @@ public class MemberController {
     }
 
     // TODO: Member 도메인에 있어야 할까? 고민 필요
-    @PostMapping(path = "/members/guided-spots", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(path = "/guided-spots", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> postGuidedSpot(
             @Valid @RequestBody final GuidedSpotRequest request
     ) {
@@ -172,7 +172,7 @@ public class MemberController {
         );
     }
 
-    @GetMapping(path = "/members/nickname/validate")
+    @GetMapping(path = "/nickname/validate")
     public ResponseEntity<Void> getNicknameValidate(
             @RequestParam(name = "nickname") final String nickname
     ) {
