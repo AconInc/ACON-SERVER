@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @FeignClient(
         name = "naverMapsClient",
-        url = "https://naveropenapi.apigw.ntruss.com",
+        url = "https://maps.apigw.ntruss.com",
         configuration = NaverMapsFeignConfig.class
 )
 public interface NaverMapsClient {
