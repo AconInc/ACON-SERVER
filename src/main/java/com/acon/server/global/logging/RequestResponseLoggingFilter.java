@@ -1,0 +1,106 @@
+package com.acon.server.global.logging;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
+import org.springframework.core.annotation.Order;
+import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.util.ContentCachingResponseWrapper;
+
+@Component
+@Order(1)
+@Slf4j
+public class RequestResponseLoggingFilter extends OncePerRequestFilter {
+
+    private static final String TRACE_ID = "traceId";
+    private static final String X_FORWARDED_FOR_HEADER = "X-Forwarded-For";
+
+    @Override
+    protected void doFilterInternal(
+            @NonNull final HttpServletRequest httpServletRequest,
+            @NonNull final HttpServletResponse httpServletResponse,
+            @NonNull final FilterChain filterChain
+    ) throws IOException, ServletException {
+        CachedBodyHttpServletRequest request = new CachedBodyHttpServletRequest(httpServletRequest);
+        ContentCachingResponseWrapper response = new ContentCachingResponseWrapper(httpServletResponse);
+
+        try {
+            MDC.put(TRACE_ID, UUID.randomUUID().toString());
+
+            String requestInfo = request.getMethod() + " | " + request.getRequestURI() + getRequestParams(request);
+            String requestLog = "[Request]  " + requestInfo + " | " + getRequestAddr(request);
+            String requestBody = "";
+
+            // Request의 Content-Type이 JSON인 경우에만 Request Body를 로깅
+            if (isJson(request.getContentType())) {
+                requestBody = request.getBody();
+            }
+
+            if (!requestBody.isEmpty()) {
+                requestLog += " | " + requestBody;
+            }
+
+            log.info(requestLog);
+
+            filterChain.doFilter(request, response);
+
+            String responseLog = "[Response] " + requestInfo + " | " + response.getStatus();
+            String responseBody = "";
+
+            // Response의 Content-Type이 JSON인 경우에만 Response Body를 로깅
+            if (isJson(response.getContentType())) {
+                responseBody = getResponseBody(response);
+            }
+
+            if (!responseBody.isEmpty()) {
+                responseLog += " | " + responseBody;
+            }
+
+            log.info(responseLog);
+
+            // 캐싱된 Response Body를 클라이언트에게 전달하기 위해 실제 응답 스트림으로 다시 복사
+            response.copyBodyToResponse();
+        } finally {
+            MDC.clear();
+        }
+    }
+
+    private String getRequestParams(final HttpServletRequest request) {
+        Map<String, String[]> parameterMap = request.getParameterMap();
+
+        if (parameterMap.isEmpty()) {
+            return "";
+        }
+
+        return parameterMap.entrySet().stream()
+                .flatMap(entry -> Arrays.stream(entry.getValue())
+                        .map(value -> entry.getKey() + "=" + value))
+                .collect(Collectors.joining("&", "?", ""));
+    }
+
+    private String getRequestAddr(final HttpServletRequest request) {
+        String requestAddr = request.getHeader(X_FORWARDED_FOR_HEADER);
+
+        return (requestAddr != null) ? requestAddr : request.getRemoteAddr();
+    }
+
+    private boolean isJson(String contentType) {
+        return contentType != null && contentType.toLowerCase().contains("application/json");
+    }
+
+    private String getResponseBody(ContentCachingResponseWrapper response) {
+        // ContentCachingResponseWrapper에 캐싱된 Response Body를 가져와 UTF-8 문자열로 변환
+        return new String(response.getContentAsByteArray(), StandardCharsets.UTF_8);
+    }
+}

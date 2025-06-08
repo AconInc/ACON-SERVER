@@ -8,9 +8,9 @@ public record PreferenceRequest(
         List<String> dislikeFoodList,
         @NotEmpty(message = "favoriteCuisineRank가 빈 값입니다.")
         List<String> favoriteCuisineRank,
-        @NotBlank(message = "favoriteSpotType가 빈 값입니다.")
+        @NotBlank(message = "favoriteSpotType이 빈 값입니다.")
         String favoriteSpotType,
-        @NotBlank(message = "favoriteSpotStyle가 빈 값입니다.")
+        @NotBlank(message = "favoriteSpotStyle이 빈 값입니다.")
         String favoriteSpotStyle,
         @NotEmpty(message = "favoriteSpotRank가 빈 값입니다.")
         List<String> favoriteSpotRank
