@@ -737,7 +737,8 @@ public class SpotService {
             return false;
         }
 
-        return distance <= VERIFICATION_DISTANCE;
+//        return distance <= VERIFICATION_DISTANCE;
+        return true; // TODO: 앱 출시 초기 단계에서 리뷰 작성 시 거리 제한 미적용, 추후 다시 도입 예정
     }
 
     @Transactional(readOnly = true)
