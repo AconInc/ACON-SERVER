@@ -3,16 +3,12 @@ package com.acon.server.spot.api.response;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import lombok.Builder;
-import lombok.NonNull;
 
-@Builder
+@Builder // TODO: 확인 요망
 @JsonInclude(Include.NON_NULL)
 public record MenuResponse(
-        @NonNull
         Long id,
-        @NonNull
         String name,
-        @NonNull
         Integer price,
         String image
 ) {

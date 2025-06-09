@@ -11,9 +11,10 @@ import org.mapstruct.ReportingPolicy;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface SpotDtoMapper {
 
+    @Mapping(target = "spotId", source = "id")
     SpotDetailResponse toSpotDetailResponse(SpotEntity spotEntity, List<String> imageList, boolean openStatus);
 
     @Mapping(target = "spotId", source = "id")
-    @Mapping(target = "spotName", source = "name")
+        // TODO: 확인 요망
     SearchSuggestionResponse toSearchSuggestionResponse(SpotEntity spotEntity);
 }

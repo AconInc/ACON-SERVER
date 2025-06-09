@@ -5,10 +5,7 @@ public record ReissueTokenResponse(
         String refreshToken
 ) {
 
-    public static ReissueTokenResponse of(
-            final String accessToken,
-            final String refreshToken
-    ) {
+    public static ReissueTokenResponse of(final String accessToken, final String refreshToken) {
         return new ReissueTokenResponse(accessToken, refreshToken);
     }
 }

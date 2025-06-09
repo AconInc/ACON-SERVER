@@ -91,7 +91,7 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.fail(ErrorType.NOT_FOUND_PATH_ERROR, e.getRequestURL()));
     }
 
-    // TODO: NonNull 필드에 null 값이 입력되었을 때 발생하는 예외 처리 추가
+    // TODO: NotNull 필드에 null 값이 입력되었을 때 발생하는 예외 처리 추가
     // TODO: 존재하지 않는 경로로 요청이 들어왔을 시 예외 처리 추가
 
     // 비즈니스 로직에서 발생하는 예외 처리
