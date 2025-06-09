@@ -10,7 +10,7 @@ import lombok.Builder;
 public record ProfileResponse(
         String image,
         String nickname,
-        int leftAcornCount,
+        Integer leftAcornCount,
         String birthDate,
         List<VerifiedArea> verifiedAreaList
 ) {

@@ -4,14 +4,14 @@ public record LoginResponse(
         String externalUUID,
         String accessToken,
         String refreshToken,
-        boolean hasVerifiedArea
+        Boolean hasVerifiedArea
 ) {
 
     public static LoginResponse of(
             final String externalUUID,
             final String accessToken,
             final String refreshToken,
-            final boolean hasVerifiedArea
+            final Boolean hasVerifiedArea
     ) {
         return new LoginResponse(externalUUID, accessToken, refreshToken, hasVerifiedArea);
     }

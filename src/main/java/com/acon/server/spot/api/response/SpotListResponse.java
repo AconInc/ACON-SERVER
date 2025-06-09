@@ -10,12 +10,12 @@ public record SpotListResponse(
 ) {
 
     public record RecommendedSpot(
-            long id,                        // 장소 ID
+            Long id,                    // 장소 ID
             String image,                   // 장소 이미지 URL
             Integer matchingRate,           // 취향 일치율 (Optional)
             String type,                    // 장소 분류
             String name,                    // 장소 이름
-            int walkingTime                 // 도보 시간
+            Integer walkingTime             // 도보 시간
     ) {
 
     }
