@@ -1,9 +1,9 @@
 package com.acon.server.member.infra.entity;
 
-import com.acon.server.global.entity.BaseTimeEntity;
 import com.acon.server.member.domain.enums.SocialType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
@@ -11,17 +11,22 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Getter
+@EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 // TODO: socialType, socialId를 unique로 묶기
 @Table(name = "member")
-public class MemberEntity extends BaseTimeEntity {
+public class MemberEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -58,6 +63,14 @@ public class MemberEntity extends BaseTimeEntity {
     @Column(name = "left_acorn_count", nullable = false)
     private int leftAcornCount;
 
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
     @Builder
     public MemberEntity(
             Long id,
@@ -70,7 +83,9 @@ public class MemberEntity extends BaseTimeEntity {
             String nickname,
             LocalDate nicknameUpdatedAt,
             LocalDate birthDate,
-            Integer leftAcornCount
+            Integer leftAcornCount,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt
     ) {
         this.id = id;
         this.socialType = socialType;
@@ -84,5 +99,7 @@ public class MemberEntity extends BaseTimeEntity {
         this.birthDate = birthDate;
         // TODO: 도메인 로직으로 이동
         this.leftAcornCount = leftAcornCount != null ? leftAcornCount : 25;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 }
