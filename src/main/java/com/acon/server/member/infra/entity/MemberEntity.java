@@ -42,26 +42,20 @@ public class MemberEntity {
     @Column(name = "external_uuid", nullable = false, unique = true)
     private String externalUUID;
 
-    @Column(name = "recent_latitude")
-    private Double recentLatitude;
-
-    @Column(name = "recent_longitude")
-    private Double recentLongitude;
-
     @Column(name = "profile_image", nullable = false)
     private String profileImage;
 
     @Column(name = "nickname", nullable = false, unique = true)
     private String nickname;
 
-    @Column(name = "nickname_updated_at")
-    private LocalDate nicknameUpdatedAt;
+    @Column(name = "nickname_updated_at", nullable = false)
+    private LocalDateTime nicknameUpdatedAt;
 
     @Column(name = "birth_date")
     private LocalDate birthDate;
 
     @Column(name = "left_acorn_count", nullable = false)
-    private int leftAcornCount;
+    private Integer leftAcornCount;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -77,11 +71,9 @@ public class MemberEntity {
             SocialType socialType,
             String socialId,
             String externalUUID,
-            Double recentLatitude,
-            Double recentLongitude,
             String profileImage,
             String nickname,
-            LocalDate nicknameUpdatedAt,
+            LocalDateTime nicknameUpdatedAt,
             LocalDate birthDate,
             Integer leftAcornCount,
             LocalDateTime createdAt,
@@ -91,14 +83,11 @@ public class MemberEntity {
         this.socialType = socialType;
         this.socialId = socialId;
         this.externalUUID = externalUUID;
-        this.recentLatitude = recentLatitude;
-        this.recentLongitude = recentLongitude;
         this.profileImage = profileImage;
         this.nickname = nickname;
         this.nicknameUpdatedAt = nicknameUpdatedAt;
         this.birthDate = birthDate;
-        // TODO: 도메인 로직으로 이동
-        this.leftAcornCount = leftAcornCount != null ? leftAcornCount : 25;
+        this.leftAcornCount = leftAcornCount;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }

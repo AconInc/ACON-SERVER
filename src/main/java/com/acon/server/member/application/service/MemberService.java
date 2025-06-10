@@ -148,6 +148,7 @@ public class MemberService {
                         .externalUUID(generateUUID())
                         .profileImage(s3Adapter.getBasicProfileImageUrl())
                         .nickname(generateUniqueNickname())
+                        .nicknameUpdatedAt(LocalDateTime.now())
                         .leftAcornCount(25)
                         .build())
         );
