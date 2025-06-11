@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -20,8 +21,13 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Getter
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "saved_spot")
-// TODO: unique constraint 추가
+@Table(
+        name = "saved_spot",
+        uniqueConstraints = @UniqueConstraint(
+                name = "unique_saved_spot_member_id_spot_id",
+                columnNames = {"member_id", "spot_id"}
+        )
+)
 public class SavedSpotEntity {
 
     @Id

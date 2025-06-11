@@ -63,6 +63,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -374,22 +375,23 @@ public class MemberService {
             throw new BusinessException(ErrorType.NOT_FOUND_SPOT_ERROR);
         }
 
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        // TODO: memberId만 사용할 경우 아래처럼 리팩토링하기
+        long memberId = principalHandler.getUserIdFromPrincipal();
 
-        if (isAlreadySaved(memberEntity.getId(), spotId)) {
-            return;
+        if (!memberRepository.existsById(memberId)) {
+            throw new BusinessException(ErrorType.NOT_FOUND_MEMBER_ERROR);
         }
 
-        savedSpotRepository.save(
-                SavedSpotEntity.builder()
-                        .memberId(memberEntity.getId())
-                        .spotId(spotId)
-                        .build()
-        );
-    }
+        try {
+            savedSpotRepository.save(
+                    SavedSpotEntity.builder()
+                            .memberId(memberId)
+                            .spotId(spotId)
+                            .build()
+            );
+        } catch (DataIntegrityViolationException ignored) {
 
-    private boolean isAlreadySaved(final long memberId, final long spotId) {
-        return savedSpotRepository.existsByMemberIdAndSpotId(memberId, spotId);
+        }
     }
 
     @Transactional
