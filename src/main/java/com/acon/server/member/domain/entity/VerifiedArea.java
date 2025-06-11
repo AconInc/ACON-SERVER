@@ -1,7 +1,6 @@
 package com.acon.server.member.domain.entity;
 
-import java.time.LocalDate;
-import java.util.List;
+import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
@@ -13,29 +12,21 @@ public class VerifiedArea {
     private final Long id;
     private final Long memberId;
     private final String name;
-
-    private List<LocalDate> verifiedDate;
-    private boolean certifiedForThreeMonths;
-    private boolean hasCertificationMark;
+    private final LocalDateTime createdAt;
+    private final LocalDateTime updatedAt;
 
     @Builder
     public VerifiedArea(
-            Long id,
-            Long memberId,
-            String name,
-            List<LocalDate> verifiedDate,
-            boolean certifiedForThreeMonths,
-            boolean hasCertificationMark
+            final Long id,
+            final Long memberId,
+            final String name,
+            final LocalDateTime createdAt,
+            final LocalDateTime updatedAt
     ) {
         this.id = id;
         this.memberId = memberId;
         this.name = name;
-        this.verifiedDate = verifiedDate;
-        this.certifiedForThreeMonths = certifiedForThreeMonths;
-        this.hasCertificationMark = hasCertificationMark;
-    }
-
-    public void updateVerifiedDate(LocalDate localDate) {
-        this.verifiedDate.add(localDate);
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 }
