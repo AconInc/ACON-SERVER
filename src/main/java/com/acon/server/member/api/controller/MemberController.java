@@ -63,11 +63,7 @@ public class MemberController {
         );
     }
 
-    @PostMapping(
-            path = "/verified-areas",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
+    @PostMapping(path = "/verified-areas", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> postVerifiedArea(
             @Valid @RequestBody final VerifiedAreaRequest request
     ) {

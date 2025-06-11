@@ -17,7 +17,6 @@ import com.acon.server.member.api.response.VerifiedAreaResponse;
 import com.acon.server.member.application.mapper.GuidedSpotMapper;
 import com.acon.server.member.application.mapper.MemberMapper;
 import com.acon.server.member.application.mapper.PreferenceMapper;
-import com.acon.server.member.application.mapper.VerifiedAreaMapper;
 import com.acon.server.member.domain.entity.GuidedSpot;
 import com.acon.server.member.domain.entity.Member;
 import com.acon.server.member.domain.entity.Preference;
@@ -80,7 +79,6 @@ public class MemberService {
     private final GuidedSpotMapper guidedSpotMapper;
     private final MemberMapper memberMapper;
     private final PreferenceMapper preferenceMapper;
-    private final VerifiedAreaMapper verifiedAreaMapper;
 
     private final JwtTokenProvider jwtTokenProvider;
     private final PrincipalHandler principalHandler;
@@ -240,10 +238,9 @@ public class MemberService {
         MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
 
         List<VerifiedAreaEntity> verifiedAreaEntityList =
-                verifiedAreaRepository.findAllByMemberId(memberEntity.getId());
+                verifiedAreaRepository.findAllByMemberIdOrderById(memberEntity.getId());
         List<VerifiedAreaResponse> verifiedAreaList = verifiedAreaEntityList.stream()
-                .map(verifiedAreaEntity -> VerifiedAreaResponse.of(verifiedAreaEntity.getId(),
-                        verifiedAreaEntity.getName()))
+                .map(VerifiedAreaResponse::of)
                 .toList();
 
         return VerifiedAreaListResponse.of(verifiedAreaList);
@@ -254,7 +251,7 @@ public class MemberService {
         MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
         VerifiedAreaEntity verifiedAreaEntity = verifiedAreaRepository.findByIdOrElseThrow(verifiedAreaId);
 
-        if (!verifiedAreaEntity.getMemberId().equals(memberEntity.getId())) {
+        if (!memberEntity.getId().equals(verifiedAreaEntity.getMemberId())) {
             throw new BusinessException(ErrorType.INVALID_VERIFIED_AREA_ERROR);
         }
 
@@ -328,7 +325,7 @@ public class MemberService {
     @Transactional(readOnly = true)
     public ProfileResponse fetchProfile() {
         MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
-        List<VerifiedAreaEntity> verifiedAreaEntityList = verifiedAreaRepository.findAllByMemberId(
+        List<VerifiedAreaEntity> verifiedAreaEntityList = verifiedAreaRepository.findAllByMemberIdOrderById(
                 memberEntity.getId());
 
         return ProfileResponse.builder().

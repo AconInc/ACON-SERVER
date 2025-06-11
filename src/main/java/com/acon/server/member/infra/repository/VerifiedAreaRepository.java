@@ -15,7 +15,7 @@ public interface VerifiedAreaRepository extends JpaRepository<VerifiedAreaEntity
 
     boolean existsByMemberIdAndName(Long memberId, String name);
 
-    List<VerifiedAreaEntity> findAllByMemberId(Long memberId);
+    List<VerifiedAreaEntity> findAllByMemberIdOrderById(Long memberId);
 
     Optional<VerifiedAreaEntity> findByMemberIdAndName(Long memberId, String name);
 
