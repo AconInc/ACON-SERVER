@@ -141,7 +141,7 @@ public class MemberController {
         );
     }
 
-    @GetMapping(path = "saved-spots", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/saved-spots", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SavedSpotListResponse> getSavedSpotList() {
         return ResponseEntity.ok(
                 memberService.fetchSavedSpotList()
