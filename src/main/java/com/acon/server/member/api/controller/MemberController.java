@@ -15,6 +15,7 @@ import com.acon.server.member.api.response.LoginResponse;
 import com.acon.server.member.api.response.PreSignedUrlResponse;
 import com.acon.server.member.api.response.ProfileResponse;
 import com.acon.server.member.api.response.ReissueTokenResponse;
+import com.acon.server.member.api.response.SavedSpotListResponse;
 import com.acon.server.member.api.response.VerifiedAreaListResponse;
 import com.acon.server.member.application.service.MemberService;
 import com.acon.server.member.domain.enums.Cuisine;
@@ -137,6 +138,13 @@ public class MemberController {
     public ResponseEntity<ProfileResponse> getProfile() {
         return ResponseEntity.ok(
                 memberService.fetchProfile()
+        );
+    }
+
+    @GetMapping(path = "saved-spots", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<SavedSpotListResponse> getSavedSpotList() {
+        return ResponseEntity.ok(
+                memberService.fetchSavedSpotList()
         );
     }
 

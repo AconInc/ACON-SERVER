@@ -12,6 +12,8 @@ import com.acon.server.member.api.response.LoginResponse;
 import com.acon.server.member.api.response.PreSignedUrlResponse;
 import com.acon.server.member.api.response.ProfileResponse;
 import com.acon.server.member.api.response.ReissueTokenResponse;
+import com.acon.server.member.api.response.SavedSpotListResponse;
+import com.acon.server.member.api.response.SavedSpotResponse;
 import com.acon.server.member.api.response.VerifiedAreaListResponse;
 import com.acon.server.member.api.response.VerifiedAreaResponse;
 import com.acon.server.member.application.mapper.GuidedSpotMapper;
@@ -41,16 +43,24 @@ import com.acon.server.member.infra.repository.SavedSpotRepository;
 import com.acon.server.member.infra.repository.VerifiedAreaRepository;
 import com.acon.server.member.infra.repository.WithdrawalReasonRepository;
 import com.acon.server.spot.domain.enums.SpotType;
+import com.acon.server.spot.infra.entity.SpotEntity;
+import com.acon.server.spot.infra.entity.SpotImageEntity;
+import com.acon.server.spot.infra.repository.SpotImageRepository;
 import com.acon.server.spot.infra.repository.SpotRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -79,8 +89,10 @@ public class MemberService {
     private final PreferenceRepository preferenceRepository;
     private final VerifiedAreaRepository verifiedAreaRepository;
     private final SavedSpotRepository savedSpotRepository;
-    private final SpotRepository spotRepository;
     private final WithdrawalReasonRepository withdrawalReasonRepository;
+
+    private final SpotRepository spotRepository;
+    private final SpotImageRepository spotImageRepository;
 
     private final GuidedSpotMapper guidedSpotMapper;
     private final MemberMapper memberMapper;
@@ -418,6 +430,56 @@ public class MemberService {
                                 verifiedAreaEntity.getName()))
                         .toList())
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public SavedSpotListResponse fetchSavedSpotList() {
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+
+        List<SavedSpotEntity> savedSpotEntityList =
+                savedSpotRepository.findAllByMemberIdOrderByIdDesc(memberEntity.getId());
+
+        List<Long> spotIdList = savedSpotEntityList.stream()
+                .map(SavedSpotEntity::getSpotId)
+                .toList();
+
+        Map<Long, SpotEntity> spotMap = spotRepository.findAllById(spotIdList).stream()
+                .collect(
+                        Collectors.toMap(
+                                SpotEntity::getId,
+                                Function.identity(),
+                                (existing, replacement) -> existing,
+                                LinkedHashMap::new // 순서 보장
+                        )
+                );
+
+        Map<Long, String> spotImageMap = spotImageRepository.findMainImagesBySpotIds(spotIdList).stream()
+                .collect(
+                        Collectors.toMap(
+                                SpotImageEntity::getSpotId,
+                                SpotImageEntity::getImage,
+                                (existing, replacement) -> existing
+                        )
+                );
+
+        List<SavedSpotResponse> savedSpotResponseList = savedSpotEntityList.stream()
+                .map(
+                        savedSpotEntity -> {
+                            SpotEntity spotEntity = spotMap.get(savedSpotEntity.getSpotId());
+
+                            if (spotEntity == null) {
+                                return null;
+                            }
+
+                            String image = spotImageMap.get(savedSpotEntity.getSpotId());
+
+                            return SavedSpotResponse.of(spotEntity.getId(), image, spotEntity.getName());
+                        }
+                )
+                .filter(Objects::nonNull)
+                .toList();
+
+        return SavedSpotListResponse.of(savedSpotResponseList);
     }
 
     public PreSignedUrlResponse fetchPreSignedUrl(final ImageType imageType) {
