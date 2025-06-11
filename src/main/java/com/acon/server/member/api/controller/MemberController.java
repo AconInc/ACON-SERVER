@@ -10,7 +10,6 @@ import com.acon.server.member.api.request.ReissueTokenRequest;
 import com.acon.server.member.api.request.VerifiedAreaRequest;
 import com.acon.server.member.api.request.WithdrawalReasonRequest;
 import com.acon.server.member.api.response.AcornCountResponse;
-import com.acon.server.member.api.response.AreaResponse;
 import com.acon.server.member.api.response.LoginResponse;
 import com.acon.server.member.api.response.PreSignedUrlResponse;
 import com.acon.server.member.api.response.ProfileResponse;
@@ -25,13 +24,11 @@ import com.acon.server.member.domain.enums.SocialType;
 import com.acon.server.member.domain.enums.SpotStyle;
 import com.acon.server.spot.domain.enums.SpotType;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -81,24 +78,6 @@ public class MemberController {
         }
 
         return ResponseEntity.ok().build();
-    }
-
-    @GetMapping(path = "/area", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<AreaResponse> getArea(
-            @NotNull(message = "위도는 필수입니다.")
-            @Validated @RequestParam(name = "latitude") final Double latitude,
-            @NotNull(message = "경도는 필수입니다.")
-            @Validated @RequestParam(name = "longitude") final Double longitude
-    ) {
-        if (!principalHandler.isGuestUser() && memberService.checkTestUser()) {
-            return ResponseEntity.ok(
-                    memberService.fetchMemberArea(37.559115, 126.921976)
-            );
-        }
-
-        return ResponseEntity.ok(
-                memberService.fetchMemberArea(latitude, longitude)
-        );
     }
 
     @PutMapping(path = "/preference", consumes = MediaType.APPLICATION_JSON_VALUE)

@@ -8,7 +8,6 @@ import com.acon.server.global.exception.ErrorType;
 import com.acon.server.global.external.maps.NaverMapsAdapter;
 import com.acon.server.global.external.s3.S3Adapter;
 import com.acon.server.member.api.response.AcornCountResponse;
-import com.acon.server.member.api.response.AreaResponse;
 import com.acon.server.member.api.response.LoginResponse;
 import com.acon.server.member.api.response.PreSignedUrlResponse;
 import com.acon.server.member.api.response.ProfileResponse;
@@ -264,20 +263,6 @@ public class MemberService {
         }
 
         verifiedAreaRepository.deleteById(verifiedAreaId);
-    }
-
-    @Transactional(readOnly = true)
-    public AreaResponse fetchMemberArea(
-            final double latitude,
-            final double longitude
-    ) {
-        if (isOutOfServiceArea(latitude, longitude)) {
-            throw new BusinessException(ErrorType.UNAVAILABLE_SERVICE_AREA_ERROR);
-        }
-
-        String area = naverMapsAdapter.getReverseGeoCodingResult(latitude, longitude);
-
-        return AreaResponse.of(area);
     }
 
     @Transactional
