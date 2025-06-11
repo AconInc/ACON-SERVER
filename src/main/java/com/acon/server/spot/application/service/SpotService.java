@@ -153,6 +153,8 @@ public class SpotService {
             throw new BusinessException(ErrorType.UNAVAILABLE_SERVICE_AREA_ERROR);
         }
 
+        // TODO: 토글, 상세필터, 상세페이지, 길찾기 다 게스트 유저 접근 불가
+        // TODO: 장소는 최대 5개까지만 노출
         if (principalHandler.isGuestUser()) { // TODO: 메서드화 (게스트 유저와 온보딩 건너뛴 유저)
             List<SpotEntity> filteredSpotList = filterSpotList(request);
             List<SpotEntity> mutableList = new ArrayList<>(filteredSpotList);

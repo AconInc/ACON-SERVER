@@ -8,21 +8,20 @@ import com.acon.server.global.exception.ErrorType;
 import com.acon.server.global.external.maps.NaverMapsAdapter;
 import com.acon.server.global.external.s3.S3Adapter;
 import com.acon.server.member.api.response.AcornCountResponse;
-import com.acon.server.member.api.response.AreaResponse;
 import com.acon.server.member.api.response.LoginResponse;
 import com.acon.server.member.api.response.PreSignedUrlResponse;
 import com.acon.server.member.api.response.ProfileResponse;
 import com.acon.server.member.api.response.ReissueTokenResponse;
+import com.acon.server.member.api.response.SavedSpotListResponse;
+import com.acon.server.member.api.response.SavedSpotResponse;
 import com.acon.server.member.api.response.VerifiedAreaListResponse;
 import com.acon.server.member.api.response.VerifiedAreaResponse;
 import com.acon.server.member.application.mapper.GuidedSpotMapper;
 import com.acon.server.member.application.mapper.MemberMapper;
 import com.acon.server.member.application.mapper.PreferenceMapper;
-import com.acon.server.member.application.mapper.VerifiedAreaMapper;
 import com.acon.server.member.domain.entity.GuidedSpot;
 import com.acon.server.member.domain.entity.Member;
 import com.acon.server.member.domain.entity.Preference;
-import com.acon.server.member.domain.entity.VerifiedArea;
 import com.acon.server.member.domain.enums.Cuisine;
 import com.acon.server.member.domain.enums.DislikeFood;
 import com.acon.server.member.domain.enums.FavoriteSpot;
@@ -32,6 +31,7 @@ import com.acon.server.member.domain.enums.SpotStyle;
 import com.acon.server.member.domain.vo.MemberIdentifiersVO;
 import com.acon.server.member.infra.entity.GuidedSpotEntity;
 import com.acon.server.member.infra.entity.MemberEntity;
+import com.acon.server.member.infra.entity.SavedSpotEntity;
 import com.acon.server.member.infra.entity.VerifiedAreaEntity;
 import com.acon.server.member.infra.entity.WithdrawalReasonEntity;
 import com.acon.server.member.infra.external.google.GoogleSocialService;
@@ -39,22 +39,31 @@ import com.acon.server.member.infra.external.ios.AppleAuthAdapter;
 import com.acon.server.member.infra.repository.GuidedSpotRepository;
 import com.acon.server.member.infra.repository.MemberRepository;
 import com.acon.server.member.infra.repository.PreferenceRepository;
+import com.acon.server.member.infra.repository.SavedSpotRepository;
 import com.acon.server.member.infra.repository.VerifiedAreaRepository;
 import com.acon.server.member.infra.repository.WithdrawalReasonRepository;
 import com.acon.server.spot.domain.enums.SpotType;
+import com.acon.server.spot.infra.entity.SpotEntity;
+import com.acon.server.spot.infra.entity.SpotImageEntity;
+import com.acon.server.spot.infra.repository.SpotImageRepository;
 import com.acon.server.spot.infra.repository.SpotRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
-import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,28 +71,33 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class MemberService {
 
-    private static final char[] CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.".toCharArray();
-    private static final int MAX_NICKNAME_LENGTH = 16;
-    private static final String NICKNAME_PATTERN = "^[a-zA-Z0-9_.ㄱ-ㅎㅏ-ㅣ가-힣]+$";
-    private static final DateTimeFormatter BIRTH_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy.MM.dd");
-    private static final int MIN_VERIFIED_AREA_SIZE = 1;
-    private static final int MAX_VERIFIED_AREA_SIZE = 5;
+    private static final int MIN_NICKNAME_LENGTH = 1;
+    private static final int MAX_NICKNAME_LENGTH = 14;
+    private static final int MIN_VERIFIED_AREA_COUNT = 1;
+    private static final int MAX_VERIFIED_AREA_COUNT = 3;
+    private static final int DELETE_RESTRICTION_START_WEEK = 1;
+    private static final int DELETE_RESTRICTION_END_MONTH = 3;
     private static final double MIN_LATITUDE = 33.1;
     private static final double MAX_LATITUDE = 38.6;
     private static final double MIN_LONGITUDE = 124.6;
     private static final double MAX_LONGITUDE = 131.9;
+    private static final char[] CHARACTERS = "abcdefghijklmnopqrstuvwxyz0123456789_.".toCharArray();
+    private static final String NICKNAME_PATTERN = "^[a-z0-9_.]+$";
+    private static final DateTimeFormatter BIRTH_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy.MM.dd");
 
     private final GuidedSpotRepository guidedSpotRepository;
     private final MemberRepository memberRepository;
     private final PreferenceRepository preferenceRepository;
     private final VerifiedAreaRepository verifiedAreaRepository;
-    private final SpotRepository spotRepository;
+    private final SavedSpotRepository savedSpotRepository;
     private final WithdrawalReasonRepository withdrawalReasonRepository;
+
+    private final SpotRepository spotRepository;
+    private final SpotImageRepository spotImageRepository;
 
     private final GuidedSpotMapper guidedSpotMapper;
     private final MemberMapper memberMapper;
     private final PreferenceMapper preferenceMapper;
-    private final VerifiedAreaMapper verifiedAreaMapper;
 
     private final JwtTokenProvider jwtTokenProvider;
     private final PrincipalHandler principalHandler;
@@ -116,6 +130,7 @@ public class MemberService {
     ) {
         String socialId;
 
+        // TODO: 추후 전략 패턴 적용
         if (socialType == SocialType.GOOGLE) {
             socialId = googleSocialService.login(idToken);
         } else if (socialType == SocialType.APPLE) {
@@ -131,30 +146,41 @@ public class MemberService {
 
         boolean hasVerifiedArea = verifiedAreaRepository.existsByMemberId(memberIdsVO.memberId());
 
-        return LoginResponse.of(memberIdsVO.externalUUID(), accessToken, refreshToken, hasVerifiedArea);
+        // TODO: dto 파라미터 개수에 따른 컨벤션 고민 필요
+        return LoginResponse.of(
+                memberIdsVO.externalUUID(),
+                accessToken,
+                refreshToken,
+                hasVerifiedArea
+        );
     }
 
     private MemberIdentifiersVO fetchMemberIdAndExternalUUID(
             final SocialType socialType,
             final String socialId
     ) {
-        Optional<MemberEntity> optionalMemberEntity = memberRepository.findBySocialTypeAndSocialId(socialType,
-                socialId);
+        Optional<MemberEntity> optionalMemberEntity =
+                memberRepository.findBySocialTypeAndSocialId(socialType, socialId);
+        MemberEntity memberEntity = optionalMemberEntity.orElseGet(() -> createMember(socialType, socialId));
 
-        MemberEntity memberEntity = optionalMemberEntity.orElseGet(() ->
-                memberRepository.save(MemberEntity.builder()
+        return MemberIdentifiersVO.of(memberEntity);
+    }
+
+    private MemberEntity createMember(
+            final SocialType socialType,
+            final String socialId
+    ) {
+        return memberRepository.save(
+                MemberEntity.builder()
                         .socialType(socialType)
                         .socialId(socialId)
                         .externalUUID(generateUUID())
                         .profileImage(s3Adapter.getBasicProfileImageUrl())
                         .nickname(generateUniqueNickname())
+                        .nicknameUpdatedAt(LocalDateTime.now())
                         .leftAcornCount(25)
-                        .build())
+                        .build()
         );
-
-        Member member = memberMapper.toDomain(memberEntity);
-
-        return MemberIdentifiersVO.of(member.getId(), member.getExternalUUID());
     }
 
     private String generateUUID() {
@@ -163,6 +189,7 @@ public class MemberService {
 
     private String generateUniqueNickname() {
         String nickname;
+
         do {
             nickname = generateRandomNickname();
         } while (memberRepository.existsByNickname(nickname));
@@ -182,7 +209,7 @@ public class MemberService {
     }
 
     @Transactional
-    public VerifiedAreaResponse createVerifiedArea(
+    public void createVerifiedArea(
             final double latitude,
             final double longitude
     ) {
@@ -192,76 +219,81 @@ public class MemberService {
 
         MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
 
-        if (verifiedAreaRepository.countByMemberId(memberEntity.getId()) >= MAX_VERIFIED_AREA_SIZE) {
+        if (verifiedAreaRepository.countByMemberId(memberEntity.getId()) >= MAX_VERIFIED_AREA_COUNT) {
             throw new BusinessException(ErrorType.INVALID_AREA_SIZE_ERROR);
         }
 
         String legalDong = naverMapsAdapter.getReverseGeoCodingResult(latitude, longitude);
-        Optional<VerifiedAreaEntity> optionalVerifiedAreaEntity = verifiedAreaRepository.findByMemberIdAndName(
-                memberEntity.getId(), legalDong);
 
-        LocalDate currentDate = LocalDate.now();
-        VerifiedAreaEntity savedVerifiedAreaEntity = optionalVerifiedAreaEntity
-                .map(entity -> updateVerifiedAreaEntity(entity, currentDate))
-                .orElseGet(() -> createVerifiedAreaEntity(legalDong, memberEntity.getId(), currentDate));
+        if (!verifiedAreaRepository.existsByMemberIdAndName(memberEntity.getId(), legalDong)) {
+            createVerifiedArea(memberEntity.getId(), legalDong);
+        }
+    }
 
-        return VerifiedAreaResponse.of(savedVerifiedAreaEntity.getId(), savedVerifiedAreaEntity.getName());
+    private boolean isOutOfServiceArea(
+            final double latitude,
+            final double longitude
+    ) {
+        return latitude < MIN_LATITUDE || latitude > MAX_LATITUDE
+                || longitude < MIN_LONGITUDE || longitude > MAX_LONGITUDE;
+    }
+
+    private void createVerifiedArea(
+            final Long memberId,
+            final String legalDong
+    ) {
+        verifiedAreaRepository.save(
+                VerifiedAreaEntity.builder()
+                        .memberId(memberId)
+                        .name(legalDong)
+                        .build()
+        );
     }
 
     @Transactional(readOnly = true)
     public VerifiedAreaListResponse fetchVerifiedAreaList() {
         MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
-        List<VerifiedAreaEntity> verifiedAreaEntityList = verifiedAreaRepository.findAllByMemberId(
-                memberEntity.getId());
+
+        List<VerifiedAreaEntity> verifiedAreaEntityList =
+                verifiedAreaRepository.findAllByMemberIdOrderById(memberEntity.getId());
         List<VerifiedAreaResponse> verifiedAreaList = verifiedAreaEntityList.stream()
-                .map(verifiedAreaEntity -> VerifiedAreaResponse.of(verifiedAreaEntity.getId(),
-                        verifiedAreaEntity.getName()))
+                .map(VerifiedAreaResponse::of)
                 .toList();
 
-        return new VerifiedAreaListResponse(verifiedAreaList);
+        return VerifiedAreaListResponse.of(verifiedAreaList);
     }
 
     @Transactional
-    public void deleteVerifiedArea(final Long verifiedAreaId) {
+    public void deleteVerifiedArea(final long verifiedAreaId) {
         MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
         VerifiedAreaEntity verifiedAreaEntity = verifiedAreaRepository.findByIdOrElseThrow(verifiedAreaId);
 
-        if (!verifiedAreaEntity.getMemberId().equals(memberEntity.getId())) {
+        if (!memberEntity.getId().equals(verifiedAreaEntity.getMemberId())) {
             throw new BusinessException(ErrorType.INVALID_VERIFIED_AREA_ERROR);
         }
 
-        if (verifiedAreaRepository.countByMemberId(memberEntity.getId()) <= MIN_VERIFIED_AREA_SIZE) {
+        validateVerifiedAreaDeleteRestriction(verifiedAreaEntity.getCreatedAt());
+
+        if (verifiedAreaRepository.countByMemberId(memberEntity.getId()) <= MIN_VERIFIED_AREA_COUNT) {
             throw new BusinessException(ErrorType.INVALID_AREA_SIZE_ERROR);
         }
 
         verifiedAreaRepository.deleteById(verifiedAreaId);
     }
 
-    private VerifiedAreaEntity updateVerifiedAreaEntity(
-            final VerifiedAreaEntity entity,
-            final LocalDate currentDate
-    ) {
-        VerifiedArea verifiedArea = verifiedAreaMapper.toDomain(entity);
-        verifiedArea.updateVerifiedDate(currentDate);
-        return verifiedAreaRepository.save(verifiedAreaMapper.toEntity(verifiedArea));
+    private void validateVerifiedAreaDeleteRestriction(final LocalDateTime createdAt) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime oneWeekAfter = createdAt.plusWeeks(DELETE_RESTRICTION_START_WEEK);
+        LocalDateTime threeMonthsAfter = createdAt.plusMonths(DELETE_RESTRICTION_END_MONTH);
+
+        if (now.isAfter(oneWeekAfter) && now.isBefore(threeMonthsAfter)) {
+            throw new BusinessException(ErrorType.VERIFIED_AREA_DELETE_RESTRICTED_PERIOD_ERROR);
+        }
     }
 
-    private VerifiedAreaEntity createVerifiedAreaEntity(
-            final String legalDong,
-            final Long memberId,
-            final LocalDate currentDate
-    ) {
-        return verifiedAreaRepository.save(
-                VerifiedAreaEntity.builder()
-                        .name(legalDong)
-                        .memberId(memberId)
-                        .verifiedDate(Collections.singletonList(currentDate))
-                        .build()
-        );
-    }
-
-    @Transactional(readOnly = true)
-    public AreaResponse fetchMemberArea(
+    @Transactional
+    public void replaceVerifiedArea(
+            final long verifiedAreaId,
             final double latitude,
             final double longitude
     ) {
@@ -269,9 +301,20 @@ public class MemberService {
             throw new BusinessException(ErrorType.UNAVAILABLE_SERVICE_AREA_ERROR);
         }
 
-        String area = naverMapsAdapter.getReverseGeoCodingResult(latitude, longitude);
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        VerifiedAreaEntity verifiedAreaEntity = verifiedAreaRepository.findByIdOrElseThrow(verifiedAreaId);
 
-        return AreaResponse.of(area);
+        if (!memberEntity.getId().equals(verifiedAreaEntity.getMemberId())) {
+            throw new BusinessException(ErrorType.INVALID_VERIFIED_AREA_ERROR);
+        }
+
+        validateVerifiedAreaDeleteRestriction(verifiedAreaEntity.getCreatedAt());
+        String legalDong = naverMapsAdapter.getReverseGeoCodingResult(latitude, longitude);
+
+        if (!verifiedAreaRepository.existsByMemberIdAndName(memberEntity.getId(), legalDong)) {
+            verifiedAreaRepository.deleteById(verifiedAreaId);
+            createVerifiedArea(memberEntity.getId(), legalDong);
+        }
     }
 
     @Transactional
@@ -298,7 +341,7 @@ public class MemberService {
 
     @Transactional
     public void createGuidedSpot(final Long spotId) {
-        if (principalHandler.isGuestUser()) {
+        if (principalHandler.isGuestUser()) { // TODO: 토글, 상세필터, 상세페이지, 길찾기 다 게스트 유저 접근 불가
             return;
         }
 
@@ -314,7 +357,7 @@ public class MemberService {
         optionalGuidedSpotEntity.ifPresentOrElse(
                 guidedSpotEntity -> {
                     GuidedSpot guidedSpot = guidedSpotMapper.toDomain(guidedSpotEntity);
-                    guidedSpot.updateUpdatedAt(LocalDateTime.now());
+                    guidedSpot.setUpdatedAtNow();
                     guidedSpotRepository.save(guidedSpotMapper.toEntity(guidedSpot));
                 },
                 () -> guidedSpotRepository.save(
@@ -326,18 +369,53 @@ public class MemberService {
         );
     }
 
+    @Transactional
+    public void createSavedSpot(final long spotId) {
+        if (!spotRepository.existsById(spotId)) {
+            throw new BusinessException(ErrorType.NOT_FOUND_SPOT_ERROR);
+        }
+
+        // TODO: memberId만 사용할 경우 아래처럼 리팩토링하기
+        long memberId = principalHandler.getUserIdFromPrincipal();
+
+        if (!memberRepository.existsById(memberId)) {
+            throw new BusinessException(ErrorType.NOT_FOUND_MEMBER_ERROR);
+        }
+
+        try {
+            savedSpotRepository.save(
+                    SavedSpotEntity.builder()
+                            .memberId(memberId)
+                            .spotId(spotId)
+                            .build()
+            );
+        } catch (DataIntegrityViolationException ignored) {
+
+        }
+    }
+
+    @Transactional
+    public void deleteSavedSpot(final Long spotId) {
+        if (!spotRepository.existsById(spotId)) {
+            throw new BusinessException(ErrorType.NOT_FOUND_SPOT_ERROR);
+        }
+
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        savedSpotRepository.deleteByMemberIdAndSpotId(memberEntity.getId(), spotId);
+    }
+
     @Transactional(readOnly = true)
     public AcornCountResponse fetchAcornCount() {
         MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
         int acornCount = memberEntity.getLeftAcornCount();
 
-        return new AcornCountResponse(acornCount);
+        return AcornCountResponse.of(acornCount);
     }
 
     @Transactional(readOnly = true)
     public ProfileResponse fetchProfile() {
         MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
-        List<VerifiedAreaEntity> verifiedAreaEntityList = verifiedAreaRepository.findAllByMemberId(
+        List<VerifiedAreaEntity> verifiedAreaEntityList = verifiedAreaRepository.findAllByMemberIdOrderById(
                 memberEntity.getId());
 
         return ProfileResponse.builder().
@@ -354,6 +432,56 @@ public class MemberService {
                                 verifiedAreaEntity.getName()))
                         .toList())
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public SavedSpotListResponse fetchSavedSpotList() {
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+
+        List<SavedSpotEntity> savedSpotEntityList =
+                savedSpotRepository.findAllByMemberIdOrderByIdDesc(memberEntity.getId());
+
+        List<Long> spotIdList = savedSpotEntityList.stream()
+                .map(SavedSpotEntity::getSpotId)
+                .toList();
+
+        Map<Long, SpotEntity> spotMap = spotRepository.findAllById(spotIdList).stream()
+                .collect(
+                        Collectors.toMap(
+                                SpotEntity::getId,
+                                Function.identity(),
+                                (existing, replacement) -> existing,
+                                LinkedHashMap::new // 순서 보장
+                        )
+                );
+
+        Map<Long, String> spotImageMap = spotImageRepository.findMainImagesBySpotIds(spotIdList).stream()
+                .collect(
+                        Collectors.toMap(
+                                SpotImageEntity::getSpotId,
+                                SpotImageEntity::getImage,
+                                (existing, replacement) -> existing
+                        )
+                );
+
+        List<SavedSpotResponse> savedSpotResponseList = savedSpotEntityList.stream()
+                .map(
+                        savedSpotEntity -> {
+                            SpotEntity spotEntity = spotMap.get(savedSpotEntity.getSpotId());
+
+                            if (spotEntity == null) {
+                                return null;
+                            }
+
+                            String image = spotImageMap.get(savedSpotEntity.getSpotId());
+
+                            return SavedSpotResponse.of(spotEntity.getId(), image, spotEntity.getName());
+                        }
+                )
+                .filter(Objects::nonNull)
+                .toList();
+
+        return SavedSpotListResponse.of(savedSpotResponseList);
     }
 
     public PreSignedUrlResponse fetchPreSignedUrl(final ImageType imageType) {
@@ -384,29 +512,9 @@ public class MemberService {
     }
 
     private void validateNicknameLength(final String nickname) {
-        int length = calculateNicknameLength(nickname);
-
-        if (length < 1 || length > MAX_NICKNAME_LENGTH) {
+        if (nickname.length() < MIN_NICKNAME_LENGTH || nickname.length() > MAX_NICKNAME_LENGTH) {
             throw new BusinessException(ErrorType.INVALID_NICKNAME_ERROR);
         }
-    }
-
-    private int calculateNicknameLength(final String nickname) {
-        int length = 0;
-
-        for (char c : nickname.toCharArray()) {
-            if (isKorean(c)) {
-                length += 2;
-            } else {
-                length += 1;
-            }
-        }
-
-        return length;
-    }
-
-    private boolean isKorean(char c) {
-        return (c >= 0xAC00 && c <= 0xD7A3);
     }
 
     private void validateNicknameDuplication(final String nickname) {
@@ -523,14 +631,6 @@ public class MemberService {
 
         return memberEntity.getSocialId().equals(testAccount1) || memberEntity.getSocialId().equals(testAccount2)
                 || memberEntity.getSocialId().equals(testAccount3) || memberEntity.getSocialId().equals(testAccount4);
-    }
-
-    private boolean isOutOfServiceArea(
-            final double latitude,
-            final double longitude
-    ) {
-        return latitude < MIN_LATITUDE || latitude > MAX_LATITUDE
-                || longitude < MIN_LONGITUDE || longitude > MAX_LONGITUDE;
     }
 
     // TODO: 최근 길 안내 장소 지우는 스케줄러 추가

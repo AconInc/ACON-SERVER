@@ -15,7 +15,7 @@ public interface VerifiedAreaRepository extends JpaRepository<VerifiedAreaEntity
 
     boolean existsByMemberIdAndName(Long memberId, String name);
 
-    Optional<VerifiedAreaEntity> findById(Long id);
+    List<VerifiedAreaEntity> findAllByMemberIdOrderById(Long memberId);
 
     Optional<VerifiedAreaEntity> findByMemberIdAndName(Long memberId, String name);
 
@@ -24,6 +24,4 @@ public interface VerifiedAreaRepository extends JpaRepository<VerifiedAreaEntity
                 () -> new BusinessException(ErrorType.NOT_FOUND_VERIFIED_AREA_ERROR)
         );
     }
-
-    List<VerifiedAreaEntity> findAllByMemberId(Long memberId);
 }
