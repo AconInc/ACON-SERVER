@@ -22,7 +22,6 @@ import com.acon.server.member.application.mapper.VerifiedAreaMapper;
 import com.acon.server.member.domain.entity.GuidedSpot;
 import com.acon.server.member.domain.entity.Member;
 import com.acon.server.member.domain.entity.Preference;
-import com.acon.server.member.domain.entity.VerifiedArea;
 import com.acon.server.member.domain.enums.Cuisine;
 import com.acon.server.member.domain.enums.DislikeFood;
 import com.acon.server.member.domain.enums.FavoriteSpot;
@@ -48,7 +47,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -146,7 +144,7 @@ public class MemberService {
     ) {
         Optional<MemberEntity> optionalMemberEntity =
                 memberRepository.findBySocialTypeAndSocialId(socialType, socialId);
-        MemberEntity memberEntity = optionalMemberEntity.orElseGet(() -> createMemberEntity(socialType, socialId));
+        MemberEntity memberEntity = optionalMemberEntity.orElseGet(() -> createMember(socialType, socialId));
 
         return MemberIdentifiersVO.of(
                 memberEntity.getId(),
@@ -154,7 +152,7 @@ public class MemberService {
         );
     }
 
-    private MemberEntity createMemberEntity(
+    private MemberEntity createMember(
             final SocialType socialType,
             final String socialId
     ) {
@@ -197,7 +195,7 @@ public class MemberService {
     }
 
     @Transactional
-    public VerifiedAreaResponse createVerifiedArea(
+    public void createVerifiedArea(
             final double latitude,
             final double longitude
     ) {
@@ -212,18 +210,10 @@ public class MemberService {
         }
 
         String legalDong = naverMapsAdapter.getReverseGeoCodingResult(latitude, longitude);
-        Optional<VerifiedAreaEntity> optionalVerifiedAreaEntity =
-                verifiedAreaRepository.findByMemberIdAndName(memberEntity.getId(), legalDong);
 
-        LocalDate currentDate = LocalDate.now();
-        VerifiedAreaEntity savedVerifiedAreaEntity = optionalVerifiedAreaEntity
-                .map(entity -> updateVerifiedAreaEntity(entity, currentDate))
-                .orElseGet(() -> createVerifiedAreaEntity(legalDong, memberEntity.getId(), currentDate));
-
-        return VerifiedAreaResponse.of(
-                savedVerifiedAreaEntity.getId(),
-                savedVerifiedAreaEntity.getName()
-        );
+        if (!verifiedAreaRepository.existsByMemberIdAndName(memberEntity.getId(), legalDong)) {
+            createVerifiedArea(memberEntity.getId(), legalDong);
+        }
     }
 
     private boolean isOutOfServiceArea(
@@ -232,6 +222,18 @@ public class MemberService {
     ) {
         return latitude < MIN_LATITUDE || latitude > MAX_LATITUDE
                 || longitude < MIN_LONGITUDE || longitude > MAX_LONGITUDE;
+    }
+
+    private void createVerifiedArea(
+            final Long memberId,
+            final String legalDong
+    ) {
+        verifiedAreaRepository.save(
+                VerifiedAreaEntity.builder()
+                        .memberId(memberId)
+                        .name(legalDong)
+                        .build()
+        );
     }
 
     @Transactional(readOnly = true)
@@ -262,30 +264,6 @@ public class MemberService {
         }
 
         verifiedAreaRepository.deleteById(verifiedAreaId);
-    }
-
-    private VerifiedAreaEntity updateVerifiedAreaEntity(
-            final VerifiedAreaEntity entity,
-            final LocalDate currentDate
-    ) {
-        VerifiedArea verifiedArea = verifiedAreaMapper.toDomain(entity);
-        verifiedArea.updateVerifiedDate(currentDate);
-
-        return verifiedAreaRepository.save(verifiedAreaMapper.toEntity(verifiedArea));
-    }
-
-    private VerifiedAreaEntity createVerifiedAreaEntity(
-            final String legalDong,
-            final Long memberId,
-            final LocalDate currentDate
-    ) {
-        return verifiedAreaRepository.save(
-                VerifiedAreaEntity.builder()
-                        .name(legalDong)
-                        .memberId(memberId)
-                        .verifiedDate(Collections.singletonList(currentDate))
-                        .build()
-        );
     }
 
     @Transactional(readOnly = true)

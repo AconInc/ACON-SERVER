@@ -16,7 +16,6 @@ import com.acon.server.member.api.response.PreSignedUrlResponse;
 import com.acon.server.member.api.response.ProfileResponse;
 import com.acon.server.member.api.response.ReissueTokenResponse;
 import com.acon.server.member.api.response.VerifiedAreaListResponse;
-import com.acon.server.member.api.response.VerifiedAreaResponse;
 import com.acon.server.member.application.service.MemberService;
 import com.acon.server.member.domain.enums.Cuisine;
 import com.acon.server.member.domain.enums.DislikeFood;
@@ -67,37 +66,19 @@ public class MemberController {
         );
     }
 
-    @PostMapping(path = "/verified-areas",
+    @PostMapping(
+            path = "/verified-areas",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<VerifiedAreaResponse> postVerifiedArea(
+    public ResponseEntity<Void> postVerifiedArea(
             @Valid @RequestBody final VerifiedAreaRequest request
     ) {
         if (memberService.checkTestUser()) {
-            return ResponseEntity.ok(
-                    memberService.createVerifiedArea(37.559115, 126.921976)
-            );
+            memberService.createVerifiedArea(37.559115, 126.921976);
+        } else {
+            memberService.createVerifiedArea(request.latitude(), request.longitude());
         }
-
-        return ResponseEntity.ok(
-                memberService.createVerifiedArea(request.latitude(), request.longitude())
-        );
-    }
-
-    @GetMapping(path = "/verified-areas", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<VerifiedAreaListResponse> getVerifiedAreaList() {
-        return ResponseEntity.ok(
-                memberService.fetchVerifiedAreaList()
-        );
-    }
-
-    @DeleteMapping(path = "/verified-areas/{verifiedAreaId}")
-    public ResponseEntity<Void> deleteVerifiedArea(
-            @Positive(message = "verifiedAreaId는 양수여야 합니다.")
-            @PathVariable(name = "verifiedAreaId") final Long verifiedAreaId
-    ) {
-        memberService.deleteVerifiedArea(verifiedAreaId);
 
         return ResponseEntity.ok().build();
     }
@@ -185,6 +166,23 @@ public class MemberController {
             @Valid @RequestBody ProfileRequest request
     ) {
         memberService.updateProfile(request.profileImage(), request.nickname(), request.birthDate());
+
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping(path = "/verified-areas", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<VerifiedAreaListResponse> getVerifiedAreaList() {
+        return ResponseEntity.ok(
+                memberService.fetchVerifiedAreaList()
+        );
+    }
+
+    @DeleteMapping(path = "/verified-areas/{verifiedAreaId}")
+    public ResponseEntity<Void> deleteVerifiedArea(
+            @Positive(message = "verifiedAreaId는 양수여야 합니다.")
+            @PathVariable(name = "verifiedAreaId") final Long verifiedAreaId
+    ) {
+        memberService.deleteVerifiedArea(verifiedAreaId);
 
         return ResponseEntity.ok().build();
     }
