@@ -62,16 +62,16 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class MemberService {
 
-    private static final char[] CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.".toCharArray();
-    private static final int MAX_NICKNAME_LENGTH = 16;
-    private static final String NICKNAME_PATTERN = "^[a-zA-Z0-9_.ㄱ-ㅎㅏ-ㅣ가-힣]+$";
-    private static final DateTimeFormatter BIRTH_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy.MM.dd");
-    private static final int MIN_VERIFIED_AREA_SIZE = 1;
-    private static final int MAX_VERIFIED_AREA_SIZE = 5;
+    private static final int MAX_NICKNAME_LENGTH = 14;
+    private static final int MIN_VERIFIED_AREA_NUM = 1;
+    private static final int MAX_VERIFIED_AREA_NUM = 3;
     private static final double MIN_LATITUDE = 33.1;
     private static final double MAX_LATITUDE = 38.6;
     private static final double MIN_LONGITUDE = 124.6;
     private static final double MAX_LONGITUDE = 131.9;
+    private static final char[] CHARACTERS = "abcdefghijklmnopqrstuvwxyz0123456789_.".toCharArray();
+    private static final String NICKNAME_PATTERN = "^[a-z0-9_.]+$";
+    private static final DateTimeFormatter BIRTH_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy.MM.dd");
 
     private final GuidedSpotRepository guidedSpotRepository;
     private final MemberRepository memberRepository;
@@ -131,18 +131,35 @@ public class MemberService {
 
         boolean hasVerifiedArea = verifiedAreaRepository.existsByMemberId(memberIdsVO.memberId());
 
-        return LoginResponse.of(memberIdsVO.externalUUID(), accessToken, refreshToken, hasVerifiedArea);
+        // TODO: dto 파라미터 개수에 따른 컨벤션 고민 필요
+        return LoginResponse.of(
+                memberIdsVO.externalUUID(),
+                accessToken,
+                refreshToken,
+                hasVerifiedArea
+        );
     }
 
     private MemberIdentifiersVO fetchMemberIdAndExternalUUID(
             final SocialType socialType,
             final String socialId
     ) {
-        Optional<MemberEntity> optionalMemberEntity = memberRepository.findBySocialTypeAndSocialId(socialType,
-                socialId);
+        Optional<MemberEntity> optionalMemberEntity =
+                memberRepository.findBySocialTypeAndSocialId(socialType, socialId);
+        MemberEntity memberEntity = optionalMemberEntity.orElseGet(() -> createMemberEntity(socialType, socialId));
 
-        MemberEntity memberEntity = optionalMemberEntity.orElseGet(() ->
-                memberRepository.save(MemberEntity.builder()
+        return MemberIdentifiersVO.of(
+                memberEntity.getId(),
+                memberEntity.getExternalUUID()
+        );
+    }
+
+    private MemberEntity createMemberEntity(
+            final SocialType socialType,
+            final String socialId
+    ) {
+        return memberRepository.save(
+                MemberEntity.builder()
                         .socialType(socialType)
                         .socialId(socialId)
                         .externalUUID(generateUUID())
@@ -150,12 +167,8 @@ public class MemberService {
                         .nickname(generateUniqueNickname())
                         .nicknameUpdatedAt(LocalDateTime.now())
                         .leftAcornCount(25)
-                        .build())
+                        .build()
         );
-
-        Member member = memberMapper.toDomain(memberEntity);
-
-        return MemberIdentifiersVO.of(member.getId(), member.getExternalUUID());
     }
 
     private String generateUUID() {
@@ -164,6 +177,7 @@ public class MemberService {
 
     private String generateUniqueNickname() {
         String nickname;
+
         do {
             nickname = generateRandomNickname();
         } while (memberRepository.existsByNickname(nickname));
@@ -193,33 +207,45 @@ public class MemberService {
 
         MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
 
-        if (verifiedAreaRepository.countByMemberId(memberEntity.getId()) >= MAX_VERIFIED_AREA_SIZE) {
+        if (verifiedAreaRepository.countByMemberId(memberEntity.getId()) >= MAX_VERIFIED_AREA_NUM) {
             throw new BusinessException(ErrorType.INVALID_AREA_SIZE_ERROR);
         }
 
         String legalDong = naverMapsAdapter.getReverseGeoCodingResult(latitude, longitude);
-        Optional<VerifiedAreaEntity> optionalVerifiedAreaEntity = verifiedAreaRepository.findByMemberIdAndName(
-                memberEntity.getId(), legalDong);
+        Optional<VerifiedAreaEntity> optionalVerifiedAreaEntity =
+                verifiedAreaRepository.findByMemberIdAndName(memberEntity.getId(), legalDong);
 
         LocalDate currentDate = LocalDate.now();
         VerifiedAreaEntity savedVerifiedAreaEntity = optionalVerifiedAreaEntity
                 .map(entity -> updateVerifiedAreaEntity(entity, currentDate))
                 .orElseGet(() -> createVerifiedAreaEntity(legalDong, memberEntity.getId(), currentDate));
 
-        return VerifiedAreaResponse.of(savedVerifiedAreaEntity.getId(), savedVerifiedAreaEntity.getName());
+        return VerifiedAreaResponse.of(
+                savedVerifiedAreaEntity.getId(),
+                savedVerifiedAreaEntity.getName()
+        );
+    }
+
+    private boolean isOutOfServiceArea(
+            final double latitude,
+            final double longitude
+    ) {
+        return latitude < MIN_LATITUDE || latitude > MAX_LATITUDE
+                || longitude < MIN_LONGITUDE || longitude > MAX_LONGITUDE;
     }
 
     @Transactional(readOnly = true)
     public VerifiedAreaListResponse fetchVerifiedAreaList() {
         MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
-        List<VerifiedAreaEntity> verifiedAreaEntityList = verifiedAreaRepository.findAllByMemberId(
-                memberEntity.getId());
+
+        List<VerifiedAreaEntity> verifiedAreaEntityList =
+                verifiedAreaRepository.findAllByMemberId(memberEntity.getId());
         List<VerifiedAreaResponse> verifiedAreaList = verifiedAreaEntityList.stream()
                 .map(verifiedAreaEntity -> VerifiedAreaResponse.of(verifiedAreaEntity.getId(),
                         verifiedAreaEntity.getName()))
                 .toList();
 
-        return new VerifiedAreaListResponse(verifiedAreaList);
+        return VerifiedAreaListResponse.of(verifiedAreaList);
     }
 
     @Transactional
@@ -231,7 +257,7 @@ public class MemberService {
             throw new BusinessException(ErrorType.INVALID_VERIFIED_AREA_ERROR);
         }
 
-        if (verifiedAreaRepository.countByMemberId(memberEntity.getId()) <= MIN_VERIFIED_AREA_SIZE) {
+        if (verifiedAreaRepository.countByMemberId(memberEntity.getId()) <= MIN_VERIFIED_AREA_NUM) {
             throw new BusinessException(ErrorType.INVALID_AREA_SIZE_ERROR);
         }
 
@@ -244,6 +270,7 @@ public class MemberService {
     ) {
         VerifiedArea verifiedArea = verifiedAreaMapper.toDomain(entity);
         verifiedArea.updateVerifiedDate(currentDate);
+
         return verifiedAreaRepository.save(verifiedAreaMapper.toEntity(verifiedArea));
     }
 
@@ -524,14 +551,6 @@ public class MemberService {
 
         return memberEntity.getSocialId().equals(testAccount1) || memberEntity.getSocialId().equals(testAccount2)
                 || memberEntity.getSocialId().equals(testAccount3) || memberEntity.getSocialId().equals(testAccount4);
-    }
-
-    private boolean isOutOfServiceArea(
-            final double latitude,
-            final double longitude
-    ) {
-        return latitude < MIN_LATITUDE || latitude > MAX_LATITUDE
-                || longitude < MIN_LONGITUDE || longitude > MAX_LONGITUDE;
     }
 
     // TODO: 최근 길 안내 장소 지우는 스케줄러 추가

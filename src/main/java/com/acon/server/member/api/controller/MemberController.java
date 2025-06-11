@@ -86,8 +86,7 @@ public class MemberController {
     }
 
     @GetMapping(path = "/verified-areas", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<VerifiedAreaListResponse> getVerifiedAreaList(
-    ) {
+    public ResponseEntity<VerifiedAreaListResponse> getVerifiedAreaList() {
         return ResponseEntity.ok(
                 memberService.fetchVerifiedAreaList()
         );
