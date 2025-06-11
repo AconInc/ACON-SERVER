@@ -339,6 +339,36 @@ public class MemberService {
     }
 
     @Transactional
+    public void createGuidedSpot(final Long spotId) {
+        if (principalHandler.isGuestUser()) { // TODO: 토글, 상세필터, 상세페이지, 길찾기 다 게스트 유저 접근 불가
+            return;
+        }
+
+        if (!spotRepository.existsById(spotId)) {
+            throw new BusinessException(ErrorType.NOT_FOUND_SPOT_ERROR);
+        }
+
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+
+        Optional<GuidedSpotEntity> optionalGuidedSpotEntity =
+                guidedSpotRepository.findByMemberIdAndSpotId(memberEntity.getId(), spotId);
+
+        optionalGuidedSpotEntity.ifPresentOrElse(
+                guidedSpotEntity -> {
+                    GuidedSpot guidedSpot = guidedSpotMapper.toDomain(guidedSpotEntity);
+                    guidedSpot.setUpdatedAtNow();
+                    guidedSpotRepository.save(guidedSpotMapper.toEntity(guidedSpot));
+                },
+                () -> guidedSpotRepository.save(
+                        GuidedSpotEntity.builder()
+                                .memberId(memberEntity.getId())
+                                .spotId(spotId)
+                                .build()
+                )
+        );
+    }
+
+    @Transactional
     public void createSavedSpot(final long spotId) {
         if (!spotRepository.existsById(spotId)) {
             throw new BusinessException(ErrorType.NOT_FOUND_SPOT_ERROR);
@@ -370,36 +400,6 @@ public class MemberService {
 
         MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
         savedSpotRepository.deleteByMemberIdAndSpotId(memberEntity.getId(), spotId);
-    }
-
-    @Transactional
-    public void createGuidedSpot(final Long spotId) {
-        if (principalHandler.isGuestUser()) {
-            return;
-        }
-
-        if (!spotRepository.existsById(spotId)) {
-            throw new BusinessException(ErrorType.NOT_FOUND_SPOT_ERROR);
-        }
-
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
-
-        Optional<GuidedSpotEntity> optionalGuidedSpotEntity =
-                guidedSpotRepository.findByMemberIdAndSpotId(memberEntity.getId(), spotId);
-
-        optionalGuidedSpotEntity.ifPresentOrElse(
-                guidedSpotEntity -> {
-                    GuidedSpot guidedSpot = guidedSpotMapper.toDomain(guidedSpotEntity);
-                    guidedSpot.updateUpdatedAt(LocalDateTime.now());
-                    guidedSpotRepository.save(guidedSpotMapper.toEntity(guidedSpot));
-                },
-                () -> guidedSpotRepository.save(
-                        GuidedSpotEntity.builder()
-                                .memberId(memberEntity.getId())
-                                .spotId(spotId)
-                                .build()
-                )
-        );
     }
 
     @Transactional(readOnly = true)
