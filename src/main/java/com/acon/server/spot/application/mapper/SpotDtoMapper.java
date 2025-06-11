@@ -11,7 +11,7 @@ import org.mapstruct.ReportingPolicy;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface SpotDtoMapper {
 
-    @Mapping(target = "spotId", source = "id")
+    @Mapping(target = "spotId", source = "spotEntity.id")
     SpotDetailResponse toSpotDetailResponse(SpotEntity spotEntity, List<String> imageList, boolean openStatus);
 
     @Mapping(target = "spotId", source = "id")
