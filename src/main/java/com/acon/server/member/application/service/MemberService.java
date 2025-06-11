@@ -510,29 +510,9 @@ public class MemberService {
     }
 
     private void validateNicknameLength(final String nickname) {
-        int length = calculateNicknameLength(nickname);
-
-        if (length < MIN_NICKNAME_LENGTH || length > MAX_NICKNAME_LENGTH) {
+        if (nickname.length() < MIN_NICKNAME_LENGTH || nickname.length() > MAX_NICKNAME_LENGTH) {
             throw new BusinessException(ErrorType.INVALID_NICKNAME_ERROR);
         }
-    }
-
-    private int calculateNicknameLength(final String nickname) {
-        int length = 0;
-
-        for (char c : nickname.toCharArray()) {
-            if (isKorean(c)) {
-                length += 2;
-            } else {
-                length += 1;
-            }
-        }
-
-        return length;
-    }
-
-    private boolean isKorean(char c) {
-        return (c >= 0xAC00 && c <= 0xD7A3);
     }
 
     private void validateNicknameDuplication(final String nickname) {
