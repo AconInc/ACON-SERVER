@@ -13,20 +13,17 @@ public class VerifiedArea {
     private final Long memberId;
     private final String name;
     private final LocalDateTime createdAt;
-    private final LocalDateTime updatedAt;
 
     @Builder
     public VerifiedArea(
             final Long id,
             final Long memberId,
             final String name,
-            final LocalDateTime createdAt,
-            final LocalDateTime updatedAt
+            final LocalDateTime createdAt
     ) {
         this.id = id;
         this.memberId = memberId;
         this.name = name;
         this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
     }
 }

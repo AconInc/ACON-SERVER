@@ -58,9 +58,12 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class MemberService {
 
+    private static final int MIN_NICKNAME_LENGTH = 1;
     private static final int MAX_NICKNAME_LENGTH = 14;
-    private static final int MIN_VERIFIED_AREA_NUM = 1;
-    private static final int MAX_VERIFIED_AREA_NUM = 3;
+    private static final int MIN_VERIFIED_AREA_COUNT = 1;
+    private static final int MAX_VERIFIED_AREA_COUNT = 3;
+    private static final int DELETE_RESTRICTION_START_WEEK = 1;
+    private static final int DELETE_RESTRICTION_END_MONTH = 3;
     private static final double MIN_LATITUDE = 33.1;
     private static final double MAX_LATITUDE = 38.6;
     private static final double MIN_LONGITUDE = 124.6;
@@ -200,7 +203,7 @@ public class MemberService {
 
         MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
 
-        if (verifiedAreaRepository.countByMemberId(memberEntity.getId()) >= MAX_VERIFIED_AREA_NUM) {
+        if (verifiedAreaRepository.countByMemberId(memberEntity.getId()) >= MAX_VERIFIED_AREA_COUNT) {
             throw new BusinessException(ErrorType.INVALID_AREA_SIZE_ERROR);
         }
 
@@ -245,7 +248,7 @@ public class MemberService {
     }
 
     @Transactional
-    public void deleteVerifiedArea(final Long verifiedAreaId) {
+    public void deleteVerifiedArea(final long verifiedAreaId) {
         MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
         VerifiedAreaEntity verifiedAreaEntity = verifiedAreaRepository.findByIdOrElseThrow(verifiedAreaId);
 
@@ -253,11 +256,49 @@ public class MemberService {
             throw new BusinessException(ErrorType.INVALID_VERIFIED_AREA_ERROR);
         }
 
-        if (verifiedAreaRepository.countByMemberId(memberEntity.getId()) <= MIN_VERIFIED_AREA_NUM) {
+        validateVerifiedAreaDeleteRestriction(verifiedAreaEntity.getCreatedAt());
+
+        if (verifiedAreaRepository.countByMemberId(memberEntity.getId()) <= MIN_VERIFIED_AREA_COUNT) {
             throw new BusinessException(ErrorType.INVALID_AREA_SIZE_ERROR);
         }
 
         verifiedAreaRepository.deleteById(verifiedAreaId);
+    }
+
+    private void validateVerifiedAreaDeleteRestriction(final LocalDateTime createdAt) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime oneWeekAfter = createdAt.plusWeeks(DELETE_RESTRICTION_START_WEEK);
+        LocalDateTime threeMonthsAfter = createdAt.plusMonths(DELETE_RESTRICTION_END_MONTH);
+
+        if (now.isAfter(oneWeekAfter) && now.isBefore(threeMonthsAfter)) {
+            throw new BusinessException(ErrorType.VERIFIED_AREA_DELETE_RESTRICTED_PERIOD_ERROR);
+        }
+    }
+
+    @Transactional
+    public void replaceVerifiedArea(
+            final long verifiedAreaId,
+            final double latitude,
+            final double longitude
+    ) {
+        if (isOutOfServiceArea(latitude, longitude)) {
+            throw new BusinessException(ErrorType.UNAVAILABLE_SERVICE_AREA_ERROR);
+        }
+
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        VerifiedAreaEntity verifiedAreaEntity = verifiedAreaRepository.findByIdOrElseThrow(verifiedAreaId);
+
+        if (!memberEntity.getId().equals(verifiedAreaEntity.getMemberId())) {
+            throw new BusinessException(ErrorType.INVALID_VERIFIED_AREA_ERROR);
+        }
+
+        validateVerifiedAreaDeleteRestriction(verifiedAreaEntity.getCreatedAt());
+        String legalDong = naverMapsAdapter.getReverseGeoCodingResult(latitude, longitude);
+
+        if (!verifiedAreaRepository.existsByMemberIdAndName(memberEntity.getId(), legalDong)) {
+            verifiedAreaRepository.deleteById(verifiedAreaId);
+            createVerifiedArea(memberEntity.getId(), legalDong);
+        }
     }
 
     @Transactional
@@ -372,7 +413,7 @@ public class MemberService {
     private void validateNicknameLength(final String nickname) {
         int length = calculateNicknameLength(nickname);
 
-        if (length < 1 || length > MAX_NICKNAME_LENGTH) {
+        if (length < MIN_NICKNAME_LENGTH || length > MAX_NICKNAME_LENGTH) {
             throw new BusinessException(ErrorType.INVALID_NICKNAME_ERROR);
         }
     }

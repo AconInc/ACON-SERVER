@@ -53,6 +53,7 @@ public enum ErrorType {
     INVALID_NICKNAME_ERROR(HttpStatus.BAD_REQUEST, 40051, "닉네임이 조건을 만족하지 않습니다."),
     INVALID_BIRTH_DATE_ERROR(HttpStatus.BAD_REQUEST, 40053, "유효하지 않은 생년월일입니다."),
     INVALID_VERIFIED_AREA_ERROR(HttpStatus.BAD_REQUEST, 40054, "유효하지 않은 인증 지역입니다."),
+    VERIFIED_AREA_DELETE_RESTRICTED_PERIOD_ERROR(HttpStatus.BAD_REQUEST, 40055, "인증일로부터 1주 이상 3개월 미만인 지역은 삭제할 수 없습니다."),
 
     /* 404 Not Found */
     NOT_FOUND_VERIFIED_AREA_ERROR(HttpStatus.NOT_FOUND, 40404, "존재하지 않는 인증 지역입니다."),

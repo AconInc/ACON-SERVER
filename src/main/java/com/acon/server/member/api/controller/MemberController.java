@@ -6,6 +6,7 @@ import com.acon.server.member.api.request.LogoutRequest;
 import com.acon.server.member.api.request.PreferenceRequest;
 import com.acon.server.member.api.request.ProfileRequest;
 import com.acon.server.member.api.request.ReissueTokenRequest;
+import com.acon.server.member.api.request.ReplaceVerifiedAreaRequest;
 import com.acon.server.member.api.request.VerifiedAreaRequest;
 import com.acon.server.member.api.request.WithdrawalReasonRequest;
 import com.acon.server.member.api.response.AcornCountResponse;
@@ -168,6 +169,19 @@ public class MemberController {
             @PathVariable(name = "verifiedAreaId") final Long verifiedAreaId
     ) {
         memberService.deleteVerifiedArea(verifiedAreaId);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(path = "/verified-areas/replacement", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> replaceVerifiedArea(
+            @Valid @RequestBody final ReplaceVerifiedAreaRequest request
+    ) {
+        memberService.replaceVerifiedArea(
+                request.verifiedAreaId(),
+                request.latitude(),
+                request.longitude()
+        );
 
         return ResponseEntity.ok().build();
     }
