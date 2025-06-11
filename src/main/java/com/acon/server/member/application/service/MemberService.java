@@ -29,6 +29,7 @@ import com.acon.server.member.domain.enums.SpotStyle;
 import com.acon.server.member.domain.vo.MemberIdentifiersVO;
 import com.acon.server.member.infra.entity.GuidedSpotEntity;
 import com.acon.server.member.infra.entity.MemberEntity;
+import com.acon.server.member.infra.entity.SavedSpotEntity;
 import com.acon.server.member.infra.entity.VerifiedAreaEntity;
 import com.acon.server.member.infra.entity.WithdrawalReasonEntity;
 import com.acon.server.member.infra.external.google.GoogleSocialService;
@@ -36,6 +37,7 @@ import com.acon.server.member.infra.external.ios.AppleAuthAdapter;
 import com.acon.server.member.infra.repository.GuidedSpotRepository;
 import com.acon.server.member.infra.repository.MemberRepository;
 import com.acon.server.member.infra.repository.PreferenceRepository;
+import com.acon.server.member.infra.repository.SavedSpotRepository;
 import com.acon.server.member.infra.repository.VerifiedAreaRepository;
 import com.acon.server.member.infra.repository.WithdrawalReasonRepository;
 import com.acon.server.spot.domain.enums.SpotType;
@@ -76,6 +78,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final PreferenceRepository preferenceRepository;
     private final VerifiedAreaRepository verifiedAreaRepository;
+    private final SavedSpotRepository savedSpotRepository;
     private final SpotRepository spotRepository;
     private final WithdrawalReasonRepository withdrawalReasonRepository;
 
@@ -321,6 +324,40 @@ public class MemberService {
                 .build();
 
         preferenceRepository.save(preferenceMapper.toEntity(preference));
+    }
+
+    @Transactional
+    public void createSavedSpot(final long spotId) {
+        if (!spotRepository.existsById(spotId)) {
+            throw new BusinessException(ErrorType.NOT_FOUND_SPOT_ERROR);
+        }
+
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+
+        if (isAlreadySaved(memberEntity.getId(), spotId)) {
+            return;
+        }
+
+        savedSpotRepository.save(
+                SavedSpotEntity.builder()
+                        .memberId(memberEntity.getId())
+                        .spotId(spotId)
+                        .build()
+        );
+    }
+
+    private boolean isAlreadySaved(final long memberId, final long spotId) {
+        return savedSpotRepository.existsByMemberIdAndSpotId(memberId, spotId);
+    }
+
+    @Transactional
+    public void deleteSavedSpot(final Long spotId) {
+        if (!spotRepository.existsById(spotId)) {
+            throw new BusinessException(ErrorType.NOT_FOUND_SPOT_ERROR);
+        }
+
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        savedSpotRepository.deleteByMemberIdAndSpotId(memberEntity.getId(), spotId);
     }
 
     @Transactional

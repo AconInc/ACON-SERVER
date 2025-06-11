@@ -7,6 +7,7 @@ import com.acon.server.member.api.request.PreferenceRequest;
 import com.acon.server.member.api.request.ProfileRequest;
 import com.acon.server.member.api.request.ReissueTokenRequest;
 import com.acon.server.member.api.request.ReplaceVerifiedAreaRequest;
+import com.acon.server.member.api.request.SavedSpotRequest;
 import com.acon.server.member.api.request.VerifiedAreaRequest;
 import com.acon.server.member.api.request.WithdrawalReasonRequest;
 import com.acon.server.member.api.response.AcornCountResponse;
@@ -91,6 +92,26 @@ public class MemberController {
 
         memberService.upsertPreference(dislikeFoodList, favoriteCuisineList, favoriteSpotType, favoriteSpotStyle,
                 favoriteSpotRank);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(path = "/saved-spots", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> postSavedSpot(
+            @Valid @RequestBody final SavedSpotRequest request
+    ) {
+        memberService.createSavedSpot(request.spotId());
+
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping(path = "/saved-spots/{spotId}")
+    public ResponseEntity<Void> deleteSavedSpot(
+            @NotNull(message = "spotId는 필수입니다.")
+            @Positive(message = "spotId는 양수여야 합니다.")
+            @PathVariable(name = "spotId") final Long spotId
+    ) {
+        memberService.deleteSavedSpot(spotId);
 
         return ResponseEntity.ok().build();
     }
