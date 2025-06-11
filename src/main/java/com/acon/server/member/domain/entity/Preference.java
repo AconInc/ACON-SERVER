@@ -10,10 +10,8 @@ import com.acon.server.spot.domain.enums.SpotType;
 import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.ToString;
 
 @Getter
-@ToString
 public class Preference {
 
     // TODO: 매직 넘버 yml로 옮기기

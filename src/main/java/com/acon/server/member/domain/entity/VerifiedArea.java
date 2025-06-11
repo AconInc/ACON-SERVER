@@ -3,10 +3,8 @@ package com.acon.server.member.domain.entity;
 import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.ToString;
 
 @Getter
-@ToString
 public class VerifiedArea {
 
     private final Long id;
