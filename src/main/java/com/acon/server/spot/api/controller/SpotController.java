@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1")
+@Validated
 public class SpotController {
 
     private final SpotService spotService;
@@ -58,7 +59,7 @@ public class SpotController {
     public ResponseEntity<SpotDetailResponse> getSpotDetail(
             @NotNull(message = "spotId는 필수입니다.")
             @Positive(message = "spotId는 양수여야 합니다.")
-            @Validated @PathVariable(name = "spotId") final Long spotId
+            @PathVariable(name = "spotId") final Long spotId
     ) {
         return ResponseEntity.ok(
                 spotService.fetchSpotDetail(spotId)
@@ -69,7 +70,7 @@ public class SpotController {
     public ResponseEntity<MenuListResponse> getMenus(
             @NotNull(message = "spotId는 필수입니다.")
             @Positive(message = "spotId는 양수여야 합니다.")
-            @Validated @PathVariable(name = "spotId") final Long spotId
+            @PathVariable(name = "spotId") final Long spotId
     ) {
         return ResponseEntity.ok(
                 spotService.fetchMenus(spotId)
@@ -79,9 +80,9 @@ public class SpotController {
     @GetMapping(path = "/search-suggestions", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SearchSuggestionListResponse> getSearchSuggestions(
             @NotNull(message = "위도는 필수입니다.")
-            @Validated @RequestParam(name = "latitude") Double latitude,
+            @RequestParam(name = "latitude") Double latitude,
             @NotNull(message = "경도는 필수입니다.")
-            @Validated @RequestParam(name = "longitude") Double longitude
+            @RequestParam(name = "longitude") Double longitude
     ) {
         if (spotService.checkTestUser()) {
             latitude = 37.559115;
@@ -108,11 +109,11 @@ public class SpotController {
     public ResponseEntity<VerifiedSpotResponse> verifySpot(
             @NotNull(message = "spotId는 필수입니다.")
             @Positive(message = "spotId는 양수여야 합니다.")
-            @Validated @RequestParam(name = "spotId") final Long spotId,
+            @RequestParam(name = "spotId") final Long spotId,
             @NotNull(message = "위도는 필수입니다.")
-            @Validated @RequestParam(name = "latitude") Double latitude,
+            @RequestParam(name = "latitude") Double latitude,
             @NotNull(message = "경도는 필수입니다.")
-            @Validated @RequestParam(name = "longitude") Double longitude
+            @RequestParam(name = "longitude") Double longitude
     ) {
         if (spotService.checkTestUser()) {
             latitude = 37.559115;

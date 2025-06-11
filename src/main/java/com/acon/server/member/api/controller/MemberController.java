@@ -1,6 +1,5 @@
 package com.acon.server.member.api.controller;
 
-import com.acon.server.global.auth.PrincipalHandler;
 import com.acon.server.member.api.request.GuidedSpotRequest;
 import com.acon.server.member.api.request.LoginRequest;
 import com.acon.server.member.api.request.LogoutRequest;
@@ -24,11 +23,14 @@ import com.acon.server.member.domain.enums.SocialType;
 import com.acon.server.member.domain.enums.SpotStyle;
 import com.acon.server.spot.domain.enums.SpotType;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -43,10 +45,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1")
+@Validated
 public class MemberController {
 
     private final MemberService memberService;
-    private final PrincipalHandler principalHandler;
 
     @PostMapping(
             path = "/auth/login",
@@ -118,6 +120,7 @@ public class MemberController {
 
     @GetMapping(path = "/images/presigned-url", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PreSignedUrlResponse> getPreSignedUrl(
+            @NotBlank(message = "imageType은 공백일 수 없습니다.")
             @RequestParam(name = "imageType") final String imageTypeString
     ) {
         ImageType imageType = ImageType.fromValue(imageTypeString);
@@ -129,6 +132,7 @@ public class MemberController {
 
     @GetMapping(path = "/nickname/validate")
     public ResponseEntity<Void> getNicknameValidate(
+            @NotBlank(message = "nickname은 공백일 수 없습니다.")
             @RequestParam(name = "nickname") final String nickname
     ) {
         memberService.validateNickname(nickname);
@@ -138,9 +142,14 @@ public class MemberController {
 
     @PatchMapping(path = "/members/me", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> patchProfile(
+
             @Valid @RequestBody ProfileRequest request
     ) {
-        memberService.updateProfile(request.profileImage(), request.nickname(), request.birthDate());
+        memberService.updateProfile(
+                request.profileImage().trim(),
+                request.nickname(),
+                request.birthDate()
+        );
 
         return ResponseEntity.ok().build();
     }
@@ -154,6 +163,7 @@ public class MemberController {
 
     @DeleteMapping(path = "/verified-areas/{verifiedAreaId}")
     public ResponseEntity<Void> deleteVerifiedArea(
+            @NotNull(message = "verifiedAreaId는 필수입니다.")
             @Positive(message = "verifiedAreaId는 양수여야 합니다.")
             @PathVariable(name = "verifiedAreaId") final Long verifiedAreaId
     ) {
@@ -171,7 +181,8 @@ public class MemberController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping(path = "/auth/reissue",
+    @PostMapping(
+            path = "/auth/reissue",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )

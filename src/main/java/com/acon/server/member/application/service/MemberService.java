@@ -111,6 +111,7 @@ public class MemberService {
     ) {
         String socialId;
 
+        // TODO: 추후 전략 패턴 적용
         if (socialType == SocialType.GOOGLE) {
             socialId = googleSocialService.login(idToken);
         } else if (socialType == SocialType.APPLE) {
@@ -143,10 +144,7 @@ public class MemberService {
                 memberRepository.findBySocialTypeAndSocialId(socialType, socialId);
         MemberEntity memberEntity = optionalMemberEntity.orElseGet(() -> createMember(socialType, socialId));
 
-        return MemberIdentifiersVO.of(
-                memberEntity.getId(),
-                memberEntity.getExternalUUID()
-        );
+        return MemberIdentifiersVO.of(memberEntity);
     }
 
     private MemberEntity createMember(
@@ -319,7 +317,7 @@ public class MemberService {
         MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
         int acornCount = memberEntity.getLeftAcornCount();
 
-        return new AcornCountResponse(acornCount);
+        return AcornCountResponse.of(acornCount);
     }
 
     @Transactional(readOnly = true)
