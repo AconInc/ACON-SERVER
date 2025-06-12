@@ -428,32 +428,32 @@ public class MemberService {
     @Transactional(readOnly = true)
     public ProfileResponse fetchProfile() {
         MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
-        List<VerifiedAreaEntity> verifiedAreaEntityList = verifiedAreaRepository.findAllByMemberIdOrderById(
-                memberEntity.getId());
+        List<SavedSpotEntity> savedSpotEntityList =
+                savedSpotRepository.findTop10ByMemberIdOrderByIdDesc(memberEntity.getId());
+        List<SavedSpotResponse> savedSpotResponseList = mapToSavedSpotResponseList(savedSpotEntityList);
 
-        return ProfileResponse.builder().
-                image(memberEntity.getProfileImage())
+        return ProfileResponse.builder()
+                .profileImage(memberEntity.getProfileImage())
                 .nickname(memberEntity.getNickname())
                 .birthDate(
                         memberEntity.getBirthDate() != null
                                 ? memberEntity.getBirthDate().format(BIRTH_DATE_FORMATTER)
                                 : null
                 )
-                .leftAcornCount(memberEntity.getLeftAcornCount())
-                .verifiedAreaList(verifiedAreaEntityList.stream()
-                        .map(verifiedAreaEntity -> new ProfileResponse.VerifiedArea(verifiedAreaEntity.getId(),
-                                verifiedAreaEntity.getName()))
-                        .toList())
+                .savedSpotList(savedSpotResponseList)
                 .build();
     }
 
     @Transactional(readOnly = true)
     public SavedSpotListResponse fetchSavedSpotList() {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        long memberId = fetchMemberId();
+        List<SavedSpotEntity> savedSpotEntityList = savedSpotRepository.findAllByMemberIdOrderByIdDesc(memberId);
+        List<SavedSpotResponse> savedSpotResponseList = mapToSavedSpotResponseList(savedSpotEntityList);
 
-        List<SavedSpotEntity> savedSpotEntityList =
-                savedSpotRepository.findAllByMemberIdOrderByIdDesc(memberEntity.getId());
+        return SavedSpotListResponse.of(savedSpotResponseList);
+    }
 
+    private List<SavedSpotResponse> mapToSavedSpotResponseList(final List<SavedSpotEntity> savedSpotEntityList) {
         List<Long> spotIdList = savedSpotEntityList.stream()
                 .map(SavedSpotEntity::getSpotId)
                 .toList();
@@ -477,7 +477,7 @@ public class MemberService {
                         )
                 );
 
-        List<SavedSpotResponse> savedSpotResponseList = savedSpotEntityList.stream()
+        return savedSpotEntityList.stream()
                 .map(
                         savedSpotEntity -> {
                             SpotEntity spotEntity = spotMap.get(savedSpotEntity.getSpotId());
@@ -488,13 +488,17 @@ public class MemberService {
 
                             String image = spotImageMap.get(savedSpotEntity.getSpotId());
 
-                            return SavedSpotResponse.of(spotEntity.getId(), image, spotEntity.getName());
+                            return SavedSpotResponse.builder()
+                                    .spotId(spotEntity.getId())
+                                    .image(image)
+                                    .name(spotEntity.getName())
+                                    .build();
                         }
                 )
                 .filter(Objects::nonNull)
                 .toList();
+    }
 
-        return SavedSpotListResponse.of(savedSpotResponseList);
     }
 
     public PreSignedUrlResponse fetchPreSignedUrl(final ImageType imageType) {

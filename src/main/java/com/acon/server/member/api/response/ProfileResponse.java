@@ -8,17 +8,10 @@ import lombok.Builder;
 @Builder
 @JsonInclude(Include.NON_NULL)
 public record ProfileResponse(
-        String image,
+        String profileImage,
         String nickname,
-        Integer leftAcornCount,
         String birthDate,
-        List<VerifiedArea> verifiedAreaList
+        List<SavedSpotResponse> savedSpotList
 ) {
 
-    public record VerifiedArea(
-            Long id,
-            String name
-    ) {
-
-    }
 }
