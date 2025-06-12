@@ -170,7 +170,7 @@ public class SpotService {
             return new SpotListResponse(spotList);
         }
 
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
         PreferenceEntity preferenceEntity = preferenceRepository.findByMemberId(memberEntity.getId()).orElse(null);
 
         // 1) 필터(거리, 가격, 옵션 등) + 영업중인 가게
@@ -633,7 +633,7 @@ public class SpotService {
             throw new BusinessException(ErrorType.UNAVAILABLE_SERVICE_AREA_ERROR);
         }
 
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
 
         List<SearchSuggestionResponse> recentSpotSuggestion = guidedSpotCustomRepository.findRecentGuidedSpotSuggestions(
                 memberEntity.getId(),
@@ -745,7 +745,7 @@ public class SpotService {
 
     @Transactional(readOnly = true)
     public boolean checkTestUser() {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
 
         return memberEntity.getSocialId().equals(testAccount1) || memberEntity.getSocialId().equals(testAccount2)
                 || memberEntity.getSocialId().equals(testAccount3) || memberEntity.getSocialId().equals(testAccount4);

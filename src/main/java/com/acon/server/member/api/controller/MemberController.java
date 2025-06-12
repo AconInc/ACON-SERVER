@@ -172,7 +172,6 @@ public class MemberController {
 
     @PatchMapping(path = "/members/me", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> patchProfile(
-
             @Valid @RequestBody ProfileRequest request
     ) {
         memberService.updateProfile(

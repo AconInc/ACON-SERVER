@@ -239,7 +239,7 @@ public class MemberService {
     }
 
     private void createVerifiedArea(
-            final Long memberId,
+            final long memberId,
             final String legalDong
     ) {
         verifiedAreaRepository.save(
@@ -340,7 +340,7 @@ public class MemberService {
     }
 
     @Transactional
-    public void createGuidedSpot(final Long spotId) {
+    public void createGuidedSpot(final long spotId) {
         if (principalHandler.isGuestUser()) { // TODO: 토글, 상세필터, 상세페이지, 길찾기 다 게스트 유저 접근 불가
             return;
         }
@@ -395,7 +395,7 @@ public class MemberService {
     }
 
     @Transactional
-    public void deleteSavedSpot(final Long spotId) {
+    public void deleteSavedSpot(final long spotId) {
         if (!spotRepository.existsById(spotId)) {
             throw new BusinessException(ErrorType.NOT_FOUND_SPOT_ERROR);
         }
@@ -406,7 +406,7 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public AcornCountResponse fetchAcornCount() {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
         int acornCount = memberEntity.getLeftAcornCount();
 
         return AcornCountResponse.of(acornCount);
@@ -414,7 +414,7 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public ProfileResponse fetchProfile() {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
         List<VerifiedAreaEntity> verifiedAreaEntityList = verifiedAreaRepository.findAllByMemberIdOrderById(
                 memberEntity.getId());
 
@@ -518,7 +518,7 @@ public class MemberService {
     }
 
     private void validateNicknameDuplication(final String nickname) {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
 
         if (memberEntity.getNickname().equals(nickname)) {
             return;
@@ -602,6 +602,7 @@ public class MemberService {
         MemberAuthentication memberAuthentication = new MemberAuthentication(memberId, null, null);
         String newAccessToken = jwtTokenProvider.issueAccessToken(memberAuthentication);
         String newRefreshToken = jwtTokenProvider.issueRefreshToken(memberId);
+
         return ReissueTokenResponse.of(newAccessToken, newRefreshToken);
     }
 
@@ -627,7 +628,7 @@ public class MemberService {
     // TODO: 순환 참조 방지를 위해 같은 메서드를 재선언했으므로, 추후 Facade 패턴을 통한 리팩토링 필요
     @Transactional(readOnly = true)
     public boolean checkTestUser() {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
 
         return memberEntity.getSocialId().equals(testAccount1) || memberEntity.getSocialId().equals(testAccount2)
                 || memberEntity.getSocialId().equals(testAccount3) || memberEntity.getSocialId().equals(testAccount4);
