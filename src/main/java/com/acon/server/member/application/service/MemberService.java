@@ -499,6 +499,42 @@ public class MemberService {
                 .toList();
     }
 
+    @Transactional
+    public void updateProfile(
+            final String profileImage,
+            final String nickname,
+            final String birthDate
+    ) {
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
+        Member member = memberMapper.toDomain(memberEntity);
+
+        if (!member.getProfileImage().equals(profileImage)) {
+            if (profileImage == null || profileImage.isEmpty()) {
+                String basicProfileImageUrl = s3Adapter.getBasicProfileImageUrl();
+                member.setProfileImage(basicProfileImageUrl);
+            } else {
+                s3Adapter.validateProfileImageExists(profileImage);
+                String imageUrl = s3Adapter.getProfileImageUrl(profileImage);
+                s3Adapter.deleteFile(member.getProfileImage());
+                member.setProfileImage(imageUrl);
+            }
+        }
+
+        if (!member.getNickname().equals(nickname)) {
+            validateNickname(nickname);
+            member.setNickname(nickname);
+        }
+
+        if (birthDate == null || birthDate.isEmpty()) {
+            member.setBirthDate(null);
+        } else if (!member.getBirthDate().toString().equals(birthDate)) {
+            LocalDate parsedBirthDate = validateAndParseBirthDate(birthDate);
+            member.setBirthDate(parsedBirthDate);
+        }
+
+        memberRepository.save(
+                memberMapper.toEntity(member)
+        );
     }
 
     public PreSignedUrlResponse fetchPreSignedUrl(final ImageType imageType) {
@@ -544,42 +580,6 @@ public class MemberService {
         if (memberRepository.existsByNickname(nickname)) {
             throw new BusinessException(ErrorType.DUPLICATED_NICKNAME_ERROR);
         }
-    }
-
-    @Transactional
-    public void updateProfile(
-            final String profileImage,
-            final String nickname,
-            final String birthDate
-    ) {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
-        Member member = memberMapper.toDomain(memberEntity);
-
-        if (!profileImage.equals(member.getProfileImage())) {
-            if (profileImage.isEmpty()) {
-                String basicProfileImageUrl = s3Adapter.getBasicProfileImageUrl();
-                member.setProfileImage(basicProfileImageUrl);
-            } else {
-                s3Adapter.validateProfileImageExists(profileImage);
-                String imageUrl = s3Adapter.getProfileImageUrl(profileImage);
-                s3Adapter.deleteFile(member.getProfileImage());
-                member.setProfileImage(imageUrl);
-            }
-        }
-
-        if (!nickname.equals(member.getNickname())) {
-            validateNickname(nickname);
-            member.setNickname(nickname);
-        }
-
-        if (birthDate == null) {
-            member.setBirthDate(null);
-        } else if (member.getBirthDate() == null || !birthDate.equals(member.getBirthDate().toString())) {
-            LocalDate parsedBirthDate = validateAndParseBirthDate(birthDate);
-            member.setBirthDate(parsedBirthDate);
-        }
-
-        memberRepository.save(memberMapper.toEntity(member));
     }
 
     private LocalDate validateAndParseBirthDate(final String birthDate) {
