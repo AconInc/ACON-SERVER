@@ -48,12 +48,13 @@ public enum ErrorType {
     INVALID_FAVORITE_SPOT_ERROR(HttpStatus.BAD_REQUEST, 40017, "유효하지 않은 favoriteSpot입니다."),
     INVALID_FAVORITE_SPOT_RANK_SIZE_ERROR(HttpStatus.BAD_REQUEST, 40030, "favoriteSpotRank의 사이즈가 잘못되었습니다."),
     INVALID_FAVORITE_CUISINE_RANK_SIZE_ERROR(HttpStatus.BAD_REQUEST, 40031, "favoriteCuisineRank의 사이즈가 잘못되었습니다."),
-    INVALID_AREA_SIZE_ERROR(HttpStatus.BAD_REQUEST, 40032, "인증 지역은 최소 1개 ~ 최대 3개까지 가능합니다."),
+    INVALID_VERIFIED_AREA_COUNT_ERROR(HttpStatus.BAD_REQUEST, 40032, "인증 지역은 최소 1개 ~ 최대 3개까지 가능합니다."),
     INVALID_IMAGE_TYPE_ERROR(HttpStatus.BAD_REQUEST, 40045, "유효하지 않은 imageType입니다."),
     INVALID_NICKNAME_ERROR(HttpStatus.BAD_REQUEST, 40051, "닉네임이 조건을 만족하지 않습니다."),
     INVALID_BIRTH_DATE_ERROR(HttpStatus.BAD_REQUEST, 40053, "유효하지 않은 생년월일입니다."),
     INVALID_VERIFIED_AREA_ERROR(HttpStatus.BAD_REQUEST, 40054, "유효하지 않은 인증 지역입니다."),
-    VERIFIED_AREA_DELETE_RESTRICTED_PERIOD_ERROR(HttpStatus.BAD_REQUEST, 40055, "인증일로부터 1주 이상 3개월 미만인 지역은 삭제할 수 없습니다."),
+    VERIFIED_AREA_DELETE_RESTRICTION_ERROR(HttpStatus.BAD_REQUEST, 40055, "인증일로부터 1주 이상 3개월 미만인 지역은 삭제할 수 없습니다."),
+    VERIFIED_AREA_REPLACE_RESTRICTION_ERROR(HttpStatus.BAD_REQUEST, 40056, "인증 지역이 2개 이상인 경우 인증 지역을 교체할 수 없습니다."),
 
     /* 404 Not Found */
     NOT_FOUND_VERIFIED_AREA_ERROR(HttpStatus.NOT_FOUND, 40404, "존재하지 않는 인증 지역입니다."),

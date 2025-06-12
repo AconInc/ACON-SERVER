@@ -220,7 +220,7 @@ public class MemberService {
         long memberId = fetchMemberId();
 
         if (verifiedAreaRepository.countByMemberId(memberId) >= MAX_VERIFIED_AREA_COUNT) {
-            throw new BusinessException(ErrorType.INVALID_AREA_SIZE_ERROR);
+            throw new BusinessException(ErrorType.INVALID_VERIFIED_AREA_COUNT_ERROR);
         }
 
         String legalDong = naverMapsAdapter.getReverseGeoCodingResult(latitude, longitude);
@@ -285,7 +285,7 @@ public class MemberService {
         validateVerifiedAreaDeleteRestriction(verifiedAreaEntity.getCreatedAt());
 
         if (verifiedAreaRepository.countByMemberId(memberId) <= MIN_VERIFIED_AREA_COUNT) {
-            throw new BusinessException(ErrorType.INVALID_AREA_SIZE_ERROR);
+            throw new BusinessException(ErrorType.INVALID_VERIFIED_AREA_COUNT_ERROR);
         }
 
         verifiedAreaRepository.deleteById(verifiedAreaId);
@@ -297,7 +297,7 @@ public class MemberService {
         LocalDateTime threeMonthsAfter = createdAt.plusMonths(DELETE_RESTRICTION_END_MONTH);
 
         if (now.isAfter(oneWeekAfter) && now.isBefore(threeMonthsAfter)) {
-            throw new BusinessException(ErrorType.VERIFIED_AREA_DELETE_RESTRICTED_PERIOD_ERROR);
+            throw new BusinessException(ErrorType.VERIFIED_AREA_DELETE_RESTRICTION_ERROR);
         }
     }
 
@@ -316,6 +316,10 @@ public class MemberService {
 
         if (!verifiedAreaEntity.getMemberId().equals(memberId)) {
             throw new BusinessException(ErrorType.INVALID_VERIFIED_AREA_ERROR);
+        }
+
+        if (verifiedAreaRepository.countByMemberId(memberId) != MIN_VERIFIED_AREA_COUNT) {
+            throw new BusinessException(ErrorType.VERIFIED_AREA_REPLACE_RESTRICTION_ERROR);
         }
 
         validateVerifiedAreaDeleteRestriction(verifiedAreaEntity.getCreatedAt());
