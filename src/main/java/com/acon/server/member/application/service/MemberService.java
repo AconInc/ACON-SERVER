@@ -217,16 +217,16 @@ public class MemberService {
             throw new BusinessException(ErrorType.UNAVAILABLE_SERVICE_AREA_ERROR);
         }
 
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        long memberId = fetchMemberId();
 
-        if (verifiedAreaRepository.countByMemberId(memberEntity.getId()) >= MAX_VERIFIED_AREA_COUNT) {
+        if (verifiedAreaRepository.countByMemberId(memberId) >= MAX_VERIFIED_AREA_COUNT) {
             throw new BusinessException(ErrorType.INVALID_AREA_SIZE_ERROR);
         }
 
         String legalDong = naverMapsAdapter.getReverseGeoCodingResult(latitude, longitude);
 
-        if (!verifiedAreaRepository.existsByMemberIdAndName(memberEntity.getId(), legalDong)) {
-            createVerifiedArea(memberEntity.getId(), legalDong);
+        if (!verifiedAreaRepository.existsByMemberIdAndName(memberId, legalDong)) {
+            createVerifiedArea(memberId, legalDong);
         }
     }
 
@@ -236,6 +236,16 @@ public class MemberService {
     ) {
         return latitude < MIN_LATITUDE || latitude > MAX_LATITUDE
                 || longitude < MIN_LONGITUDE || longitude > MAX_LONGITUDE;
+    }
+
+    private long fetchMemberId() {
+        long memberId = principalHandler.getMemberIdFromPrincipal();
+
+        if (!memberRepository.existsById(memberId)) {
+            throw new BusinessException(ErrorType.NOT_FOUND_MEMBER_ERROR);
+        }
+
+        return memberId;
     }
 
     private void createVerifiedArea(
@@ -252,10 +262,10 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public VerifiedAreaListResponse fetchVerifiedAreaList() {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        long memberId = fetchMemberId();
 
         List<VerifiedAreaEntity> verifiedAreaEntityList =
-                verifiedAreaRepository.findAllByMemberIdOrderById(memberEntity.getId());
+                verifiedAreaRepository.findAllByMemberIdOrderById(memberId);
         List<VerifiedAreaResponse> verifiedAreaList = verifiedAreaEntityList.stream()
                 .map(VerifiedAreaResponse::of)
                 .toList();
@@ -265,16 +275,16 @@ public class MemberService {
 
     @Transactional
     public void deleteVerifiedArea(final long verifiedAreaId) {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        long memberId = fetchMemberId();
         VerifiedAreaEntity verifiedAreaEntity = verifiedAreaRepository.findByIdOrElseThrow(verifiedAreaId);
 
-        if (!memberEntity.getId().equals(verifiedAreaEntity.getMemberId())) {
+        if (!verifiedAreaEntity.getMemberId().equals(memberId)) {
             throw new BusinessException(ErrorType.INVALID_VERIFIED_AREA_ERROR);
         }
 
         validateVerifiedAreaDeleteRestriction(verifiedAreaEntity.getCreatedAt());
 
-        if (verifiedAreaRepository.countByMemberId(memberEntity.getId()) <= MIN_VERIFIED_AREA_COUNT) {
+        if (verifiedAreaRepository.countByMemberId(memberId) <= MIN_VERIFIED_AREA_COUNT) {
             throw new BusinessException(ErrorType.INVALID_AREA_SIZE_ERROR);
         }
 
@@ -301,19 +311,23 @@ public class MemberService {
             throw new BusinessException(ErrorType.UNAVAILABLE_SERVICE_AREA_ERROR);
         }
 
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        long memberId = fetchMemberId();
         VerifiedAreaEntity verifiedAreaEntity = verifiedAreaRepository.findByIdOrElseThrow(verifiedAreaId);
 
-        if (!memberEntity.getId().equals(verifiedAreaEntity.getMemberId())) {
+        if (!verifiedAreaEntity.getMemberId().equals(memberId)) {
             throw new BusinessException(ErrorType.INVALID_VERIFIED_AREA_ERROR);
         }
 
         validateVerifiedAreaDeleteRestriction(verifiedAreaEntity.getCreatedAt());
         String legalDong = naverMapsAdapter.getReverseGeoCodingResult(latitude, longitude);
 
-        if (!verifiedAreaRepository.existsByMemberIdAndName(memberEntity.getId(), legalDong)) {
+        if (legalDong.equals(verifiedAreaEntity.getName())) {
+            return;
+        }
+
+        if (!verifiedAreaRepository.existsByMemberIdAndName(memberId, legalDong)) {
             verifiedAreaRepository.deleteById(verifiedAreaId);
-            createVerifiedArea(memberEntity.getId(), legalDong);
+            createVerifiedArea(memberId, legalDong);
         }
     }
 
@@ -325,10 +339,10 @@ public class MemberService {
             final SpotStyle favoriteSpotStyle,
             final List<FavoriteSpot> favoriteSpotRank
     ) {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        long memberId = fetchMemberId();
 
         Preference preference = Preference.builder()
-                .memberId(memberEntity.getId())
+                .memberId(memberId)
                 .dislikeFoodList(dislikeFoodList)
                 .favoriteCuisineRank(favoriteCuisineList)
                 .favoriteSpotType(favoriteSpotType)
@@ -349,24 +363,23 @@ public class MemberService {
             throw new BusinessException(ErrorType.NOT_FOUND_SPOT_ERROR);
         }
 
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        long memberId = fetchMemberId();
 
-        Optional<GuidedSpotEntity> optionalGuidedSpotEntity =
-                guidedSpotRepository.findByMemberIdAndSpotId(memberEntity.getId(), spotId);
+        try {
+            guidedSpotRepository.save(
+                    GuidedSpotEntity.builder()
+                            .memberId(memberId)
+                            .spotId(spotId)
+                            .build()
+            );
+        } catch (DataIntegrityViolationException e) {
+            GuidedSpotEntity guidedSpotEntity =
+                    guidedSpotRepository.findByMemberIdAndSpotId(memberId, spotId).orElseThrow();
+            GuidedSpot guidedSpot = guidedSpotMapper.toDomain(guidedSpotEntity);
+            guidedSpot.setUpdatedAtNow();
 
-        optionalGuidedSpotEntity.ifPresentOrElse(
-                guidedSpotEntity -> {
-                    GuidedSpot guidedSpot = guidedSpotMapper.toDomain(guidedSpotEntity);
-                    guidedSpot.setUpdatedAtNow();
-                    guidedSpotRepository.save(guidedSpotMapper.toEntity(guidedSpot));
-                },
-                () -> guidedSpotRepository.save(
-                        GuidedSpotEntity.builder()
-                                .memberId(memberEntity.getId())
-                                .spotId(spotId)
-                                .build()
-                )
-        );
+            guidedSpotRepository.save(guidedSpotMapper.toEntity(guidedSpot));
+        }
     }
 
     @Transactional
@@ -375,12 +388,8 @@ public class MemberService {
             throw new BusinessException(ErrorType.NOT_FOUND_SPOT_ERROR);
         }
 
-        // TODO: memberId만 사용할 경우 아래처럼 리팩토링하기
-        long memberId = principalHandler.getUserIdFromPrincipal();
-
-        if (!memberRepository.existsById(memberId)) {
-            throw new BusinessException(ErrorType.NOT_FOUND_MEMBER_ERROR);
-        }
+        // TODO: memberId만 사용할 경우 아래처럼 리팩토링하기, 그리고 메서드로 빼기
+        long memberId = fetchMemberId();
 
         try {
             savedSpotRepository.save(
@@ -400,8 +409,8 @@ public class MemberService {
             throw new BusinessException(ErrorType.NOT_FOUND_SPOT_ERROR);
         }
 
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
-        savedSpotRepository.deleteByMemberIdAndSpotId(memberEntity.getId(), spotId);
+        long memberId = fetchMemberId();
+        savedSpotRepository.deleteByMemberIdAndSpotId(memberId, spotId);
     }
 
     @Transactional(readOnly = true)
@@ -584,10 +593,12 @@ public class MemberService {
 
     @Transactional
     public void logout(final String refreshToken) {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
-        if (!memberEntity.getId().equals(jwtTokenProvider.validateRefreshToken(refreshToken))) {
+        long memberId = fetchMemberId();
+
+        if (!jwtTokenProvider.validateRefreshToken(refreshToken).equals(memberId)) {
             throw new BusinessException(ErrorType.INVALID_ACCESS_TOKEN_ERROR);
         }
+
         jwtTokenProvider.deleteRefreshToken(refreshToken);
     }
 
@@ -595,7 +606,10 @@ public class MemberService {
     public ReissueTokenResponse reissueToken(final String refreshToken) {
         // TODO: 리팩토링
         Long memberId = jwtTokenProvider.validateRefreshToken(refreshToken);
-        memberRepository.findByIdOrElseThrow(memberId);
+
+        if (memberRepository.existsById(memberId)) {
+            throw new BusinessException(ErrorType.NOT_FOUND_MEMBER_ERROR);
+        }
 
         jwtTokenProvider.deleteRefreshToken(refreshToken);
 
@@ -611,10 +625,10 @@ public class MemberService {
             final String reason,
             final String refreshToken
     ) {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        long memberId = fetchMemberId();
 
         // TODO: memberId 존재하는 테이블에 member row 제거 ( 리뷰 테이블 제외 )
-        memberRepository.deleteById(memberEntity.getId());
+        memberRepository.deleteById(memberId);
         jwtTokenProvider.deleteRefreshToken(refreshToken);
         // TODO: 엑세스 토큰 블랙리스트
 
