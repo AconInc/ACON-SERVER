@@ -18,19 +18,15 @@ import com.acon.server.member.api.response.VerifiedAreaListResponse;
 import com.acon.server.member.api.response.VerifiedAreaResponse;
 import com.acon.server.member.application.mapper.GuidedSpotMapper;
 import com.acon.server.member.application.mapper.MemberMapper;
-import com.acon.server.member.application.mapper.PreferenceMapper;
 import com.acon.server.member.domain.entity.GuidedSpot;
 import com.acon.server.member.domain.entity.Member;
-import com.acon.server.member.domain.entity.Preference;
-import com.acon.server.member.domain.enums.Cuisine;
 import com.acon.server.member.domain.enums.DislikeFood;
-import com.acon.server.member.domain.enums.FavoriteSpot;
 import com.acon.server.member.domain.enums.ImageType;
 import com.acon.server.member.domain.enums.SocialType;
-import com.acon.server.member.domain.enums.SpotStyle;
 import com.acon.server.member.domain.vo.MemberIdentifiersVO;
 import com.acon.server.member.infra.entity.GuidedSpotEntity;
 import com.acon.server.member.infra.entity.MemberEntity;
+import com.acon.server.member.infra.entity.PreferenceEntity;
 import com.acon.server.member.infra.entity.SavedSpotEntity;
 import com.acon.server.member.infra.entity.VerifiedAreaEntity;
 import com.acon.server.member.infra.entity.WithdrawalReasonEntity;
@@ -42,7 +38,6 @@ import com.acon.server.member.infra.repository.PreferenceRepository;
 import com.acon.server.member.infra.repository.SavedSpotRepository;
 import com.acon.server.member.infra.repository.VerifiedAreaRepository;
 import com.acon.server.member.infra.repository.WithdrawalReasonRepository;
-import com.acon.server.spot.domain.enums.SpotType;
 import com.acon.server.spot.infra.entity.SpotEntity;
 import com.acon.server.spot.infra.entity.SpotImageEntity;
 import com.acon.server.spot.infra.repository.SpotImageRepository;
@@ -97,7 +92,6 @@ public class MemberService {
 
     private final GuidedSpotMapper guidedSpotMapper;
     private final MemberMapper memberMapper;
-    private final PreferenceMapper preferenceMapper;
 
     private final JwtTokenProvider jwtTokenProvider;
     private final PrincipalHandler principalHandler;
@@ -337,24 +331,16 @@ public class MemberService {
 
     @Transactional
     public void upsertPreference(
-            final List<DislikeFood> dislikeFoodList,
-            final List<Cuisine> favoriteCuisineList,
-            final SpotType favoriteSpotType,
-            final SpotStyle favoriteSpotStyle,
-            final List<FavoriteSpot> favoriteSpotRank
+            final List<DislikeFood> dislikeFoodList
     ) {
         long memberId = fetchMemberId();
 
-        Preference preference = Preference.builder()
-                .memberId(memberId)
-                .dislikeFoodList(dislikeFoodList)
-                .favoriteCuisineRank(favoriteCuisineList)
-                .favoriteSpotType(favoriteSpotType)
-                .favoriteSpotStyle(favoriteSpotStyle)
-                .favoriteSpotRank(favoriteSpotRank)
-                .build();
-
-        preferenceRepository.save(preferenceMapper.toEntity(preference));
+        preferenceRepository.save(
+                PreferenceEntity.builder()
+                        .memberId(memberId)
+                        .dislikeFoodList(dislikeFoodList)
+                        .build()
+        );
     }
 
     @Transactional

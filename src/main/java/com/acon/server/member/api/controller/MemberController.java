@@ -18,13 +18,9 @@ import com.acon.server.member.api.response.ReissueTokenResponse;
 import com.acon.server.member.api.response.SavedSpotListResponse;
 import com.acon.server.member.api.response.VerifiedAreaListResponse;
 import com.acon.server.member.application.service.MemberService;
-import com.acon.server.member.domain.enums.Cuisine;
 import com.acon.server.member.domain.enums.DislikeFood;
-import com.acon.server.member.domain.enums.FavoriteSpot;
 import com.acon.server.member.domain.enums.ImageType;
 import com.acon.server.member.domain.enums.SocialType;
-import com.acon.server.member.domain.enums.SpotStyle;
-import com.acon.server.spot.domain.enums.SpotType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -86,13 +82,7 @@ public class MemberController {
             @Valid @RequestBody final PreferenceRequest request
     ) {
         List<DislikeFood> dislikeFoodList = request.dislikeFoodList().stream().map(DislikeFood::fromValue).toList();
-        List<Cuisine> favoriteCuisineList = request.favoriteCuisineRank().stream().map(Cuisine::fromValue).toList();
-        SpotType favoriteSpotType = SpotType.fromValue(request.favoriteSpotType());
-        SpotStyle favoriteSpotStyle = SpotStyle.fromValue(request.favoriteSpotStyle());
-        List<FavoriteSpot> favoriteSpotRank = request.favoriteSpotRank().stream().map(FavoriteSpot::fromValue).toList();
-
-        memberService.upsertPreference(dislikeFoodList, favoriteCuisineList, favoriteSpotType, favoriteSpotStyle,
-                favoriteSpotRank);
+        memberService.upsertPreference(dislikeFoodList);
 
         return ResponseEntity.ok().build();
     }

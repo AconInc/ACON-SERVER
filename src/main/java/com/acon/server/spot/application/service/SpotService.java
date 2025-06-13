@@ -11,8 +11,6 @@ import com.acon.server.global.external.maps.GeoCodingResponse;
 import com.acon.server.global.external.maps.NaverMapsAdapter;
 import com.acon.server.member.domain.enums.Cuisine;
 import com.acon.server.member.domain.enums.DislikeFood;
-import com.acon.server.member.domain.enums.FavoriteSpot;
-import com.acon.server.member.domain.enums.SpotStyle;
 import com.acon.server.member.infra.entity.MemberEntity;
 import com.acon.server.member.infra.entity.PreferenceEntity;
 import com.acon.server.member.infra.repository.GuidedSpotCustomRepository;
@@ -171,7 +169,7 @@ public class SpotService {
         }
 
         MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
-        PreferenceEntity preferenceEntity = preferenceRepository.findByMemberId(memberEntity.getId()).orElse(null);
+        PreferenceEntity preferenceEntity = preferenceRepository.findById(memberEntity.getId()).orElse(null);
 
         // 1) 필터(거리, 가격, 옵션 등) + 영업중인 가게
         List<SpotEntity> filteredSpotList = filterSpotList(request);

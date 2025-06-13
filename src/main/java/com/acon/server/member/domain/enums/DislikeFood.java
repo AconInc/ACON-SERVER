@@ -10,11 +10,22 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public enum DislikeFood {
 
+    SHRIMP,
+    CRAB,
+    CLAM,
+    OYSTER,
+    SASHIMI,
+    FISH,
+    SEAFOOD,
+    YUKHOE_YUKSASHIMI,
+    SEONJI,
+    SUNDAE,
+    GOPCHANG_DAECHANG_MAKCHANG,
     DAKBAL,
-    HOE_YUKHOE,
-    GOPCHANG_MAKCHANG_DAECHANG,
-    SUNDAE_SEONJI,
-    YANGGOGI,
+    DAKTTONGJIP,
+    LAMB,
+    OFFAL,
+    VEGETABLE,
     ;
 
     private static final Map<String, DislikeFood> DISLIKE_FOOD_MAP = new HashMap<>();
