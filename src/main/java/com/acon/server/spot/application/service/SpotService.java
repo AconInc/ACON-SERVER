@@ -14,6 +14,7 @@ import com.acon.server.member.infra.repository.PreferenceRepository;
 import com.acon.server.review.infra.repository.ReviewRepository;
 import com.acon.server.spot.api.request.SpotListRequest;
 import com.acon.server.spot.api.response.MenuResponse;
+import com.acon.server.spot.api.response.MenuboardImageListResponse;
 import com.acon.server.spot.api.response.SearchSpotListResponse;
 import com.acon.server.spot.api.response.SearchSpotResponse;
 import com.acon.server.spot.api.response.SearchSuggestionListResponse;
@@ -26,10 +27,12 @@ import com.acon.server.spot.domain.entity.Spot;
 import com.acon.server.spot.domain.enums.SpotType;
 import com.acon.server.spot.domain.enums.Tag;
 import com.acon.server.spot.infra.entity.MenuEntity;
+import com.acon.server.spot.infra.entity.MenuboardImageEntity;
 import com.acon.server.spot.infra.entity.OpeningHourEntity;
 import com.acon.server.spot.infra.entity.SpotEntity;
 import com.acon.server.spot.infra.entity.SpotImageEntity;
 import com.acon.server.spot.infra.repository.MenuRepository;
+import com.acon.server.spot.infra.repository.MenuboardImageRepository;
 import com.acon.server.spot.infra.repository.OpeningHourRepository;
 import com.acon.server.spot.infra.repository.SpotImageRepository;
 import com.acon.server.spot.infra.repository.SpotNativeQueryRepository;
@@ -72,6 +75,7 @@ public class SpotService {
     private final GuidedSpotCustomRepository guidedSpotCustomRepository;
     private final MemberRepository memberRepository;
 
+    private final MenuboardImageRepository menuboardImageRepository;
     private final MenuRepository menuRepository;
     private final OpeningHourRepository openingHourRepository;
     private final SpotImageRepository spotImageRepository;
@@ -442,12 +446,17 @@ public class SpotService {
                 .toList();
     }
 
-                        .price(menu.getPrice())
-                        .image(menu.getImage())
-                        .build())
+    @Transactional(readOnly = true)
+    public MenuboardImageListResponse fetchMenuboards(final Long spotId) {
+        if (!spotRepository.existsById(spotId)) {
+            throw new BusinessException(ErrorType.NOT_FOUND_SPOT_ERROR);
+        }
+
+        List<String> menuboardImageList = menuboardImageRepository.findAllBySpotId(spotId).stream()
+                .map(MenuboardImageEntity::getImage)
                 .toList();
 
-        return new MenuListResponse(menuResponseList);
+        return MenuboardImageListResponse.of(menuboardImageList);
     }
 
     @Transactional(readOnly = true)
