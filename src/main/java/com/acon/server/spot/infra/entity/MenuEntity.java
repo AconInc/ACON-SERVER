@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -16,11 +15,11 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
-        name = "menu",
-        indexes = @Index(
-                name = "idx_menu_spot_id",
-                columnList = "spot_id"
-        )
+        name = "menu"
+//        indexes = @Index(
+//                name = "idx_menu_spot_id",
+//                columnList = "spot_id"
+//        )
 )
 public class MenuEntity {
 
@@ -31,32 +30,22 @@ public class MenuEntity {
     @Column(name = "spot_id", nullable = false)
     private Long spotId;
 
-    @Column(name = "image")
-    private String image;
-
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", length = 50, nullable = false)
     private String name;
 
     @Column(name = "price", nullable = false)
-    private int price;
-
-    @Column(name = "main_menu", nullable = false)
-    private boolean mainMenu;
+    private Integer price;
 
     @Builder
     public MenuEntity(
             Long id,
             Long spotId,
-            String image,
             String name,
-            int price,
-            boolean mainMenu
+            int price
     ) {
         this.id = id;
         this.spotId = spotId;
-        this.image = image;
         this.name = name;
         this.price = price;
-        this.mainMenu = mainMenu;
     }
 }

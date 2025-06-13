@@ -6,8 +6,8 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -22,11 +22,15 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
         name = "verified_area",
-        indexes = @Index(
-                name = "idx_verified_area_member_id",
-                columnList = "member_id"
+        uniqueConstraints = @UniqueConstraint(
+                name = "unique_verified_area_member_id_name",
+                columnNames = {"member_id", "name"}
         )
-        // TODO: memberId와 name을 unique로 묶던가 verifiedDate를 위한 테이블을 분리하던가
+        // TODO: 복합 인덱스, 단일 인덱스 등 추가 고려
+//        indexes = @Index(
+//                name = "idx_verified_area_member_id",
+//                columnList = "member_id"
+//        )
 )
 public class VerifiedAreaEntity {
 
@@ -37,7 +41,7 @@ public class VerifiedAreaEntity {
     @Column(name = "member_id", nullable = false)
     private Long memberId;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", length = 20, nullable = false)
     private String name;
 
     @CreatedDate

@@ -38,19 +38,19 @@ public class MemberEntity {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "social_type", nullable = false)
+    @Column(name = "social_type", length = 10, nullable = false)
     private SocialType socialType;
 
-    @Column(name = "social_id", nullable = false, unique = true)
+    @Column(name = "social_id", length = 50, nullable = false, unique = true)
     private String socialId;
 
-    @Column(name = "external_uuid", nullable = false, unique = true)
+    @Column(name = "external_uuid", length = 50, nullable = false, unique = true)
     private String externalUUID;
 
     @Column(name = "profile_image", nullable = false)
     private String profileImage;
 
-    @Column(name = "nickname", nullable = false, unique = true)
+    @Column(name = "nickname", length = 20, nullable = false, unique = true)
     private String nickname;
 
     @Column(name = "nickname_updated_at", nullable = false)

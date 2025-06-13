@@ -24,7 +24,7 @@ public class OptionEntity {
     @Column(name = "category_id", nullable = false)
     private Long categoryId;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", length = 50, nullable = false)
     private String name;
 
     @Builder

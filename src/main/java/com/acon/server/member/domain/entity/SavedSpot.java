@@ -11,20 +11,17 @@ public class SavedSpot {
     private final Long memberId;
     private final Long spotId;
     private final LocalDateTime createdAt;
-    private final LocalDateTime updatedAt;
 
     @Builder
     public SavedSpot(
             final Long id,
             final Long memberId,
             final Long spotId,
-            final LocalDateTime createdAt,
-            final LocalDateTime updatedAt
+            final LocalDateTime createdAt
     ) {
         this.id = id;
         this.memberId = memberId;
         this.spotId = spotId;
         this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
     }
 }
