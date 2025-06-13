@@ -13,7 +13,6 @@ import com.acon.server.member.infra.repository.MemberRepository;
 import com.acon.server.member.infra.repository.PreferenceRepository;
 import com.acon.server.review.infra.repository.ReviewRepository;
 import com.acon.server.spot.api.request.SpotListRequest;
-import com.acon.server.spot.api.response.MenuListResponse;
 import com.acon.server.spot.api.response.MenuResponse;
 import com.acon.server.spot.api.response.SearchSpotListResponse;
 import com.acon.server.spot.api.response.SearchSpotResponse;
@@ -22,7 +21,6 @@ import com.acon.server.spot.api.response.SearchSuggestionResponse;
 import com.acon.server.spot.api.response.SpotDetailResponse;
 import com.acon.server.spot.api.response.SpotListResponse;
 import com.acon.server.spot.api.response.SpotListResponse.RecommendedSpot;
-import com.acon.server.spot.application.mapper.SpotDtoMapper;
 import com.acon.server.spot.application.mapper.SpotMapper;
 import com.acon.server.spot.domain.entity.Spot;
 import com.acon.server.spot.domain.enums.SpotType;
@@ -81,7 +79,6 @@ public class SpotService {
     private final SpotOptionRepository spotOptionRepository;
     private final SpotRepository spotRepository;
 
-    private final SpotDtoMapper spotDtoMapper;
     private final SpotMapper spotMapper;
 
     private final PrincipalHandler principalHandler;
@@ -412,34 +409,39 @@ public class SpotService {
     @Transactional
     public SpotDetailResponse fetchSpotDetail(final Long spotId) {
         SpotEntity spotEntity = spotRepository.findByIdOrElseThrow(spotId);
-        Spot spot = spotMapper.toDomain(spotEntity);
 
         List<SpotImageEntity> spotImageEntityList = spotImageRepository.findAllBySpotId(spotId);
         List<String> imageList = spotImageEntityList.stream()
                 .map(SpotImageEntity::getImage)
                 .toList();
 
-        if (spot.getLatitude() == null || spot.getLongitude() == null) {
-            updateSpotCoordinate(spot);
-            spotEntity = spotRepository.save(spotMapper.toEntity(spot));
-        }
-
-        return spotDtoMapper.toSpotDetailResponse(spotEntity, imageList, isSpotOpen(spotId));
+        return new SpotDetailResponse(
+                spotId,
+                imageList,
+                spotEntity.getName(),
+                spotEntity.getLocalAcornCount() + spotEntity.getBasicAcornCount(),
+                fetchSpotTagList(spotEntity),
+                isSpotOpen(spotId),
+                "23:00",
+                "10:00", // TODO: 영업시간 정보 추가
+                fetchMenus(spotId),
+                spotEntity.getLatitude(),
+                spotEntity.getLongitude()
+        );
     }
 
-    @Transactional(readOnly = true)
-    public MenuListResponse fetchMenus(final Long spotId) {
+    private List<MenuResponse> fetchMenus(final Long spotId) {
         if (!spotRepository.existsById(spotId)) {
             throw new BusinessException(ErrorType.NOT_FOUND_SPOT_ERROR);
         }
 
         List<MenuEntity> menuEntityList = menuRepository.findAllBySpotId(spotId);
 
-        // TODO: mapper로 변경
-        List<MenuResponse> menuResponseList = menuEntityList.stream()
-                .map(menu -> MenuResponse.builder()
-                        .id(menu.getId())
-                        .name(menu.getName())
+        return menuEntityList.stream()
+                .map(menu -> MenuResponse.of(menu.getName(), menu.getPrice()))
+                .toList();
+    }
+
                         .price(menu.getPrice())
                         .image(menu.getImage())
                         .build())

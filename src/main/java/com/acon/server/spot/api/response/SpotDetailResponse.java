@@ -1,17 +1,21 @@
 package com.acon.server.spot.api.response;
 
-import com.acon.server.spot.domain.enums.SpotType;
+import com.acon.server.spot.domain.enums.Tag;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import java.util.List;
 
+@JsonInclude(Include.NON_NULL)
 public record SpotDetailResponse(
         Long spotId,
-        String name,
-        SpotType spotType,
         List<String> imageList,
-        Boolean openStatus,
-        String address,
-        Integer localAcornCount,
-        Integer basicAcornCount,
+        String name,
+        Integer acornCount,
+        List<Tag> tagList,
+        Boolean isOpen,
+        String closingTime,
+        String nextOpening,
+        List<MenuResponse> signatureMenuList,
         Double latitude,
         Double longitude
 ) {
