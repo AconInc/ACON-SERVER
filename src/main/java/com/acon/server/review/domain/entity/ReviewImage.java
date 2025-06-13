@@ -2,10 +2,8 @@ package com.acon.server.review.domain.entity;
 
 import lombok.Builder;
 import lombok.Getter;
-import lombok.ToString;
 
 @Getter
-@ToString
 public class ReviewImage {
 
     private final Long id;

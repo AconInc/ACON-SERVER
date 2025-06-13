@@ -4,10 +4,8 @@ import java.time.DayOfWeek;
 import java.time.LocalTime;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.ToString;
 
 @Getter
-@ToString
 public class OpeningHour {
 
     private final Long id;
