@@ -4,13 +4,11 @@ import com.acon.server.spot.domain.enums.SpotType;
 import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.ToString;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 
 @Getter
-@ToString
 public class Spot {
 
     private static final GeometryFactory geometryFactory = new GeometryFactory();

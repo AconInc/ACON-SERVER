@@ -36,7 +36,7 @@ public class ReviewService {
 
     @Transactional
     public void createReview(final long spotId, final int acornCount) {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
         SpotEntity spotEntity = spotRepository.findByIdOrElseThrow(spotId);
 
 //        validateAcornAvailability(memberEntity.getLeftAcornCount(), acornCount); // Acon 2.0 정책: 도토리 무제한

@@ -10,17 +10,16 @@ public class PrincipalHandler {
 
     private static final String ANONYMOUS_USER = "anonymousUser";
 
-    public Long getUserIdFromPrincipal() {
+    public Long getMemberIdFromPrincipal() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        isPrincipalNull(principal);
+        validateMemberAuthentication(principal);
+
         return Long.valueOf(principal.toString());
     }
 
-    public void isPrincipalNull(
-            final Object principal
-    ) {
+    public void validateMemberAuthentication(final Object principal) {
         if (principal.toString().equals(ANONYMOUS_USER)) {
-            throw new BusinessException(ErrorType.EMPTY_PRINCIPAL_ERROR);
+            throw new BusinessException(ErrorType.NO_PRINCIPAL_ERROR);
         }
     }
 

@@ -18,19 +18,15 @@ import com.acon.server.member.api.response.VerifiedAreaListResponse;
 import com.acon.server.member.api.response.VerifiedAreaResponse;
 import com.acon.server.member.application.mapper.GuidedSpotMapper;
 import com.acon.server.member.application.mapper.MemberMapper;
-import com.acon.server.member.application.mapper.PreferenceMapper;
 import com.acon.server.member.domain.entity.GuidedSpot;
 import com.acon.server.member.domain.entity.Member;
-import com.acon.server.member.domain.entity.Preference;
-import com.acon.server.member.domain.enums.Cuisine;
 import com.acon.server.member.domain.enums.DislikeFood;
-import com.acon.server.member.domain.enums.FavoriteSpot;
 import com.acon.server.member.domain.enums.ImageType;
 import com.acon.server.member.domain.enums.SocialType;
-import com.acon.server.member.domain.enums.SpotStyle;
 import com.acon.server.member.domain.vo.MemberIdentifiersVO;
 import com.acon.server.member.infra.entity.GuidedSpotEntity;
 import com.acon.server.member.infra.entity.MemberEntity;
+import com.acon.server.member.infra.entity.PreferenceEntity;
 import com.acon.server.member.infra.entity.SavedSpotEntity;
 import com.acon.server.member.infra.entity.VerifiedAreaEntity;
 import com.acon.server.member.infra.entity.WithdrawalReasonEntity;
@@ -42,7 +38,6 @@ import com.acon.server.member.infra.repository.PreferenceRepository;
 import com.acon.server.member.infra.repository.SavedSpotRepository;
 import com.acon.server.member.infra.repository.VerifiedAreaRepository;
 import com.acon.server.member.infra.repository.WithdrawalReasonRepository;
-import com.acon.server.spot.domain.enums.SpotType;
 import com.acon.server.spot.infra.entity.SpotEntity;
 import com.acon.server.spot.infra.entity.SpotImageEntity;
 import com.acon.server.spot.infra.repository.SpotImageRepository;
@@ -56,7 +51,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
@@ -88,8 +82,8 @@ public class MemberService {
     private final GuidedSpotRepository guidedSpotRepository;
     private final MemberRepository memberRepository;
     private final PreferenceRepository preferenceRepository;
-    private final VerifiedAreaRepository verifiedAreaRepository;
     private final SavedSpotRepository savedSpotRepository;
+    private final VerifiedAreaRepository verifiedAreaRepository;
     private final WithdrawalReasonRepository withdrawalReasonRepository;
 
     private final SpotRepository spotRepository;
@@ -97,7 +91,6 @@ public class MemberService {
 
     private final GuidedSpotMapper guidedSpotMapper;
     private final MemberMapper memberMapper;
-    private final PreferenceMapper preferenceMapper;
 
     private final JwtTokenProvider jwtTokenProvider;
     private final PrincipalHandler principalHandler;
@@ -159,17 +152,31 @@ public class MemberService {
             final SocialType socialType,
             final String socialId
     ) {
-        Optional<MemberEntity> optionalMemberEntity =
-                memberRepository.findBySocialTypeAndSocialId(socialType, socialId);
-        MemberEntity memberEntity = optionalMemberEntity.orElseGet(() -> createMember(socialType, socialId));
 
-        return MemberIdentifiersVO.of(memberEntity);
+        MemberEntity member = memberRepository
+                .findBySocialTypeAndSocialId(socialType, socialId)
+                .orElseGet(() -> tryCreateMember(socialType, socialId));
+
+        return MemberIdentifiersVO.of(member);
+    }
+
+    private MemberEntity tryCreateMember(
+            final SocialType socialType,
+            final String socialId
+    ) {
+        try {
+            return createMember(socialType, socialId);
+        } catch (DataIntegrityViolationException e) {
+            return memberRepository.findBySocialTypeAndSocialId(socialType, socialId)
+                    .orElseThrow(() -> new BusinessException(ErrorType.DUPLICATE_MEMBER_ERROR));
+        }
     }
 
     private MemberEntity createMember(
             final SocialType socialType,
             final String socialId
     ) {
+        // TODO: 도메인 로직으로 이동할 부분들은 이동
         return memberRepository.save(
                 MemberEntity.builder()
                         .socialType(socialType)
@@ -217,19 +224,20 @@ public class MemberService {
             throw new BusinessException(ErrorType.UNAVAILABLE_SERVICE_AREA_ERROR);
         }
 
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        long memberId = fetchMemberId();
 
-        if (verifiedAreaRepository.countByMemberId(memberEntity.getId()) >= MAX_VERIFIED_AREA_COUNT) {
-            throw new BusinessException(ErrorType.INVALID_AREA_SIZE_ERROR);
+        if (verifiedAreaRepository.countByMemberId(memberId) >= MAX_VERIFIED_AREA_COUNT) {
+            throw new BusinessException(ErrorType.INVALID_VERIFIED_AREA_COUNT_ERROR);
         }
 
         String legalDong = naverMapsAdapter.getReverseGeoCodingResult(latitude, longitude);
 
-        if (!verifiedAreaRepository.existsByMemberIdAndName(memberEntity.getId(), legalDong)) {
-            createVerifiedArea(memberEntity.getId(), legalDong);
+        if (!verifiedAreaRepository.existsByMemberIdAndName(memberId, legalDong)) {
+            createVerifiedArea(memberId, legalDong);
         }
     }
 
+    // TODO: 공통 메서드로 빼기
     private boolean isOutOfServiceArea(
             final double latitude,
             final double longitude
@@ -238,8 +246,19 @@ public class MemberService {
                 || longitude < MIN_LONGITUDE || longitude > MAX_LONGITUDE;
     }
 
+    // TODO: 공통 메서드로 빼기
+    private long fetchMemberId() {
+        long memberId = principalHandler.getMemberIdFromPrincipal();
+
+        if (!memberRepository.existsById(memberId)) {
+            throw new BusinessException(ErrorType.NOT_FOUND_MEMBER_ERROR);
+        }
+
+        return memberId;
+    }
+
     private void createVerifiedArea(
-            final Long memberId,
+            final long memberId,
             final String legalDong
     ) {
         verifiedAreaRepository.save(
@@ -250,97 +269,22 @@ public class MemberService {
         );
     }
 
-    @Transactional(readOnly = true)
-    public VerifiedAreaListResponse fetchVerifiedAreaList() {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
-
-        List<VerifiedAreaEntity> verifiedAreaEntityList =
-                verifiedAreaRepository.findAllByMemberIdOrderById(memberEntity.getId());
-        List<VerifiedAreaResponse> verifiedAreaList = verifiedAreaEntityList.stream()
-                .map(VerifiedAreaResponse::of)
-                .toList();
-
-        return VerifiedAreaListResponse.of(verifiedAreaList);
-    }
-
-    @Transactional
-    public void deleteVerifiedArea(final long verifiedAreaId) {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
-        VerifiedAreaEntity verifiedAreaEntity = verifiedAreaRepository.findByIdOrElseThrow(verifiedAreaId);
-
-        if (!memberEntity.getId().equals(verifiedAreaEntity.getMemberId())) {
-            throw new BusinessException(ErrorType.INVALID_VERIFIED_AREA_ERROR);
-        }
-
-        validateVerifiedAreaDeleteRestriction(verifiedAreaEntity.getCreatedAt());
-
-        if (verifiedAreaRepository.countByMemberId(memberEntity.getId()) <= MIN_VERIFIED_AREA_COUNT) {
-            throw new BusinessException(ErrorType.INVALID_AREA_SIZE_ERROR);
-        }
-
-        verifiedAreaRepository.deleteById(verifiedAreaId);
-    }
-
-    private void validateVerifiedAreaDeleteRestriction(final LocalDateTime createdAt) {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime oneWeekAfter = createdAt.plusWeeks(DELETE_RESTRICTION_START_WEEK);
-        LocalDateTime threeMonthsAfter = createdAt.plusMonths(DELETE_RESTRICTION_END_MONTH);
-
-        if (now.isAfter(oneWeekAfter) && now.isBefore(threeMonthsAfter)) {
-            throw new BusinessException(ErrorType.VERIFIED_AREA_DELETE_RESTRICTED_PERIOD_ERROR);
-        }
-    }
-
-    @Transactional
-    public void replaceVerifiedArea(
-            final long verifiedAreaId,
-            final double latitude,
-            final double longitude
-    ) {
-        if (isOutOfServiceArea(latitude, longitude)) {
-            throw new BusinessException(ErrorType.UNAVAILABLE_SERVICE_AREA_ERROR);
-        }
-
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
-        VerifiedAreaEntity verifiedAreaEntity = verifiedAreaRepository.findByIdOrElseThrow(verifiedAreaId);
-
-        if (!memberEntity.getId().equals(verifiedAreaEntity.getMemberId())) {
-            throw new BusinessException(ErrorType.INVALID_VERIFIED_AREA_ERROR);
-        }
-
-        validateVerifiedAreaDeleteRestriction(verifiedAreaEntity.getCreatedAt());
-        String legalDong = naverMapsAdapter.getReverseGeoCodingResult(latitude, longitude);
-
-        if (!verifiedAreaRepository.existsByMemberIdAndName(memberEntity.getId(), legalDong)) {
-            verifiedAreaRepository.deleteById(verifiedAreaId);
-            createVerifiedArea(memberEntity.getId(), legalDong);
-        }
-    }
-
     @Transactional
     public void upsertPreference(
-            final List<DislikeFood> dislikeFoodList,
-            final List<Cuisine> favoriteCuisineList,
-            final SpotType favoriteSpotType,
-            final SpotStyle favoriteSpotStyle,
-            final List<FavoriteSpot> favoriteSpotRank
+            final List<DislikeFood> dislikeFoodList
     ) {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        long memberId = fetchMemberId();
 
-        Preference preference = Preference.builder()
-                .memberId(memberEntity.getId())
-                .dislikeFoodList(dislikeFoodList)
-                .favoriteCuisineRank(favoriteCuisineList)
-                .favoriteSpotType(favoriteSpotType)
-                .favoriteSpotStyle(favoriteSpotStyle)
-                .favoriteSpotRank(favoriteSpotRank)
-                .build();
-
-        preferenceRepository.save(preferenceMapper.toEntity(preference));
+        preferenceRepository.save(
+                PreferenceEntity.builder()
+                        .memberId(memberId)
+                        .dislikeFoodList(dislikeFoodList)
+                        .build()
+        );
     }
 
     @Transactional
-    public void createGuidedSpot(final Long spotId) {
+    public void createGuidedSpot(final long spotId) {
         if (principalHandler.isGuestUser()) { // TODO: 토글, 상세필터, 상세페이지, 길찾기 다 게스트 유저 접근 불가
             return;
         }
@@ -349,24 +293,23 @@ public class MemberService {
             throw new BusinessException(ErrorType.NOT_FOUND_SPOT_ERROR);
         }
 
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        long memberId = fetchMemberId();
 
-        Optional<GuidedSpotEntity> optionalGuidedSpotEntity =
-                guidedSpotRepository.findByMemberIdAndSpotId(memberEntity.getId(), spotId);
+        try {
+            guidedSpotRepository.save(
+                    GuidedSpotEntity.builder()
+                            .memberId(memberId)
+                            .spotId(spotId)
+                            .build()
+            );
+        } catch (DataIntegrityViolationException e) {
+            GuidedSpotEntity guidedSpotEntity =
+                    guidedSpotRepository.findByMemberIdAndSpotId(memberId, spotId).orElseThrow();
+            GuidedSpot guidedSpot = guidedSpotMapper.toDomain(guidedSpotEntity);
+            guidedSpot.setUpdatedAtNow();
 
-        optionalGuidedSpotEntity.ifPresentOrElse(
-                guidedSpotEntity -> {
-                    GuidedSpot guidedSpot = guidedSpotMapper.toDomain(guidedSpotEntity);
-                    guidedSpot.setUpdatedAtNow();
-                    guidedSpotRepository.save(guidedSpotMapper.toEntity(guidedSpot));
-                },
-                () -> guidedSpotRepository.save(
-                        GuidedSpotEntity.builder()
-                                .memberId(memberEntity.getId())
-                                .spotId(spotId)
-                                .build()
-                )
-        );
+            guidedSpotRepository.save(guidedSpotMapper.toEntity(guidedSpot));
+        }
     }
 
     @Transactional
@@ -375,12 +318,8 @@ public class MemberService {
             throw new BusinessException(ErrorType.NOT_FOUND_SPOT_ERROR);
         }
 
-        // TODO: memberId만 사용할 경우 아래처럼 리팩토링하기
-        long memberId = principalHandler.getUserIdFromPrincipal();
-
-        if (!memberRepository.existsById(memberId)) {
-            throw new BusinessException(ErrorType.NOT_FOUND_MEMBER_ERROR);
-        }
+        // TODO: memberId만 사용할 경우 아래처럼 리팩토링하기, 그리고 메서드로 빼기
+        long memberId = fetchMemberId();
 
         try {
             savedSpotRepository.save(
@@ -395,52 +334,44 @@ public class MemberService {
     }
 
     @Transactional
-    public void deleteSavedSpot(final Long spotId) {
+    public void deleteSavedSpot(final long spotId) {
         if (!spotRepository.existsById(spotId)) {
             throw new BusinessException(ErrorType.NOT_FOUND_SPOT_ERROR);
         }
 
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
-        savedSpotRepository.deleteByMemberIdAndSpotId(memberEntity.getId(), spotId);
-    }
-
-    @Transactional(readOnly = true)
-    public AcornCountResponse fetchAcornCount() {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
-        int acornCount = memberEntity.getLeftAcornCount();
-
-        return AcornCountResponse.of(acornCount);
+        long memberId = fetchMemberId();
+        savedSpotRepository.deleteByMemberIdAndSpotId(memberId, spotId);
     }
 
     @Transactional(readOnly = true)
     public ProfileResponse fetchProfile() {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
-        List<VerifiedAreaEntity> verifiedAreaEntityList = verifiedAreaRepository.findAllByMemberIdOrderById(
-                memberEntity.getId());
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
+        List<SavedSpotEntity> savedSpotEntityList =
+                savedSpotRepository.findTop10ByMemberIdOrderByIdDesc(memberEntity.getId());
+        List<SavedSpotResponse> savedSpotResponseList = mapToSavedSpotResponseList(savedSpotEntityList);
 
-        return ProfileResponse.builder().
-                image(memberEntity.getProfileImage())
+        return ProfileResponse.builder()
+                .profileImage(memberEntity.getProfileImage())
                 .nickname(memberEntity.getNickname())
                 .birthDate(
                         memberEntity.getBirthDate() != null
                                 ? memberEntity.getBirthDate().format(BIRTH_DATE_FORMATTER)
                                 : null
                 )
-                .leftAcornCount(memberEntity.getLeftAcornCount())
-                .verifiedAreaList(verifiedAreaEntityList.stream()
-                        .map(verifiedAreaEntity -> new ProfileResponse.VerifiedArea(verifiedAreaEntity.getId(),
-                                verifiedAreaEntity.getName()))
-                        .toList())
+                .savedSpotList(savedSpotResponseList)
                 .build();
     }
 
     @Transactional(readOnly = true)
     public SavedSpotListResponse fetchSavedSpotList() {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        long memberId = fetchMemberId();
+        List<SavedSpotEntity> savedSpotEntityList = savedSpotRepository.findAllByMemberIdOrderByIdDesc(memberId);
+        List<SavedSpotResponse> savedSpotResponseList = mapToSavedSpotResponseList(savedSpotEntityList);
 
-        List<SavedSpotEntity> savedSpotEntityList =
-                savedSpotRepository.findAllByMemberIdOrderByIdDesc(memberEntity.getId());
+        return SavedSpotListResponse.of(savedSpotResponseList);
+    }
 
+    private List<SavedSpotResponse> mapToSavedSpotResponseList(final List<SavedSpotEntity> savedSpotEntityList) {
         List<Long> spotIdList = savedSpotEntityList.stream()
                 .map(SavedSpotEntity::getSpotId)
                 .toList();
@@ -464,7 +395,7 @@ public class MemberService {
                         )
                 );
 
-        List<SavedSpotResponse> savedSpotResponseList = savedSpotEntityList.stream()
+        return savedSpotEntityList.stream()
                 .map(
                         savedSpotEntity -> {
                             SpotEntity spotEntity = spotMap.get(savedSpotEntity.getSpotId());
@@ -475,13 +406,54 @@ public class MemberService {
 
                             String image = spotImageMap.get(savedSpotEntity.getSpotId());
 
-                            return SavedSpotResponse.of(spotEntity.getId(), image, spotEntity.getName());
+                            return SavedSpotResponse.builder()
+                                    .spotId(spotEntity.getId())
+                                    .image(image)
+                                    .name(spotEntity.getName())
+                                    .build();
                         }
                 )
                 .filter(Objects::nonNull)
                 .toList();
+    }
 
-        return SavedSpotListResponse.of(savedSpotResponseList);
+    @Transactional
+    public void updateProfile(
+            final String profileImage,
+            final String nickname,
+            final String birthDate
+    ) {
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
+        Member member = memberMapper.toDomain(memberEntity);
+
+        if (!member.getProfileImage().equals(profileImage)) {
+            if (profileImage == null || profileImage.isEmpty()) {
+                String basicProfileImageUrl = s3Adapter.getBasicProfileImageUrl();
+                member.setProfileImage(basicProfileImageUrl);
+            } else {
+                s3Adapter.validateProfileImageExists(profileImage);
+                String imageUrl = s3Adapter.getProfileImageUrl(profileImage);
+                // TODO: 추후 원자성(2PC) 보장을 위해 트랜잭션 커밋된 이후 이벤트/트리거 방식으로 비동기 처리
+                s3Adapter.deleteFile(member.getProfileImage());
+                member.setProfileImage(imageUrl);
+            }
+        }
+
+        if (!member.getNickname().equals(nickname)) {
+            validateNickname(nickname);
+            member.setNickname(nickname);
+        }
+
+        if (birthDate == null || birthDate.isEmpty()) {
+            member.setBirthDate(null);
+        } else if (!member.getBirthDate().toString().equals(birthDate)) {
+            LocalDate parsedBirthDate = validateAndParseBirthDate(birthDate);
+            member.setBirthDate(parsedBirthDate);
+        }
+
+        memberRepository.save(
+                memberMapper.toEntity(member)
+        );
     }
 
     public PreSignedUrlResponse fetchPreSignedUrl(final ImageType imageType) {
@@ -518,51 +490,15 @@ public class MemberService {
     }
 
     private void validateNicknameDuplication(final String nickname) {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
 
         if (memberEntity.getNickname().equals(nickname)) {
             return;
         }
 
         if (memberRepository.existsByNickname(nickname)) {
-            throw new BusinessException(ErrorType.DUPLICATED_NICKNAME_ERROR);
+            throw new BusinessException(ErrorType.DUPLICATE_NICKNAME_ERROR);
         }
-    }
-
-    @Transactional
-    public void updateProfile(
-            final String profileImage,
-            final String nickname,
-            final String birthDate
-    ) {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
-        Member member = memberMapper.toDomain(memberEntity);
-
-        if (!profileImage.equals(member.getProfileImage())) {
-            if (profileImage.isEmpty()) {
-                String basicProfileImageUrl = s3Adapter.getBasicProfileImageUrl();
-                member.setProfileImage(basicProfileImageUrl);
-            } else {
-                s3Adapter.validateProfileImageExists(profileImage);
-                String imageUrl = s3Adapter.getProfileImageUrl(profileImage);
-                s3Adapter.deleteFile(member.getProfileImage());
-                member.setProfileImage(imageUrl);
-            }
-        }
-
-        if (!nickname.equals(member.getNickname())) {
-            validateNickname(nickname);
-            member.setNickname(nickname);
-        }
-
-        if (birthDate == null) {
-            member.setBirthDate(null);
-        } else if (member.getBirthDate() == null || !birthDate.equals(member.getBirthDate().toString())) {
-            LocalDate parsedBirthDate = validateAndParseBirthDate(birthDate);
-            member.setBirthDate(parsedBirthDate);
-        }
-
-        memberRepository.save(memberMapper.toEntity(member));
     }
 
     private LocalDate validateAndParseBirthDate(final String birthDate) {
@@ -582,12 +518,90 @@ public class MemberService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public VerifiedAreaListResponse fetchVerifiedAreaList() {
+        long memberId = fetchMemberId();
+
+        List<VerifiedAreaEntity> verifiedAreaEntityList =
+                verifiedAreaRepository.findAllByMemberIdOrderById(memberId);
+        List<VerifiedAreaResponse> verifiedAreaList = verifiedAreaEntityList.stream()
+                .map(VerifiedAreaResponse::of)
+                .toList();
+
+        return VerifiedAreaListResponse.of(verifiedAreaList);
+    }
+
+    @Transactional
+    public void deleteVerifiedArea(final long verifiedAreaId) {
+        long memberId = fetchMemberId();
+        VerifiedAreaEntity verifiedAreaEntity = verifiedAreaRepository.findByIdOrElseThrow(verifiedAreaId);
+
+        if (!verifiedAreaEntity.getMemberId().equals(memberId)) {
+            throw new BusinessException(ErrorType.INVALID_VERIFIED_AREA_ERROR);
+        }
+
+        validateVerifiedAreaDeleteRestriction(verifiedAreaEntity.getCreatedAt());
+
+        if (verifiedAreaRepository.countByMemberId(memberId) <= MIN_VERIFIED_AREA_COUNT) {
+            throw new BusinessException(ErrorType.INVALID_VERIFIED_AREA_COUNT_ERROR);
+        }
+
+        verifiedAreaRepository.deleteById(verifiedAreaId);
+    }
+
+    private void validateVerifiedAreaDeleteRestriction(final LocalDateTime createdAt) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime oneWeekAfter = createdAt.plusWeeks(DELETE_RESTRICTION_START_WEEK);
+        LocalDateTime threeMonthsAfter = createdAt.plusMonths(DELETE_RESTRICTION_END_MONTH);
+
+        if (now.isAfter(oneWeekAfter) && now.isBefore(threeMonthsAfter)) {
+            throw new BusinessException(ErrorType.VERIFIED_AREA_DELETE_RESTRICTION_ERROR);
+        }
+    }
+
+    @Transactional
+    public void replaceVerifiedArea(
+            final long verifiedAreaId,
+            final double latitude,
+            final double longitude
+    ) {
+        if (isOutOfServiceArea(latitude, longitude)) {
+            throw new BusinessException(ErrorType.UNAVAILABLE_SERVICE_AREA_ERROR);
+        }
+
+        long memberId = fetchMemberId();
+        VerifiedAreaEntity verifiedAreaEntity = verifiedAreaRepository.findByIdOrElseThrow(verifiedAreaId);
+
+        if (!verifiedAreaEntity.getMemberId().equals(memberId)) {
+            throw new BusinessException(ErrorType.INVALID_VERIFIED_AREA_ERROR);
+        }
+
+        validateVerifiedAreaDeleteRestriction(verifiedAreaEntity.getCreatedAt());
+
+        if (verifiedAreaRepository.countByMemberId(memberId) != MIN_VERIFIED_AREA_COUNT) {
+            throw new BusinessException(ErrorType.VERIFIED_AREA_REPLACE_RESTRICTION_ERROR);
+        }
+
+        String legalDong = naverMapsAdapter.getReverseGeoCodingResult(latitude, longitude);
+
+        if (legalDong.equals(verifiedAreaEntity.getName())) {
+            return;
+        }
+
+        if (!verifiedAreaRepository.existsByMemberIdAndName(memberId, legalDong)) {
+            verifiedAreaRepository.deleteById(verifiedAreaId);
+            createVerifiedArea(memberId, legalDong);
+        }
+    }
+
     @Transactional
     public void logout(final String refreshToken) {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
-        if (!memberEntity.getId().equals(jwtTokenProvider.validateRefreshToken(refreshToken))) {
+        long memberId = fetchMemberId();
+
+        if (!jwtTokenProvider.validateRefreshToken(refreshToken).equals(memberId)) {
             throw new BusinessException(ErrorType.INVALID_ACCESS_TOKEN_ERROR);
         }
+
         jwtTokenProvider.deleteRefreshToken(refreshToken);
     }
 
@@ -595,13 +609,17 @@ public class MemberService {
     public ReissueTokenResponse reissueToken(final String refreshToken) {
         // TODO: 리팩토링
         Long memberId = jwtTokenProvider.validateRefreshToken(refreshToken);
-        memberRepository.findByIdOrElseThrow(memberId);
+
+        if (memberRepository.existsById(memberId)) {
+            throw new BusinessException(ErrorType.NOT_FOUND_MEMBER_ERROR);
+        }
 
         jwtTokenProvider.deleteRefreshToken(refreshToken);
 
         MemberAuthentication memberAuthentication = new MemberAuthentication(memberId, null, null);
         String newAccessToken = jwtTokenProvider.issueAccessToken(memberAuthentication);
         String newRefreshToken = jwtTokenProvider.issueRefreshToken(memberId);
+
         return ReissueTokenResponse.of(newAccessToken, newRefreshToken);
     }
 
@@ -610,10 +628,10 @@ public class MemberService {
             final String reason,
             final String refreshToken
     ) {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        long memberId = fetchMemberId();
 
         // TODO: memberId 존재하는 테이블에 member row 제거 ( 리뷰 테이블 제외 )
-        memberRepository.deleteById(memberEntity.getId());
+        memberRepository.deleteById(memberId);
         jwtTokenProvider.deleteRefreshToken(refreshToken);
         // TODO: 엑세스 토큰 블랙리스트
 
@@ -627,10 +645,18 @@ public class MemberService {
     // TODO: 순환 참조 방지를 위해 같은 메서드를 재선언했으므로, 추후 Facade 패턴을 통한 리팩토링 필요
     @Transactional(readOnly = true)
     public boolean checkTestUser() {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getUserIdFromPrincipal());
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
 
         return memberEntity.getSocialId().equals(testAccount1) || memberEntity.getSocialId().equals(testAccount2)
                 || memberEntity.getSocialId().equals(testAccount3) || memberEntity.getSocialId().equals(testAccount4);
+    }
+
+    @Transactional(readOnly = true)
+    public AcornCountResponse fetchAcornCount() {
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
+        int acornCount = memberEntity.getLeftAcornCount();
+
+        return AcornCountResponse.of(acornCount);
     }
 
     // TODO: 최근 길 안내 장소 지우는 스케줄러 추가

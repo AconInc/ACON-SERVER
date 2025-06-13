@@ -10,5 +10,7 @@ public interface SavedSpotRepository extends JpaRepository<SavedSpotEntity, Long
 
     boolean existsByMemberIdAndSpotId(Long memberId, Long spotId);
 
+    List<SavedSpotEntity> findTop10ByMemberIdOrderByIdDesc(Long memberId);
+
     List<SavedSpotEntity> findAllByMemberIdOrderByIdDesc(Long memberId);
 }

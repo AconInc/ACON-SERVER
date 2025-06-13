@@ -18,13 +18,9 @@ import com.acon.server.member.api.response.ReissueTokenResponse;
 import com.acon.server.member.api.response.SavedSpotListResponse;
 import com.acon.server.member.api.response.VerifiedAreaListResponse;
 import com.acon.server.member.application.service.MemberService;
-import com.acon.server.member.domain.enums.Cuisine;
 import com.acon.server.member.domain.enums.DislikeFood;
-import com.acon.server.member.domain.enums.FavoriteSpot;
 import com.acon.server.member.domain.enums.ImageType;
 import com.acon.server.member.domain.enums.SocialType;
-import com.acon.server.member.domain.enums.SpotStyle;
-import com.acon.server.spot.domain.enums.SpotType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -86,13 +82,16 @@ public class MemberController {
             @Valid @RequestBody final PreferenceRequest request
     ) {
         List<DislikeFood> dislikeFoodList = request.dislikeFoodList().stream().map(DislikeFood::fromValue).toList();
-        List<Cuisine> favoriteCuisineList = request.favoriteCuisineRank().stream().map(Cuisine::fromValue).toList();
-        SpotType favoriteSpotType = SpotType.fromValue(request.favoriteSpotType());
-        SpotStyle favoriteSpotStyle = SpotStyle.fromValue(request.favoriteSpotStyle());
-        List<FavoriteSpot> favoriteSpotRank = request.favoriteSpotRank().stream().map(FavoriteSpot::fromValue).toList();
+        memberService.upsertPreference(dislikeFoodList);
 
-        memberService.upsertPreference(dislikeFoodList, favoriteCuisineList, favoriteSpotType, favoriteSpotStyle,
-                favoriteSpotRank);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(path = "/guided-spots", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> postGuidedSpot(
+            @Valid @RequestBody final GuidedSpotRequest request
+    ) {
+        memberService.createGuidedSpot(request.spotId());
 
         return ResponseEntity.ok().build();
     }
@@ -113,16 +112,6 @@ public class MemberController {
             @PathVariable(name = "spotId") final Long spotId
     ) {
         memberService.deleteSavedSpot(spotId);
-
-        return ResponseEntity.ok().build();
-    }
-
-    // TODO: Member 도메인에 있어야 할까? 고민 필요
-    @PostMapping(path = "/guided-spots", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> postGuidedSpot(
-            @Valid @RequestBody final GuidedSpotRequest request
-    ) {
-        memberService.createGuidedSpot(request.spotId());
 
         return ResponseEntity.ok().build();
     }
@@ -148,6 +137,19 @@ public class MemberController {
         );
     }
 
+    @PatchMapping(path = "/members/me", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> patchProfile(
+            @Valid @RequestBody ProfileRequest request
+    ) {
+        memberService.updateProfile(
+                request.profileImage(),
+                request.nickname(),
+                request.birthDate()
+        );
+
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping(path = "/images/presigned-url", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PreSignedUrlResponse> getPreSignedUrl(
             @NotBlank(message = "imageType은 공백일 수 없습니다.")
@@ -166,20 +168,6 @@ public class MemberController {
             @RequestParam(name = "nickname") final String nickname
     ) {
         memberService.validateNickname(nickname);
-
-        return ResponseEntity.ok().build();
-    }
-
-    @PatchMapping(path = "/members/me", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> patchProfile(
-
-            @Valid @RequestBody ProfileRequest request
-    ) {
-        memberService.updateProfile(
-                request.profileImage().trim(),
-                request.nickname(),
-                request.birthDate()
-        );
 
         return ResponseEntity.ok().build();
     }
