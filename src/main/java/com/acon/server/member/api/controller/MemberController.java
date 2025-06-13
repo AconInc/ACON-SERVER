@@ -142,7 +142,7 @@ public class MemberController {
             @Valid @RequestBody ProfileRequest request
     ) {
         memberService.updateProfile(
-                request.profileImage().trim(),
+                request.profileImage(),
                 request.nickname(),
                 request.birthDate()
         );
