@@ -87,6 +87,15 @@ public class MemberController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping(path = "/guided-spots", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> postGuidedSpot(
+            @Valid @RequestBody final GuidedSpotRequest request
+    ) {
+        memberService.createGuidedSpot(request.spotId());
+
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping(path = "/saved-spots", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> postSavedSpot(
             @Valid @RequestBody final SavedSpotRequest request
@@ -103,16 +112,6 @@ public class MemberController {
             @PathVariable(name = "spotId") final Long spotId
     ) {
         memberService.deleteSavedSpot(spotId);
-
-        return ResponseEntity.ok().build();
-    }
-
-    // TODO: Member 도메인에 있어야 할까? 고민 필요
-    @PostMapping(path = "/guided-spots", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> postGuidedSpot(
-            @Valid @RequestBody final GuidedSpotRequest request
-    ) {
-        memberService.createGuidedSpot(request.spotId());
 
         return ResponseEntity.ok().build();
     }
@@ -138,6 +137,19 @@ public class MemberController {
         );
     }
 
+    @PatchMapping(path = "/members/me", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> patchProfile(
+            @Valid @RequestBody ProfileRequest request
+    ) {
+        memberService.updateProfile(
+                request.profileImage().trim(),
+                request.nickname(),
+                request.birthDate()
+        );
+
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping(path = "/images/presigned-url", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PreSignedUrlResponse> getPreSignedUrl(
             @NotBlank(message = "imageType은 공백일 수 없습니다.")
@@ -156,19 +168,6 @@ public class MemberController {
             @RequestParam(name = "nickname") final String nickname
     ) {
         memberService.validateNickname(nickname);
-
-        return ResponseEntity.ok().build();
-    }
-
-    @PatchMapping(path = "/members/me", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> patchProfile(
-            @Valid @RequestBody ProfileRequest request
-    ) {
-        memberService.updateProfile(
-                request.profileImage().trim(),
-                request.nickname(),
-                request.birthDate()
-        );
 
         return ResponseEntity.ok().build();
     }

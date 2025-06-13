@@ -82,8 +82,8 @@ public class MemberService {
     private final GuidedSpotRepository guidedSpotRepository;
     private final MemberRepository memberRepository;
     private final PreferenceRepository preferenceRepository;
-    private final VerifiedAreaRepository verifiedAreaRepository;
     private final SavedSpotRepository savedSpotRepository;
+    private final VerifiedAreaRepository verifiedAreaRepository;
     private final WithdrawalReasonRepository withdrawalReasonRepository;
 
     private final SpotRepository spotRepository;
@@ -176,6 +176,7 @@ public class MemberService {
             final SocialType socialType,
             final String socialId
     ) {
+        // TODO: 도메인 로직으로 이동할 부분들은 이동
         return memberRepository.save(
                 MemberEntity.builder()
                         .socialType(socialType)
@@ -236,6 +237,7 @@ public class MemberService {
         }
     }
 
+    // TODO: 공통 메서드로 빼기
     private boolean isOutOfServiceArea(
             final double latitude,
             final double longitude
@@ -244,6 +246,7 @@ public class MemberService {
                 || longitude < MIN_LONGITUDE || longitude > MAX_LONGITUDE;
     }
 
+    // TODO: 공통 메서드로 빼기
     private long fetchMemberId() {
         long memberId = principalHandler.getMemberIdFromPrincipal();
 
@@ -264,81 +267,6 @@ public class MemberService {
                         .name(legalDong)
                         .build()
         );
-    }
-
-    @Transactional(readOnly = true)
-    public VerifiedAreaListResponse fetchVerifiedAreaList() {
-        long memberId = fetchMemberId();
-
-        List<VerifiedAreaEntity> verifiedAreaEntityList =
-                verifiedAreaRepository.findAllByMemberIdOrderById(memberId);
-        List<VerifiedAreaResponse> verifiedAreaList = verifiedAreaEntityList.stream()
-                .map(VerifiedAreaResponse::of)
-                .toList();
-
-        return VerifiedAreaListResponse.of(verifiedAreaList);
-    }
-
-    @Transactional
-    public void deleteVerifiedArea(final long verifiedAreaId) {
-        long memberId = fetchMemberId();
-        VerifiedAreaEntity verifiedAreaEntity = verifiedAreaRepository.findByIdOrElseThrow(verifiedAreaId);
-
-        if (!verifiedAreaEntity.getMemberId().equals(memberId)) {
-            throw new BusinessException(ErrorType.INVALID_VERIFIED_AREA_ERROR);
-        }
-
-        validateVerifiedAreaDeleteRestriction(verifiedAreaEntity.getCreatedAt());
-
-        if (verifiedAreaRepository.countByMemberId(memberId) <= MIN_VERIFIED_AREA_COUNT) {
-            throw new BusinessException(ErrorType.INVALID_VERIFIED_AREA_COUNT_ERROR);
-        }
-
-        verifiedAreaRepository.deleteById(verifiedAreaId);
-    }
-
-    private void validateVerifiedAreaDeleteRestriction(final LocalDateTime createdAt) {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime oneWeekAfter = createdAt.plusWeeks(DELETE_RESTRICTION_START_WEEK);
-        LocalDateTime threeMonthsAfter = createdAt.plusMonths(DELETE_RESTRICTION_END_MONTH);
-
-        if (now.isAfter(oneWeekAfter) && now.isBefore(threeMonthsAfter)) {
-            throw new BusinessException(ErrorType.VERIFIED_AREA_DELETE_RESTRICTION_ERROR);
-        }
-    }
-
-    @Transactional
-    public void replaceVerifiedArea(
-            final long verifiedAreaId,
-            final double latitude,
-            final double longitude
-    ) {
-        if (isOutOfServiceArea(latitude, longitude)) {
-            throw new BusinessException(ErrorType.UNAVAILABLE_SERVICE_AREA_ERROR);
-        }
-
-        long memberId = fetchMemberId();
-        VerifiedAreaEntity verifiedAreaEntity = verifiedAreaRepository.findByIdOrElseThrow(verifiedAreaId);
-
-        if (!verifiedAreaEntity.getMemberId().equals(memberId)) {
-            throw new BusinessException(ErrorType.INVALID_VERIFIED_AREA_ERROR);
-        }
-
-        if (verifiedAreaRepository.countByMemberId(memberId) != MIN_VERIFIED_AREA_COUNT) {
-            throw new BusinessException(ErrorType.VERIFIED_AREA_REPLACE_RESTRICTION_ERROR);
-        }
-
-        validateVerifiedAreaDeleteRestriction(verifiedAreaEntity.getCreatedAt());
-        String legalDong = naverMapsAdapter.getReverseGeoCodingResult(latitude, longitude);
-
-        if (legalDong.equals(verifiedAreaEntity.getName())) {
-            return;
-        }
-
-        if (!verifiedAreaRepository.existsByMemberIdAndName(memberId, legalDong)) {
-            verifiedAreaRepository.deleteById(verifiedAreaId);
-            createVerifiedArea(memberId, legalDong);
-        }
     }
 
     @Transactional
@@ -413,14 +341,6 @@ public class MemberService {
 
         long memberId = fetchMemberId();
         savedSpotRepository.deleteByMemberIdAndSpotId(memberId, spotId);
-    }
-
-    @Transactional(readOnly = true)
-    public AcornCountResponse fetchAcornCount() {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
-        int acornCount = memberEntity.getLeftAcornCount();
-
-        return AcornCountResponse.of(acornCount);
     }
 
     @Transactional(readOnly = true)
@@ -513,6 +433,7 @@ public class MemberService {
             } else {
                 s3Adapter.validateProfileImageExists(profileImage);
                 String imageUrl = s3Adapter.getProfileImageUrl(profileImage);
+                // TODO: 추후 원자성(2PC) 보장을 위해 트랜잭션 커밋된 이후 이벤트/트리거 방식으로 비동기 처리
                 s3Adapter.deleteFile(member.getProfileImage());
                 member.setProfileImage(imageUrl);
             }
@@ -597,6 +518,82 @@ public class MemberService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public VerifiedAreaListResponse fetchVerifiedAreaList() {
+        long memberId = fetchMemberId();
+
+        List<VerifiedAreaEntity> verifiedAreaEntityList =
+                verifiedAreaRepository.findAllByMemberIdOrderById(memberId);
+        List<VerifiedAreaResponse> verifiedAreaList = verifiedAreaEntityList.stream()
+                .map(VerifiedAreaResponse::of)
+                .toList();
+
+        return VerifiedAreaListResponse.of(verifiedAreaList);
+    }
+
+    @Transactional
+    public void deleteVerifiedArea(final long verifiedAreaId) {
+        long memberId = fetchMemberId();
+        VerifiedAreaEntity verifiedAreaEntity = verifiedAreaRepository.findByIdOrElseThrow(verifiedAreaId);
+
+        if (!verifiedAreaEntity.getMemberId().equals(memberId)) {
+            throw new BusinessException(ErrorType.INVALID_VERIFIED_AREA_ERROR);
+        }
+
+        validateVerifiedAreaDeleteRestriction(verifiedAreaEntity.getCreatedAt());
+
+        if (verifiedAreaRepository.countByMemberId(memberId) <= MIN_VERIFIED_AREA_COUNT) {
+            throw new BusinessException(ErrorType.INVALID_VERIFIED_AREA_COUNT_ERROR);
+        }
+
+        verifiedAreaRepository.deleteById(verifiedAreaId);
+    }
+
+    private void validateVerifiedAreaDeleteRestriction(final LocalDateTime createdAt) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime oneWeekAfter = createdAt.plusWeeks(DELETE_RESTRICTION_START_WEEK);
+        LocalDateTime threeMonthsAfter = createdAt.plusMonths(DELETE_RESTRICTION_END_MONTH);
+
+        if (now.isAfter(oneWeekAfter) && now.isBefore(threeMonthsAfter)) {
+            throw new BusinessException(ErrorType.VERIFIED_AREA_DELETE_RESTRICTION_ERROR);
+        }
+    }
+
+    @Transactional
+    public void replaceVerifiedArea(
+            final long verifiedAreaId,
+            final double latitude,
+            final double longitude
+    ) {
+        if (isOutOfServiceArea(latitude, longitude)) {
+            throw new BusinessException(ErrorType.UNAVAILABLE_SERVICE_AREA_ERROR);
+        }
+
+        long memberId = fetchMemberId();
+        VerifiedAreaEntity verifiedAreaEntity = verifiedAreaRepository.findByIdOrElseThrow(verifiedAreaId);
+
+        if (!verifiedAreaEntity.getMemberId().equals(memberId)) {
+            throw new BusinessException(ErrorType.INVALID_VERIFIED_AREA_ERROR);
+        }
+
+        validateVerifiedAreaDeleteRestriction(verifiedAreaEntity.getCreatedAt());
+
+        if (verifiedAreaRepository.countByMemberId(memberId) != MIN_VERIFIED_AREA_COUNT) {
+            throw new BusinessException(ErrorType.VERIFIED_AREA_REPLACE_RESTRICTION_ERROR);
+        }
+
+        String legalDong = naverMapsAdapter.getReverseGeoCodingResult(latitude, longitude);
+
+        if (legalDong.equals(verifiedAreaEntity.getName())) {
+            return;
+        }
+
+        if (!verifiedAreaRepository.existsByMemberIdAndName(memberId, legalDong)) {
+            verifiedAreaRepository.deleteById(verifiedAreaId);
+            createVerifiedArea(memberId, legalDong);
+        }
+    }
+
     @Transactional
     public void logout(final String refreshToken) {
         long memberId = fetchMemberId();
@@ -652,6 +649,14 @@ public class MemberService {
 
         return memberEntity.getSocialId().equals(testAccount1) || memberEntity.getSocialId().equals(testAccount2)
                 || memberEntity.getSocialId().equals(testAccount3) || memberEntity.getSocialId().equals(testAccount4);
+    }
+
+    @Transactional(readOnly = true)
+    public AcornCountResponse fetchAcornCount() {
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
+        int acornCount = memberEntity.getLeftAcornCount();
+
+        return AcornCountResponse.of(acornCount);
     }
 
     // TODO: 최근 길 안내 장소 지우는 스케줄러 추가
