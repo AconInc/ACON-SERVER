@@ -1,15 +1,10 @@
 package com.acon.server.spot.application.service;
 
-import static com.acon.server.member.domain.enums.Cuisine.matchCuisine;
-import static com.acon.server.member.domain.enums.FavoriteSpot.matchFavoriteSpot;
-import static com.acon.server.member.domain.enums.SpotStyle.matchSpotStyle;
-
 import com.acon.server.global.auth.PrincipalHandler;
 import com.acon.server.global.exception.BusinessException;
 import com.acon.server.global.exception.ErrorType;
 import com.acon.server.global.external.maps.GeoCodingResponse;
 import com.acon.server.global.external.maps.NaverMapsAdapter;
-import com.acon.server.member.domain.enums.Cuisine;
 import com.acon.server.member.domain.enums.DislikeFood;
 import com.acon.server.member.infra.entity.MemberEntity;
 import com.acon.server.member.infra.entity.PreferenceEntity;
@@ -299,19 +294,7 @@ public class SpotService {
         // TODO: 매직 넘버 yml로 옮기기
         double score = 0.0;
 
-        if (preferenceEntity.getFavoriteSpotType() == spotEntity.getSpotType()) {
-            score += 6.0;
-        } else {
-            score += 3.0;
-        }
-
         List<OptionEntity> optionList = findOptionsBySpot(spotEntity.getId());
-
-        score += calcCuisineScore(optionList, preferenceEntity.getFavoriteCuisineRank());
-
-        score += calcSpotStyleScore(optionList, preferenceEntity.getFavoriteSpotStyle());
-
-        score += calcFavoriteSpotScore(optionList, preferenceEntity.getFavoriteSpotRank());
 
         score += calcAcornScore(spotEntity);
 
@@ -343,101 +326,6 @@ public class SpotService {
                 .toList();
 
         return optionRepository.findAllById(optionIds);
-    }
-
-    private double calcCuisineScore(final List<OptionEntity> optionList, final List<Cuisine> favoriteCuisines) {
-        double resultScore = 0.0; // TODO: 매직 넘버 yml로 옮기기
-
-        if (favoriteCuisines == null || favoriteCuisines.isEmpty()) {
-            return resultScore;
-        }
-
-        for (OptionEntity option : optionList) {
-            String optionName = option.getName();
-
-            if (optionName == null) {
-                continue;
-            }
-
-            Cuisine matchedCuisine = matchCuisine(option.getName());
-            if (matchedCuisine == null) {
-                continue;
-            }
-
-            int idx = favoriteCuisines.indexOf(matchedCuisine);
-
-            // TODO: 매직 넘버 yml로 옮기기
-            if (idx >= 0) {
-                double candidateScore = switch (idx) {
-                    case 0 -> 4.0;
-                    case 1 -> 2.0;
-                    case 2 -> 1.0;
-                    default -> 0.0;
-                };
-
-                resultScore = Math.max(resultScore, candidateScore);
-            }
-        }
-
-        return resultScore;
-    }
-
-    private double calcSpotStyleScore(final List<OptionEntity> optionList, final SpotStyle favoriteSpotStyle) {
-        if (favoriteSpotStyle == null) {
-            return 0.0;
-        }
-
-        for (OptionEntity option : optionList) {
-            String optionName = option.getName();
-
-            if (optionName == null) {
-                continue;
-            }
-
-            SpotStyle matchedSpotStyle = matchSpotStyle(option.getName());
-
-            if (matchedSpotStyle != null && matchedSpotStyle == favoriteSpotStyle) {
-                return 2.0; // TODO: 매직 넘버 yml로 옮기기
-            }
-        }
-
-        return 0.0; // TODO: 매직 넘버 yml로 옮기기
-    }
-
-    private double calcFavoriteSpotScore(final List<OptionEntity> optionList, final List<FavoriteSpot> favoriteSpots) {
-        double resultScore = 0.0; // TODO: 매직 넘버 yml로 옮기기
-
-        if (favoriteSpots == null || favoriteSpots.isEmpty()) {
-            return resultScore;
-        }
-
-        for (OptionEntity option : optionList) {
-            String optionName = option.getName();
-
-            if (optionName == null) {
-                continue;
-            }
-
-            FavoriteSpot matchedFavoriteSpot = matchFavoriteSpot(option.getName());
-
-            if (matchedFavoriteSpot != null) {
-                int idx = favoriteSpots.indexOf(matchedFavoriteSpot);
-
-                // TODO: 매직 넘버 yml로 옮기기
-                if (idx >= 0) {
-                    double candidateScore = switch (idx) {
-                        case 0 -> 4.0;
-                        case 1 -> 2.0;
-                        case 2 -> 1.0;
-                        default -> 0.0;
-                    };
-
-                    resultScore = Math.max(resultScore, candidateScore);
-                }
-            }
-        }
-
-        return resultScore;
     }
 
     private double calcAcornScore(final SpotEntity spotEntity) {
