@@ -116,13 +116,6 @@ public class MemberController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping(path = "/members/acorn", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<AcornCountResponse> getAcornCount() {
-        return ResponseEntity.ok(
-                memberService.fetchAcornCount()
-        );
-    }
-
     @GetMapping(path = "/members/me", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ProfileResponse> getProfile() {
         return ResponseEntity.ok(
@@ -232,5 +225,12 @@ public class MemberController {
         memberService.withdrawMember(request.reason(), request.refreshToken());
 
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping(path = "/members/acorn", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<AcornCountResponse> getAcornCount() {
+        return ResponseEntity.ok(
+                memberService.fetchAcornCount()
+        );
     }
 }

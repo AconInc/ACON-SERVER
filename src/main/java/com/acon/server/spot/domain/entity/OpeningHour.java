@@ -10,18 +10,17 @@ public class OpeningHour {
 
     private final Long id;
     private final Long spotId;
-
-    private DayOfWeek dayOfWeek;
-    private LocalTime startTime;
-    private LocalTime endTime;
+    private final DayOfWeek dayOfWeek;
+    private final LocalTime startTime;
+    private final LocalTime endTime;
 
     @Builder
     public OpeningHour(
-            Long id,
-            Long spotId,
-            DayOfWeek dayOfWeek,
-            LocalTime startTime,
-            LocalTime endTime
+            final Long id,
+            final Long spotId,
+            final DayOfWeek dayOfWeek,
+            final LocalTime startTime,
+            final LocalTime endTime
     ) {
         this.id = id;
         this.spotId = spotId;

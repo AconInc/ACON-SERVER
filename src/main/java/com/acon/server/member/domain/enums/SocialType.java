@@ -25,7 +25,7 @@ public enum SocialType {
     }
 
     public static SocialType fromValue(String value) {
-        SocialType socialType = SOCIAL_TYPE_MAP.get(value);
+        SocialType socialType = SOCIAL_TYPE_MAP.get(value.toUpperCase());
 
         if (socialType == null) {
             throw new BusinessException(ErrorType.INVALID_SOCIAL_TYPE_ERROR);

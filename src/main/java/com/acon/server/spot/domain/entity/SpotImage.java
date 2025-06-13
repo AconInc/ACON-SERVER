@@ -12,9 +12,9 @@ public class SpotImage {
 
     @Builder
     public SpotImage(
-            Long id,
-            Long spotId,
-            String image
+            final Long id,
+            final Long spotId,
+            final String image
     ) {
         this.id = id;
         this.spotId = spotId;

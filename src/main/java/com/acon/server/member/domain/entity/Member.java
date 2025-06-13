@@ -20,7 +20,7 @@ public class Member {
     private String nickname;
     private LocalDateTime nicknameUpdatedAt;
     private LocalDate birthDate;
-    private int leftAcornCount;
+    private Integer leftAcornCount;
 
     @Builder
     public Member(
@@ -32,7 +32,7 @@ public class Member {
             final String nickname,
             final LocalDateTime nicknameUpdatedAt,
             final LocalDate birthDate,
-            final int leftAcornCount,
+            final Integer leftAcornCount,
             final LocalDateTime createdAt,
             final LocalDateTime updatedAt
     ) {

@@ -9,8 +9,7 @@ import lombok.Getter;
 public class Preference {
 
     private final Long memberId;
-
-    private List<DislikeFood> dislikeFoodList;
+    private final List<DislikeFood> dislikeFoodList;
 
     @Builder
     public Preference(

@@ -37,7 +37,7 @@ public enum DislikeFood {
     }
 
     public static DislikeFood fromValue(String value) {
-        DislikeFood dislikeFood = DISLIKE_FOOD_MAP.get(value);
+        DislikeFood dislikeFood = DISLIKE_FOOD_MAP.get(value.toUpperCase());
 
         if (dislikeFood == null) {
             throw new BusinessException(ErrorType.INVALID_DISLIKE_FOOD_ERROR);

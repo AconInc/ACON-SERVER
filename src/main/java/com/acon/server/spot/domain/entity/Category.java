@@ -11,8 +11,8 @@ public class Category {
 
     @Builder
     public Category(
-            Long id,
-            String name
+            final Long id,
+            final String name
     ) {
         this.id = id;
         this.name = name;

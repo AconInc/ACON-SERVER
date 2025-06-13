@@ -12,9 +12,9 @@ public class Option {
 
     @Builder
     public Option(
-            Long id,
-            Long categoryId,
-            String name
+            final Long id,
+            final Long categoryId,
+            final String name
     ) {
         this.id = id;
         this.categoryId = categoryId;
