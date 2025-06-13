@@ -10,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
@@ -24,8 +25,12 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Getter
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-// TODO: socialType, socialId를 unique로 묶기
-@Table(name = "member")
+@Table(name = "member",
+        uniqueConstraints = @UniqueConstraint(
+                name = "unique_member_social_type_social_id",
+                columnNames = {"social_type", "social_id"}
+        )
+)
 public class MemberEntity {
 
     @Id

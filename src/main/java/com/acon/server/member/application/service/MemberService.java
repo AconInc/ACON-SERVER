@@ -51,7 +51,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
@@ -153,11 +152,24 @@ public class MemberService {
             final SocialType socialType,
             final String socialId
     ) {
-        Optional<MemberEntity> optionalMemberEntity =
-                memberRepository.findBySocialTypeAndSocialId(socialType, socialId);
-        MemberEntity memberEntity = optionalMemberEntity.orElseGet(() -> createMember(socialType, socialId));
 
-        return MemberIdentifiersVO.of(memberEntity);
+        MemberEntity member = memberRepository
+                .findBySocialTypeAndSocialId(socialType, socialId)
+                .orElseGet(() -> tryCreateMember(socialType, socialId));
+
+        return MemberIdentifiersVO.of(member);
+    }
+
+    private MemberEntity tryCreateMember(
+            final SocialType socialType,
+            final String socialId
+    ) {
+        try {
+            return createMember(socialType, socialId);
+        } catch (DataIntegrityViolationException e) {
+            return memberRepository.findBySocialTypeAndSocialId(socialType, socialId)
+                    .orElseThrow(() -> new BusinessException(ErrorType.DUPLICATE_MEMBER_ERROR));
+        }
     }
 
     private MemberEntity createMember(
@@ -564,7 +576,7 @@ public class MemberService {
         }
 
         if (memberRepository.existsByNickname(nickname)) {
-            throw new BusinessException(ErrorType.DUPLICATED_NICKNAME_ERROR);
+            throw new BusinessException(ErrorType.DUPLICATE_NICKNAME_ERROR);
         }
     }
 

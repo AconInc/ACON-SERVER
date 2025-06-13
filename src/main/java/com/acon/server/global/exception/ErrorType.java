@@ -60,7 +60,8 @@ public enum ErrorType {
     NOT_FOUND_VERIFIED_AREA_ERROR(HttpStatus.NOT_FOUND, 40404, "존재하지 않는 인증 지역입니다."),
 
     /* 409 Conflict */
-    DUPLICATED_NICKNAME_ERROR(HttpStatus.CONFLICT, 40901, "이미 사용 중인 닉네임입니다."),
+    DUPLICATE_MEMBER_ERROR(HttpStatus.CONFLICT, 40902, "이미 가입된 회원입니다."),
+    DUPLICATE_NICKNAME_ERROR(HttpStatus.CONFLICT, 40901, "이미 사용 중인 닉네임입니다."),
 
     /* 500 Internal Server Error */
     FAILED_DOWNLOAD_GOOGLE_PUBLIC_KEY_ERROR(HttpStatus.BAD_REQUEST, 50002, "구글 공개키 다운로드에 실패하였습니다."),
