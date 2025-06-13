@@ -36,7 +36,7 @@ public enum RestaurantFeature {
         RestaurantFeature restaurantFeature = RESTAURANT_FEATURE_MAP.get(value.toUpperCase());
 
         if (restaurantFeature == null) {
-            throw new BusinessException(ErrorType.INVALID_RESTAURANT_FEATHER_ERROR);
+            throw new BusinessException(ErrorType.INVALID_RESTAURANT_FEATURE_ERROR);
         }
 
         return restaurantFeature;

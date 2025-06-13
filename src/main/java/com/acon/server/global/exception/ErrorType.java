@@ -69,7 +69,7 @@ public enum ErrorType {
     /* 400 Bad Request */
     INVALID_SPOT_TYPE_ERROR(HttpStatus.BAD_REQUEST, 40015, "유효하지 않은 spotType입니다."),
     INVALID_CATEGORY_NAME_ERROR(HttpStatus.BAD_REQUEST, 40016, "유효하지 않은 categoryName입니다."),
-    INVALID_RESTAURANT_FEATHER_ERROR(HttpStatus.BAD_REQUEST, 40017, "유효하지 않은 restaurantFeature입니다."),
+    INVALID_RESTAURANT_FEATURE_ERROR(HttpStatus.BAD_REQUEST, 40017, "유효하지 않은 restaurantFeature입니다."),
     INVALID_CAFE_FEATURE_ERROR(HttpStatus.BAD_REQUEST, 40018, "유효하지 않은 cafeFeature입니다."),
     INVALID_OPENING_HOUR_ERROR(HttpStatus.BAD_REQUEST, 40019, "유효하지 않은 openingHour입니다."),
     INVALID_PRICE_ERROR(HttpStatus.BAD_REQUEST, 40020, "유효하지 않은 price입니다."),
