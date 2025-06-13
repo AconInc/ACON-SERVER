@@ -11,6 +11,7 @@ import com.acon.server.member.infra.entity.PreferenceEntity;
 import com.acon.server.member.infra.repository.GuidedSpotCustomRepository;
 import com.acon.server.member.infra.repository.MemberRepository;
 import com.acon.server.member.infra.repository.PreferenceRepository;
+import com.acon.server.review.infra.repository.ReviewRepository;
 import com.acon.server.spot.api.request.SpotListRequest;
 import com.acon.server.spot.api.response.MenuListResponse;
 import com.acon.server.spot.api.response.MenuResponse;
@@ -25,16 +26,13 @@ import com.acon.server.spot.application.mapper.SpotDtoMapper;
 import com.acon.server.spot.application.mapper.SpotMapper;
 import com.acon.server.spot.domain.entity.Spot;
 import com.acon.server.spot.domain.enums.SpotType;
-import com.acon.server.spot.domain.vo.SpotWithScore;
+import com.acon.server.spot.domain.enums.Tag;
 import com.acon.server.spot.infra.entity.MenuEntity;
 import com.acon.server.spot.infra.entity.OpeningHourEntity;
-import com.acon.server.spot.infra.entity.OptionEntity;
 import com.acon.server.spot.infra.entity.SpotEntity;
 import com.acon.server.spot.infra.entity.SpotImageEntity;
-import com.acon.server.spot.infra.entity.SpotOptionEntity;
 import com.acon.server.spot.infra.repository.MenuRepository;
 import com.acon.server.spot.infra.repository.OpeningHourRepository;
-import com.acon.server.spot.infra.repository.OptionRepository;
 import com.acon.server.spot.infra.repository.SpotImageRepository;
 import com.acon.server.spot.infra.repository.SpotNativeQueryRepository;
 import com.acon.server.spot.infra.repository.SpotOptionRepository;
@@ -62,6 +60,8 @@ public class SpotService {
     private final PreferenceRepository preferenceRepository;
 
     // TODO: 매직 넘버 yml로 옮기기
+    private static final double WALKING_RADIUS = 1500.0;
+    private static final double BIKING_RADIUS = 5500.0;
     private static final int SUGGESTION_RADIUS = 250;
     private static final int SUGGESTION_LIMIT = 5;
     private static final int VERIFICATION_DISTANCE = 250;
@@ -73,9 +73,9 @@ public class SpotService {
 
     private final GuidedSpotCustomRepository guidedSpotCustomRepository;
     private final MemberRepository memberRepository;
+
     private final MenuRepository menuRepository;
     private final OpeningHourRepository openingHourRepository;
-    private final OptionRepository optionRepository;
     private final SpotImageRepository spotImageRepository;
     private final SpotNativeQueryRepository spotNativeQueryRepository;
     private final SpotOptionRepository spotOptionRepository;
@@ -87,6 +87,7 @@ public class SpotService {
     private final PrincipalHandler principalHandler;
 
     private final NaverMapsAdapter naverMapsAdapter;
+    private final ReviewRepository reviewRepository;
 
     @Value("${google.test-account-1}")
     private String testAccount1;
@@ -107,20 +108,23 @@ public class SpotService {
 
         if (spotEntityList.isEmpty()) {
             log.info("위치 정보가 비어 있는 Spot 데이터가 없습니다.");
+
             return;
         }
 
         log.info("위치 정보가 비어 있는 Spot 데이터를 {}건 찾았습니다.", spotEntityList.size());
-
         List<SpotEntity> updatedEntityList = spotEntityList.stream()
-                .map(spotEntity -> {
-                    Spot spot = spotMapper.toDomain(spotEntity);
-                    updateSpotCoordinate(spot);
-                    return spotMapper.toEntity(spot);
-                })
-                .toList();
-        spotRepository.saveAll(updatedEntityList);
+                .map(
+                        spotEntity -> {
+                            Spot spot = spotMapper.toDomain(spotEntity);
+                            updateSpotCoordinate(spot);
 
+                            return spotMapper.toEntity(spot);
+                        }
+                )
+                .toList();
+
+        spotRepository.saveAll(updatedEntityList);
         log.info("위치 정보가 비어 있는 Spot 데이터 {}건을 업데이트 했습니다.", updatedEntityList.size());
     }
 
@@ -128,17 +132,19 @@ public class SpotService {
     // 메서드 설명: 도로명 주소를 바탕으로 spotId에 해당하는 Spot의 위치 정보를 업데이트한다.
     private void updateSpotCoordinate(final Spot spot) {
         GeoCodingResponse geoCodingResponse = naverMapsAdapter.getGeoCodingResult(spot.getAddress());
-
         spot.updateCoordinate(
                 Double.parseDouble(geoCodingResponse.latitude()),
                 Double.parseDouble(geoCodingResponse.longitude())
         );
         spot.updateGeom();
-        spot.updateLegalDong(
-                naverMapsAdapter.getReverseGeoCodingResult(spot.getLatitude(), spot.getLongitude())
-        );
-        spot.updateCreatedAt();
+        spot.updateLegalDong(naverMapsAdapter.getReverseGeoCodingResult(spot.getLatitude(), spot.getLongitude()));
+        spotRepository.initCreatedAtIfNull(spot.getId());
     }
+
+    // TODO: 전체 파라미터 타입 확인
+    // TODO: 정렬 기준 적용
+    // TODO: 싫어하는 음식 필터 적용
+    // TODO: 변수명 정리
 
     @Transactional(readOnly = true)
     public SpotListResponse fetchRecommendedSpotList(final SpotListRequest request) {
@@ -147,123 +153,196 @@ public class SpotService {
         }
 
         // TODO: 토글, 상세필터, 상세페이지, 길찾기 다 게스트 유저 접근 불가
-        // TODO: 장소는 최대 5개까지만 노출
+        // TODO: 장소는 최대 15개까지만 노출
         if (principalHandler.isGuestUser()) { // TODO: 메서드화 (게스트 유저와 온보딩 건너뛴 유저)
-            List<SpotEntity> filteredSpotList = filterSpotList(request);
-            List<SpotEntity> mutableList = new ArrayList<>(filteredSpotList);
+            if (SpotType.CAFE.equals(SpotType.fromValue(request.condition().spotType()))) {
+                throw new BusinessException(ErrorType.GUEST_USER_CAFE_RECOMMENDATION_ERROR);
+            }
 
-            // 무작위로 6개 추출
-            Collections.shuffle(mutableList);
+            String transportMode; // TODO: 추후 enum 처리
+            List<SpotEntity> filteredSpotList = filterSpotList(request, WALKING_RADIUS);
 
-            List<RecommendedSpot> spotList = mutableList.stream()
-                    .map(spotEntity -> toRecommendedSpot(spotEntity, request.latitude(), request.longitude()))
-                    .limit(6)
+            if (filteredSpotList.isEmpty()) {
+                transportMode = "BIKING";
+                filteredSpotList = filterSpotList(request, BIKING_RADIUS);
+            } else {
+                transportMode = "WALKING";
+            }
+
+            List<RecommendedSpot> spotList = filteredSpotList.stream()
+                    .map(
+                            spotEntity -> toRecommendedSpot(
+                                    spotEntity,
+                                    request.latitude(),
+                                    request.longitude(),
+                                    transportMode
+                            )
+                    )
+                    .limit(5)
                     .toList();
 
-            return new SpotListResponse(spotList);
+            return new SpotListResponse(transportMode, spotList);
         }
 
         MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
         PreferenceEntity preferenceEntity = preferenceRepository.findById(memberEntity.getId()).orElse(null);
 
         // 1) 필터(거리, 가격, 옵션 등) + 영업중인 가게
-        List<SpotEntity> filteredSpotList = filterSpotList(request);
-//        filteredSpotList = filteredSpotList.stream()
-//                .filter(spot -> isSpotOpen(spot.getId()))
-//                .toList();
+
+        String transportMode; // TODO: 추후 enum 처리
+        List<SpotEntity> filteredSpotList = filterSpotList(request, WALKING_RADIUS);
+
+        if (filteredSpotList.isEmpty()) {
+            transportMode = "BIKING";
+            filteredSpotList = filterSpotList(request, BIKING_RADIUS);
+        } else {
+            transportMode = "WALKING";
+        }
 
         // TODO: 메서드로 분리
         // ========== [ CASE 1: preferenceEntity가 없는 사용자 ] ==========
         if (preferenceEntity == null) {
-            // 가변 리스트 생성
-            List<SpotEntity> mutableList = new ArrayList<>(filteredSpotList);
-
-            // 무작위로 6개 추출
-            Collections.shuffle(mutableList);
-
-            List<RecommendedSpot> spotList = mutableList.stream()
-                    .map(spotEntity -> toRecommendedSpot(spotEntity, request.latitude(), request.longitude()))
-                    .limit(6)
+            List<RecommendedSpot> spotList = filteredSpotList.stream()
+                    .map(
+                            spotEntity -> toRecommendedSpot(
+                                    spotEntity,
+                                    request.latitude(),
+                                    request.longitude(),
+                                    transportMode
+                            )
+                    )
+//                    .filter(spot -> isSpotOpen(spot.spotId()))
+                    .limit(15)
                     .toList();
 
-            return new SpotListResponse(spotList);
+            return new SpotListResponse(transportMode, spotList);
         }
 
         // ========== [ CASE 2: preferenceEntity가 있는 사용자 ] ==========
         // 2) 비선호 음식 제외
         filteredSpotList = excludeDislikedSpotList(filteredSpotList, preferenceEntity.getDislikeFoodList());
 
-        // 3) Spot별 점수/매칭률 계산
-        List<SpotWithScore> scoredList = filteredSpotList.stream()
-                .map(spotEntity -> {
-                    double score = calculateSpotScore(
-                            spotEntity,
-                            preferenceEntity,
-                            request.latitude(),
-                            request.longitude()
-                    );
-                    int matchingRate = calculateMatchingRate(score, spotEntity.getSpotType());
-
-                    return new SpotWithScore(spotEntity, score, matchingRate);
-                })
-                .sorted((a, b) -> {
-                    // 1) matchingRate 내림차순
-                    int rateCompare = Integer.compare(b.matchingRate(), a.matchingRate());
-                    if (rateCompare != 0) {
-                        return rateCompare;
-                    }
-
-                    // 2) matchingRate가 같은 경우 createdAt 내림차순
-                    LocalDateTime aCreated = a.spotEntity().getCreatedAt();
-                    LocalDateTime bCreated = b.spotEntity().getCreatedAt();
-
-                    // TODO: 추후 Comparator로 분리
-                    // createdAt이 null일 수도 있으니 안전 처리
-                    if (bCreated == null && aCreated == null) {
-                        return 0;
-                    } else if (bCreated == null) {
-                        // b가 null이면 a가 더 최근이므로 a가 앞으로
-                        return -1;
-                    } else if (aCreated == null) {
-                        // a가 null이면 b가 더 최근이므로 b가 앞으로
-                        return 1;
-                    }
-                    // 둘 다 null이 아니면, b가 더 최근이면 양수 → b가 앞으로
-                    return bCreated.compareTo(aCreated);
-                })
-                .limit(6)
+        List<RecommendedSpot> spotList = filteredSpotList.stream()
+                .map(
+                        spotEntity -> toRecommendedSpot(
+                                spotEntity,
+                                request.latitude(),
+                                request.longitude(),
+                                transportMode
+                        )
+                )
+//                .filter(spot -> isSpotOpen(spot.spotId()))
+                .limit(15)
                 .toList();
 
-        // 4) DTO 변환
-        List<RecommendedSpot> spotList = scoredList.stream()
-                .map(spotWithScore ->
-                        toRecommendedSpot(spotWithScore.spotEntity(), spotWithScore.matchingRate(), request.latitude(),
-                                request.longitude())
-                )
-                .collect(Collectors.toList());
-
-        return new SpotListResponse(spotList);
+        return new SpotListResponse(transportMode, spotList);
     }
 
-    // TODO: enum 처리 급해요
-    private List<SpotEntity> filterSpotList(final SpotListRequest request) {
-        return spotNativeQueryRepository.findSpotsWithinDistance(
+    @Transactional(readOnly = true)
+    public boolean checkTestUser() {
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
+
+        return memberEntity.getSocialId().equals(testAccount1) || memberEntity.getSocialId().equals(testAccount2)
+                || memberEntity.getSocialId().equals(testAccount3) || memberEntity.getSocialId().equals(testAccount4);
+    }
+
+    private boolean isOutOfServiceArea(
+            final double latitude,
+            final double longitude
+    ) {
+        return latitude < MIN_LATITUDE || latitude > MAX_LATITUDE
+                || longitude < MIN_LONGITUDE || longitude > MAX_LONGITUDE;
+    }
+
+    // TODO: 카테고리 필터 enum 처리 급해요
+    private List<SpotEntity> filterSpotList(
+            final SpotListRequest request,
+            final double radius
+    ) {
+        return spotNativeQueryRepository.findSpotList(
                 request.latitude(),
                 request.longitude(),
-                calculateDistanceFromWalkingTime(request.condition().walkingTime()),
-                request.condition().spotType(),
-                request.condition().priceRange(),
-                request.condition().filterList()
+                SpotType.fromValue(request.condition().spotType()),
+                request.condition().filterList(),
+                radius
         );
     }
 
-    private double calculateDistanceFromWalkingTime(final Integer walkingTime) {
-        if (walkingTime == null) {
-            return 2000.0;
+    // SpotEntity -> RecommendedSpot 변환 메서드 (게스트 혹은 온보딩 건너뛴 유저)
+    private RecommendedSpot toRecommendedSpot(
+            final SpotEntity spotEntity,
+            final Double latitude,
+            final Double longitude,
+            final String transportMode
+    ) {
+        Long spotId = spotEntity.getId();
+
+        return new RecommendedSpot(
+                spotId,
+                fetchSpotImage(spotId),
+                spotEntity.getName(),
+                spotEntity.getLocalAcornCount() + spotEntity.getBasicAcornCount(),
+                fetchSpotTagList(spotEntity),
+                isSpotOpen(spotId),
+                "23:00",
+                "10:00", // TODO: 영업시간 정보 추가
+                calculateMovingTime(spotEntity.getId(), latitude, longitude, transportMode),
+                latitude,
+                longitude
+        );
+    }
+
+    private String fetchSpotImage(final Long spotId) {
+        return spotImageRepository.findTop1BySpotIdOrderById(spotId)
+                .map(SpotImageEntity::getImage)
+                .orElse(null);
+    }
+
+    private List<Tag> fetchSpotTagList(final SpotEntity spotEntity) {
+        LocalDateTime now = LocalDateTime.now();
+        List<Tag> tagList = new ArrayList<>();
+
+        if (now.isAfter(spotEntity.getCreatedAt().plusMonths(3))) {
+            tagList.add(Tag.NEW);
         }
-        // TODO: 매직 넘버 yml로 옮기기
-        double distanceKm = (walkingTime / 60.0) * 4.0;
-        return distanceKm * 1000.0;
+
+        long localReviewerCount =
+                reviewRepository.countDistinctMemberBySpotIdAndAcornCountAndLocalAcorn(spotEntity.getId(), 5, true);
+
+        if (localReviewerCount >= 2) { // TODO: 매직 넘버 yml로 옮기기
+            tagList.add(Tag.LOCAL);
+        }
+
+        return tagList;
+    }
+
+    private int calculateMovingTime(
+            final Long spotId,
+            final Double latitude,
+            final Double longitude,
+            final String transportMode
+    ) {
+        Double distanceMeter = spotRepository.calculateDistanceFromSpot(spotId, longitude, latitude);
+
+        return calculateMovingTimeFromDistance(distanceMeter, transportMode);
+    }
+
+    private int calculateMovingTimeFromDistance(
+            final Double distanceMeter,
+            final String transportMode
+    ) {
+        // TODO: 타입 확인 및 매직 넘버 yml로 옮기기
+        double movingTimeMinutes = 0.0;
+        double walkingSpeedMetersPerMinute = (4.5 * 1000.0) / 60.0;
+        double bikingSpeedMetersPerMinute = (15.5 * 1000.0) / 60.0;
+
+        if (transportMode.equals("WALKING")) {
+            movingTimeMinutes = distanceMeter / walkingSpeedMetersPerMinute;
+        } else if (transportMode.equals("BIKING")) {
+            movingTimeMinutes = distanceMeter / bikingSpeedMetersPerMinute;
+        }
+
+        return (int) Math.round(movingTimeMinutes);
     }
 
     private List<SpotEntity> excludeDislikedSpotList(
@@ -283,167 +362,6 @@ public class SpotService {
         return originalList.stream()
                 .filter(spot -> !excludedSpotIds.contains(spot.getId()))
                 .toList();
-    }
-
-    private double calculateSpotScore(
-            final SpotEntity spotEntity,
-            final PreferenceEntity preferenceEntity,
-            final double userLat,
-            final double userLon
-    ) {
-        // TODO: 매직 넘버 yml로 옮기기
-        double score = 0.0;
-
-        List<OptionEntity> optionList = findOptionsBySpot(spotEntity.getId());
-
-        score += calcAcornScore(spotEntity);
-
-        // TODO: 메서드로 분리
-        // TODO: 매직 넘버 yml로 옮기기
-        if (spotEntity.getCreatedAt() != null) {
-            LocalDateTime threeMonthsAgo = LocalDateTime.now().minusMonths(3);
-            if (spotEntity.getCreatedAt().isAfter(threeMonthsAgo)) {
-                score += 3.0;
-            }
-        }
-
-        Double distanceMeter = spotRepository.calculateDistanceFromSpot(spotEntity.getId(), userLon, userLat);
-        // TODO: 매직 넘버 yml로 옮기기
-        if (distanceMeter != null && distanceMeter <= 3000) {
-            double distanceBonus = (distanceMeter / 100.0) * 0.1;
-            distanceBonus = Math.min(distanceBonus, 3.0);
-            score += (3.0 - distanceBonus);
-        }
-
-        return score;
-    }
-
-    private List<OptionEntity> findOptionsBySpot(final Long spotId) {
-        List<SpotOptionEntity> spotOptionList = spotOptionRepository.findAllBySpotId(spotId);
-
-        List<Long> optionIds = spotOptionList.stream()
-                .map(SpotOptionEntity::getOptionId)
-                .toList();
-
-        return optionRepository.findAllById(optionIds);
-    }
-
-    private double calcAcornScore(final SpotEntity spotEntity) {
-        double acornScore = 0.0; // TODO: 매직 넘버 yml로 옮기기
-
-        // TODO: 매직 넘버 yml로 옮기기
-        boolean isRecentLocal = spotEntity.getLocalAcornUpdatedAt() != null
-                && spotEntity.getLocalAcornUpdatedAt().isAfter(LocalDateTime.now().minusDays(1));
-        boolean isRecentBasic = spotEntity.getBasicAcornUpdatedAt() != null
-                && spotEntity.getBasicAcornUpdatedAt().isAfter(LocalDateTime.now().minusDays(1));
-
-        if (isRecentLocal && spotEntity.getLocalAcornCount() >= 4) {
-            acornScore += 5.0; // TODO: 매직 넘버 yml로 옮기기
-        }
-
-        if (isRecentBasic && spotEntity.getBasicAcornCount() >= 4) {
-            acornScore += 2.0; // TODO: 매직 넘버 yml로 옮기기
-        }
-
-        return acornScore;
-    }
-
-    // SpotEntity -> RecommendedSpot 변환 메서드 (게스트 혹은 온보딩 건너뛴 유저)
-    private RecommendedSpot toRecommendedSpot(
-            final SpotEntity spotEntity,
-            final double latitude,
-            final double longitude
-    ) {
-        return new RecommendedSpot(
-                spotEntity.getId(),
-                fetchSpotImage(spotEntity.getId()),
-                null,
-                spotEntity.getSpotType().name(),
-                spotEntity.getName(),
-                calculateWalkingTime(spotEntity, latitude, longitude)
-        );
-    }
-
-    // TODO: mapper로 분리
-    // SpotEntity -> RecommendedSpot 변환 메서드 (온보딩 마친 유저)
-    private RecommendedSpot toRecommendedSpot(
-            final SpotEntity spotEntity,
-            final int matchingRate,
-            final Double latitude,
-            final Double longitude
-    ) {
-        return new RecommendedSpot(
-                spotEntity.getId(),
-                fetchSpotImage(spotEntity.getId()),
-                matchingRate,
-                spotEntity.getSpotType().name(),
-                spotEntity.getName(),
-                calculateWalkingTime(spotEntity, latitude, longitude)
-        );
-    }
-
-    private String fetchSpotImage(final Long spotId) {
-        return spotImageRepository.findTopBySpotId(spotId)
-                .map(SpotImageEntity::getImage)
-                // TODO: 추후 기본 이미지로 변경
-                .orElse("https://github.com/user-attachments/assets/52e88bff-2577-4f0e-ae98-9636f88afd2a");
-    }
-
-    private int calculateMatchingRate(final double score, final SpotType spotType) {
-        // TODO: 매직 넘버 yml로 옮기기
-        double maxScore = 0.0;
-        switch (spotType) {
-            case RESTAURANT -> maxScore = 27.0;
-            case CAFE -> maxScore = 23.0;
-        }
-
-        // score가 maxScore보다 높아도 결과가 100을 넘지 않도록 ratio를 1.0 이하로 고정
-        double ratio = Math.min(1.0, score / maxScore);
-        double rawRate = 80.0 + (ratio * 20.0);
-
-        return (int) Math.round(rawRate);
-    }
-
-    private int calculateWalkingTime(final SpotEntity spotEntity, final Double latitude, final Double longitude) {
-        Double distanceMeter = spotRepository.calculateDistanceFromSpot(spotEntity.getId(), longitude, latitude);
-
-        return calculateWalkingTimeFromDistance(distanceMeter);
-    }
-
-    private int calculateWalkingTimeFromDistance(final double distanceMeter) {
-        // TODO: 매직 넘버 yml로 옮기기
-        // 시속 4km -> 분당 이동 거리: (4km / 60분) = 0.0667km/min = 66.7m/min
-        double walkingSpeedMetersPerMinute = (4.0 * 1000.0) / 60.0;
-
-        // 걷는 시간(분) = 거리(m) / 분당 이동 거리(m/min)
-        double walkingTimeMinutes = distanceMeter / walkingSpeedMetersPerMinute;
-
-        // 소수점 이하를 반올림하여 정수로 반환
-        return (int) Math.round(walkingTimeMinutes);
-    }
-
-    // TODO: 장소 추천 시 메뉴 가격 변동이면 메인 메뉴 X 처리
-
-    // 매칭률 같을 때 띄우는 순서
-
-    // TODO: 트랜잭션 범위 고민하기
-    // 메서드 설명: spotId에 해당하는 Spot의 상세 정보를 조회한다. (메뉴, 이미지, 영업 여부 등)
-    @Transactional
-    public SpotDetailResponse fetchSpotDetail(final Long spotId) {
-        SpotEntity spotEntity = spotRepository.findByIdOrElseThrow(spotId);
-        Spot spot = spotMapper.toDomain(spotEntity);
-
-        List<SpotImageEntity> spotImageEntityList = spotImageRepository.findAllBySpotId(spotId);
-        List<String> imageList = spotImageEntityList.stream()
-                .map(SpotImageEntity::getImage)
-                .toList();
-
-        if (spot.getLatitude() == null || spot.getLongitude() == null) {
-            updateSpotCoordinate(spot);
-            spotEntity = spotRepository.save(spotMapper.toEntity(spot));
-        }
-
-        return spotDtoMapper.toSpotDetailResponse(spotEntity, imageList, isSpotOpen(spotId));
     }
 
     // 메서드 설명: spotId에 해당하는 Spot이 현재 영업 중인지 확인한다. (영업 시간에 속하는지)
@@ -487,6 +405,26 @@ public class SpotService {
         }
 
         return currentTime.isAfter(startTime) && currentTime.isBefore(endTime);
+    }
+
+    // TODO: 트랜잭션 범위 고민하기
+    // 메서드 설명: spotId에 해당하는 Spot의 상세 정보를 조회한다. (메뉴, 이미지, 영업 여부 등)
+    @Transactional
+    public SpotDetailResponse fetchSpotDetail(final Long spotId) {
+        SpotEntity spotEntity = spotRepository.findByIdOrElseThrow(spotId);
+        Spot spot = spotMapper.toDomain(spotEntity);
+
+        List<SpotImageEntity> spotImageEntityList = spotImageRepository.findAllBySpotId(spotId);
+        List<String> imageList = spotImageEntityList.stream()
+                .map(SpotImageEntity::getImage)
+                .toList();
+
+        if (spot.getLatitude() == null || spot.getLongitude() == null) {
+            updateSpotCoordinate(spot);
+            spotEntity = spotRepository.save(spotMapper.toEntity(spot));
+        }
+
+        return spotDtoMapper.toSpotDetailResponse(spotEntity, imageList, isSpotOpen(spotId));
     }
 
     @Transactional(readOnly = true)
@@ -627,21 +565,5 @@ public class SpotService {
 
 //        return distance <= VERIFICATION_DISTANCE;
         return true; // TODO: 앱 출시 초기 단계에서 리뷰 작성 시 거리 제한 미적용, 추후 다시 도입 예정
-    }
-
-    @Transactional(readOnly = true)
-    public boolean checkTestUser() {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
-
-        return memberEntity.getSocialId().equals(testAccount1) || memberEntity.getSocialId().equals(testAccount2)
-                || memberEntity.getSocialId().equals(testAccount3) || memberEntity.getSocialId().equals(testAccount4);
-    }
-
-    private boolean isOutOfServiceArea(
-            final double latitude,
-            final double longitude
-    ) {
-        return latitude < MIN_LATITUDE || latitude > MAX_LATITUDE
-                || longitude < MIN_LONGITUDE || longitude > MAX_LONGITUDE;
     }
 }

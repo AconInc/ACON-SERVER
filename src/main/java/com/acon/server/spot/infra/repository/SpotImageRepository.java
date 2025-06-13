@@ -11,7 +11,7 @@ public interface SpotImageRepository extends JpaRepository<SpotImageEntity, Long
 
     List<SpotImageEntity> findAllBySpotId(Long spotId);
 
-    Optional<SpotImageEntity> findTopBySpotId(Long spotId);
+    Optional<SpotImageEntity> findTop1BySpotIdOrderById(Long spotId);
 
     @Query("""
             SELECT si FROM SpotImageEntity si

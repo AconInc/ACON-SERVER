@@ -11,14 +11,18 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public enum RestaurantFeature {
+
     KOREAN,
-    JAPANESE,
     CHINESE,
+    JAPANESE,
     WESTERN,
-    KOREAN_STREET,
-    ASIAN,
-    BAR,
-    EXCLUDE_FRANCHISE;
+    SOUTHEAST_ASIAN,
+    FUSION,
+    BUNSIK,
+    BUFFET,
+    DRINKING_PLACE,
+    EXCLUDE_FRANCHISE,
+    ;
 
     private static final Map<String, RestaurantFeature> RESTAURANT_FEATURE_MAP = new HashMap<>();
 
@@ -29,12 +33,12 @@ public enum RestaurantFeature {
     }
 
     public static RestaurantFeature fromValue(String value) {
-        RestaurantFeature feature = RESTAURANT_FEATURE_MAP.get(value);
+        RestaurantFeature restaurantFeature = RESTAURANT_FEATURE_MAP.get(value.toUpperCase());
 
-        if (feature == null) {
-            throw new BusinessException(ErrorType.INVALID_SPOT_TYPE_ERROR);
+        if (restaurantFeature == null) {
+            throw new BusinessException(ErrorType.INVALID_RESTAURANT_FEATHER_ERROR);
         }
 
-        return feature;
+        return restaurantFeature;
     }
 }

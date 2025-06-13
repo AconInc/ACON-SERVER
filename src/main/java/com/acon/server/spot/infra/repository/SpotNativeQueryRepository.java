@@ -1,6 +1,7 @@
 package com.acon.server.spot.infra.repository;
 
 import com.acon.server.spot.api.request.SpotListRequest.Condition.Filter;
+import com.acon.server.spot.domain.enums.SpotType;
 import com.acon.server.spot.infra.entity.SpotEntity;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -17,74 +18,65 @@ public class SpotNativeQueryRepository {
     private EntityManager entityManager;
 
     @Transactional(readOnly = true)
-    public List<SpotEntity> findSpotsWithinDistance(
-            double lat,
-            double lng,
-            double distanceMeter,
-            String spotType,
-            Integer priceRange,
-            List<Filter> filterList
+    public List<SpotEntity> findSpotList(
+            double latitude,
+            double longitude,
+            SpotType spotType,
+            List<Filter> filterList,
+            double radius
     ) {
         // 1) 기본 쿼리
-        StringBuilder sb = new StringBuilder();
-        sb.append("SELECT s.* ")
-                .append("FROM spot s ")
-                .append("WHERE ")
-                .append("ST_DWithin(s.geom::geography, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography, :distanceMeter) ");
-        if (spotType != null && !spotType.trim().isEmpty()) {
-            sb.append("AND s.spot_type = :spotType ");
-        }
-        if (priceRange != null) {
-            sb.append("AND EXISTS ( ")
-                    .append("SELECT 1 FROM menu m WHERE m.spot_id = s.id AND m.main_menu = TRUE AND m.price <= :priceRange) ");
-        }
+        StringBuilder sqlValue = new StringBuilder();
+        sqlValue.append("SELECT s.* \n")
+                .append("FROM spot s \n")
+                .append("WHERE ST_DWithin(\n")
+                .append("        s.geom::geography,\n")
+                .append("        ST_SetSRID(ST_MakePoint(:lng, :lat),4326)::geography,\n")
+                .append("        :radius) \n")
+                .append("  AND s.spot_type = :spotType \n");
 
-        // 2) filterList가 있는 경우, 각 항목마다 AND EXISTS 서브쿼리 추가
         if (filterList != null && !filterList.isEmpty()) {
             for (int i = 0; i < filterList.size(); i++) {
                 if (filterList.get(i).optionList().isEmpty()) {
                     continue;
                 }
-                sb.append("AND EXISTS (")
-                        .append("SELECT 1 FROM spot_option so ")
-                        .append("JOIN \"option\" o ON o.id = so.option_id ")
-                        .append("JOIN category c ON c.id = o.category_id ")
-                        .append("WHERE so.spot_id = s.id ")
-                        .append("AND c.name = :categoryName_").append(i).append(" ")
-                        .append("AND o.name IN (:optionNames_").append(i).append(") ")
-                        .append(") ");
+
+                sqlValue.append("  AND EXISTS (\n")
+                        .append("        SELECT 1 FROM spot_option so\n")
+                        .append("        JOIN \"option\" o ON o.id = so.option_id\n")
+                        .append("        JOIN category c ON c.id = o.category_id\n")
+                        .append("        WHERE so.spot_id = s.id\n")
+                        .append("          AND c.name = :cat_").append(i).append("\n")
+                        .append("          AND o.name IN (:opt_").append(i).append("\n")
+                        .append("   )\n");
             }
         }
 
-        // 3) Native Query 생성
-        Query query = entityManager.createNativeQuery(sb.toString(), SpotEntity.class);
+        sqlValue.append("ORDER BY ST_Distance(\n")
+                .append("            s.geom::geography,\n")
+                .append("            ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography\n")
+                .append(") ASC");
 
-        // 4) 파라미터 바인딩
-        query.setParameter("lat", lat);
-        query.setParameter("lng", lng);
-        query.setParameter("distanceMeter", distanceMeter);
+        Query query = entityManager.createNativeQuery(sqlValue.toString(), SpotEntity.class);
+        query.setParameter("lat", latitude);
+        query.setParameter("lng", longitude);
+        query.setParameter("radius", radius);
+        query.setParameter("spotType", spotType.name());
 
-        if (spotType != null && !spotType.trim().isEmpty()) {
-            query.setParameter("spotType", spotType);
-        }
-
-        if (priceRange != null) {
-            query.setParameter("priceRange", priceRange);
-        }
-
-        // 5) filterList 파라미터 바인딩
         if (filterList != null && !filterList.isEmpty()) {
             for (int i = 0; i < filterList.size(); i++) {
                 Filter filter = filterList.get(i);
-                if (filter.optionList().isEmpty()) {
+
+                if (filterList.get(i).optionList().isEmpty()) {
                     continue;
                 }
-                query.setParameter("categoryName_" + i, filter.category());
-                query.setParameter("optionNames_" + i, filter.optionList());
+
+                query.setParameter("cat_" + i, filter.category());
+                query.setParameter("opt_" + i, filter.optionList());
             }
         }
 
-        // 6) 쿼리 실행
+        @SuppressWarnings("unchecked")
         List<SpotEntity> result = query.getResultList();
 
         return result;

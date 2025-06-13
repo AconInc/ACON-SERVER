@@ -8,26 +8,19 @@ public class Menu {
 
     private final Long id;
     private final Long spotId;
-
-    private String image;
-    private String name;
-    private int price;
-    private boolean mainMenu;
+    private final String name;
+    private final Integer price;
 
     @Builder
     public Menu(
-            Long id,
-            Long spotId,
-            String image,
-            String name,
-            int price,
-            boolean mainMenu
+            final Long id,
+            final Long spotId,
+            final String name,
+            final Integer price
     ) {
         this.id = id;
         this.spotId = spotId;
-        this.image = image;
         this.name = name;
         this.price = price;
-        this.mainMenu = mainMenu;
     }
 }

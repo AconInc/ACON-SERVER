@@ -42,12 +42,6 @@ public enum ErrorType {
     INVALID_SOCIAL_TYPE_ERROR(HttpStatus.BAD_REQUEST, 40009, "유효하지 않은 socialType입니다."),
     INVALID_ID_TOKEN_ERROR(HttpStatus.BAD_REQUEST, 40010, "ID 토큰의 서명이 올바르지 않습니다."),
     INVALID_DISLIKE_FOOD_ERROR(HttpStatus.BAD_REQUEST, 40013, "유효하지 않은 dislikeFood입니다."),
-    INVALID_CUISINE_ERROR(HttpStatus.BAD_REQUEST, 40014, "유효하지 않은 cuisine입니다."),
-    INVALID_SPOT_TYPE_ERROR(HttpStatus.BAD_REQUEST, 40015, "유효하지 않은 spotType입니다."),
-    INVALID_SPOT_STYLE_ERROR(HttpStatus.BAD_REQUEST, 40016, "유효하지 않은 spotStyle입니다."),
-    INVALID_FAVORITE_SPOT_ERROR(HttpStatus.BAD_REQUEST, 40017, "유효하지 않은 favoriteSpot입니다."),
-    INVALID_FAVORITE_SPOT_RANK_SIZE_ERROR(HttpStatus.BAD_REQUEST, 40030, "favoriteSpotRank의 사이즈가 잘못되었습니다."),
-    INVALID_FAVORITE_CUISINE_RANK_SIZE_ERROR(HttpStatus.BAD_REQUEST, 40031, "favoriteCuisineRank의 사이즈가 잘못되었습니다."),
     INVALID_VERIFIED_AREA_COUNT_ERROR(HttpStatus.BAD_REQUEST, 40032, "인증 지역은 최소 1개 ~ 최대 3개까지 가능합니다."),
     INVALID_IMAGE_TYPE_ERROR(HttpStatus.BAD_REQUEST, 40045, "유효하지 않은 imageType입니다."),
     INVALID_NICKNAME_ERROR(HttpStatus.BAD_REQUEST, 40051, "닉네임이 조건을 만족하지 않습니다."),
@@ -73,7 +67,16 @@ public enum ErrorType {
 
     /* Spot Error */
     /* 400 Bad Request */
-    INVALID_DAY_ERROR(HttpStatus.BAD_REQUEST, 40099, "유효하지 않은 day입니다."),
+    INVALID_SPOT_TYPE_ERROR(HttpStatus.BAD_REQUEST, 40015, "유효하지 않은 spotType입니다."),
+    INVALID_CATEGORY_NAME_ERROR(HttpStatus.BAD_REQUEST, 40016, "유효하지 않은 categoryName입니다."),
+    INVALID_RESTAURANT_FEATHER_ERROR(HttpStatus.BAD_REQUEST, 40017, "유효하지 않은 restaurantFeature입니다."),
+    INVALID_CAFE_FEATURE_ERROR(HttpStatus.BAD_REQUEST, 40018, "유효하지 않은 cafeFeature입니다."),
+    INVALID_OPENING_HOUR_ERROR(HttpStatus.BAD_REQUEST, 40019, "유효하지 않은 openingHour입니다."),
+    INVALID_PRICE_ERROR(HttpStatus.BAD_REQUEST, 40020, "유효하지 않은 price입니다."),
+    INVALID_SPOT_TYPE_CATEGORY_ERROR(HttpStatus.BAD_REQUEST, 40021, "spotType에 해당하지 않는 카테고리입니다."),
+    INVALID_CATEGORY_OPTION_ERROR(HttpStatus.BAD_REQUEST, 40022, "category에 해당하지 않는 option입니다."),
+    GUEST_USER_CAFE_RECOMMENDATION_ERROR(HttpStatus.BAD_REQUEST, 40023, "비회원은 카페 추천을 받을 수 없습니다. 로그인 후 이용해 주세요."),
+    INVALID_TAG_ERROR(HttpStatus.BAD_REQUEST, 40024, "유효하지 않은 tag입니다."),
 
     /* 404 Not Found */
     NOT_FOUND_SPOT_ERROR(HttpStatus.NOT_FOUND, 40403, "존재하지 않는 장소입니다."),
