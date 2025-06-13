@@ -284,7 +284,7 @@ public class SpotService {
                 spotEntity.getName(),
                 spotEntity.getLocalAcornCount() + spotEntity.getBasicAcornCount(),
                 fetchSpotTagList(spotEntity),
-                isSpotOpen(spotId),
+                true,
                 "23:00",
                 "10:00", // TODO: 영업시간 정보 추가
                 calculateMovingTime(spotEntity.getId(), latitude, longitude, transportMode),
@@ -425,7 +425,7 @@ public class SpotService {
                 spotEntity.getName(),
                 spotEntity.getLocalAcornCount() + spotEntity.getBasicAcornCount(),
                 fetchSpotTagList(spotEntity),
-                isSpotOpen(spotId),
+                true,
                 "23:00",
                 "10:00", // TODO: 영업시간 정보 추가
                 fetchMenus(spotId),
