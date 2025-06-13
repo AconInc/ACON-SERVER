@@ -7,7 +7,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
@@ -20,11 +19,11 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
-        name = "opening_hour",
-        indexes = @Index(
-                name = "idx_opening_hour_spot_id_day_of_week",
-                columnList = "spot_id, day_of_week"
-        )
+        name = "opening_hour"
+//        indexes = @Index(
+//                name = "idx_opening_hour_spot_id_day_of_week",
+//                columnList = "spot_id, day_of_week"
+//        )
 )
 public class OpeningHourEntity {
 
@@ -36,7 +35,7 @@ public class OpeningHourEntity {
     private Long spotId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "day_of_week", nullable = false)
+    @Column(name = "day_of_week", length = 10, nullable = false)
     private DayOfWeek dayOfWeek;
 
     @Column(name = "start_time", nullable = false)

@@ -14,27 +14,27 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "option")
-public class OptionEntity {
+@Table(name = "menuboard_image")
+public class MenuboardImageEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "category_id", nullable = false)
-    private Long categoryId;
+    @Column(name = "spot_id", nullable = false)
+    private Long spotId;
 
-    @Column(name = "name", length = 50, nullable = false)
-    private String name;
+    @Column(name = "image", nullable = false)
+    private String image;
 
     @Builder
-    public OptionEntity(
+    public MenuboardImageEntity(
             Long id,
-            Long categoryId,
-            String name
+            Long spotId,
+            String image
     ) {
         this.id = id;
-        this.categoryId = categoryId;
-        this.name = name;
+        this.spotId = spotId;
+        this.image = image;
     }
 }

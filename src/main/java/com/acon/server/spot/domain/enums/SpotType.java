@@ -25,7 +25,7 @@ public enum SpotType {
     }
 
     public static SpotType fromValue(String value) {
-        SpotType spotType = SPOT_TYPE_MAP.get(value);
+        SpotType spotType = SPOT_TYPE_MAP.get(value.toUpperCase());
 
         if (spotType == null) {
             throw new BusinessException(ErrorType.INVALID_SPOT_TYPE_ERROR);

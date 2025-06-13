@@ -8,8 +8,6 @@ public interface SavedSpotRepository extends JpaRepository<SavedSpotEntity, Long
 
     void deleteByMemberIdAndSpotId(Long memberId, Long spotId);
 
-    boolean existsByMemberIdAndSpotId(Long memberId, Long spotId);
-
     List<SavedSpotEntity> findTop10ByMemberIdOrderByIdDesc(Long memberId);
 
     List<SavedSpotEntity> findAllByMemberIdOrderByIdDesc(Long memberId);

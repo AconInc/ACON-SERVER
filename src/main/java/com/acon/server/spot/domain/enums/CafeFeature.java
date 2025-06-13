@@ -11,11 +11,10 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public enum CafeFeature {
-    LARGE,
-    GOOD_VIEW,
-    DESSERT,
-    TERRACE,
-    EXCLUDE_FRANCHISE;
+
+    WORK_FRIENDLY,
+    EXCLUDE_FRANCHISE,
+    ;
 
     private static final Map<String, CafeFeature> CAFE_FEATURE_MAP = new HashMap<>();
 
@@ -26,12 +25,12 @@ public enum CafeFeature {
     }
 
     public static CafeFeature fromValue(String value) {
-        CafeFeature spotType = CAFE_FEATURE_MAP.get(value);
+        CafeFeature cafeFeature = CAFE_FEATURE_MAP.get(value.toUpperCase());
 
-        if (spotType == null) {
-            throw new BusinessException(ErrorType.INVALID_SPOT_TYPE_ERROR);
+        if (cafeFeature == null) {
+            throw new BusinessException(ErrorType.INVALID_CAFE_FEATURE_ERROR);
         }
 
-        return spotType;
+        return cafeFeature;
     }
 }

@@ -18,10 +18,8 @@ public class Spot {
     private final SpotType spotType;
     private final String address;
 
-    private int localAcornCount;
-    private LocalDateTime localAcornUpdatedAt;
-    private int basicAcornCount;
-    private LocalDateTime basicAcornUpdatedAt;
+    private Integer localAcornCount;
+    private Integer basicAcornCount;
     private Double latitude;
     private Double longitude;
     private Point geom;
@@ -36,9 +34,7 @@ public class Spot {
             SpotType spotType,
             String address,
             Integer localAcornCount,
-            LocalDateTime localAcornUpdatedAt,
             Integer basicAcornCount,
-            LocalDateTime basicAcornUpdatedAt,
             Double latitude,
             Double longitude,
             Point geom,
@@ -51,9 +47,7 @@ public class Spot {
         this.spotType = spotType;
         this.address = address;
         this.localAcornCount = localAcornCount;
-        this.localAcornUpdatedAt = localAcornUpdatedAt;
         this.basicAcornCount = basicAcornCount;
-        this.basicAcornUpdatedAt = basicAcornUpdatedAt;
         this.latitude = latitude;
         this.longitude = longitude;
         this.geom = geom;
@@ -72,18 +66,10 @@ public class Spot {
 
     private void addLocalAcorn(int acornCount) {
         this.localAcornCount += acornCount;
-
-        if (acornCount >= 4) { // TODO: 매직 넘버 yml로 관리
-            this.localAcornUpdatedAt = LocalDateTime.now();
-        }
     }
 
     private void addBasicAcorn(int acornCount) {
         this.basicAcornCount += acornCount;
-
-        if (acornCount >= 4) {
-            this.basicAcornUpdatedAt = LocalDateTime.now();
-        }
     }
 
     public void updateCoordinate(Double latitude, Double longitude) {

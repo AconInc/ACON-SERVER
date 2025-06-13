@@ -4,14 +4,14 @@ import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-public class SpotImage {
+public class MenuboardImage {
 
     private final Long id;
     private final Long spotId;
     private final String image;
 
     @Builder
-    public SpotImage(
+    public MenuboardImage(
             final Long id,
             final Long spotId,
             final String image

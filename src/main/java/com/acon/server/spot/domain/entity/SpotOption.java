@@ -12,9 +12,9 @@ public class SpotOption {
 
     @Builder
     public SpotOption(
-            Long id,
-            Long spotId,
-            Long optionId
+            final Long id,
+            final Long spotId,
+            final Long optionId
     ) {
         this.id = id;
         this.spotId = spotId;

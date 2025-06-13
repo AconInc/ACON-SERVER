@@ -50,24 +50,18 @@ public class SpotEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", length = 30, nullable = false)
     private String name;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "spot_type", nullable = false)
+    @Column(name = "spot_type", length = 10, nullable = false)
     private SpotType spotType;
 
     @Column(name = "local_acorn_count", nullable = false)
-    private int localAcornCount;
-
-    @Column(name = "local_acorn_updated_at")
-    private LocalDateTime localAcornUpdatedAt;
+    private Integer localAcornCount;
 
     @Column(name = "basic_acorn_count", nullable = false)
-    private int basicAcornCount;
-
-    @Column(name = "basic_acorn_updated_at")
-    private LocalDateTime basicAcornUpdatedAt;
+    private Integer basicAcornCount;
 
     @Column(name = "address", nullable = false)
     private String address;
@@ -86,7 +80,7 @@ public class SpotEntity {
     private String legalDong;
 
     @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @LastModifiedDate
@@ -99,9 +93,7 @@ public class SpotEntity {
             String name,
             SpotType spotType,
             Integer localAcornCount,
-            LocalDateTime localAcornUpdatedAt,
             Integer basicAcornCount,
-            LocalDateTime basicAcornUpdatedAt,
             String address,
             Double latitude,
             Double longitude,
@@ -115,9 +107,7 @@ public class SpotEntity {
         this.spotType = spotType;
         // TODO: 영속성 엔티티에서 기본값을 설정하는 로직을 도메인 엔티티로 이동
         this.localAcornCount = localAcornCount != null ? localAcornCount : 0;
-        this.localAcornUpdatedAt = localAcornUpdatedAt;
         this.basicAcornCount = basicAcornCount != null ? basicAcornCount : 0;
-        this.basicAcornUpdatedAt = basicAcornUpdatedAt;
         this.address = address;
         this.latitude = latitude;
         this.longitude = longitude;

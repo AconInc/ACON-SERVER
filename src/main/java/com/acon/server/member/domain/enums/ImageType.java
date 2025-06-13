@@ -24,7 +24,7 @@ public enum ImageType {
     }
 
     public static ImageType fromValue(String value) {
-        ImageType imageType = IMAGE_TYPE_MAP.get(value);
+        ImageType imageType = IMAGE_TYPE_MAP.get(value.toUpperCase());
 
         if (imageType == null) {
             throw new BusinessException(ErrorType.INVALID_IMAGE_TYPE_ERROR);

@@ -2,7 +2,7 @@ package com.acon.server.spot.api.controller;
 
 import com.acon.server.global.auth.PrincipalHandler;
 import com.acon.server.spot.api.request.SpotListRequest;
-import com.acon.server.spot.api.response.MenuListResponse;
+import com.acon.server.spot.api.response.MenuboardImageListResponse;
 import com.acon.server.spot.api.response.SearchSpotListResponse;
 import com.acon.server.spot.api.response.SearchSuggestionListResponse;
 import com.acon.server.spot.api.response.SpotDetailResponse;
@@ -66,14 +66,14 @@ public class SpotController {
         );
     }
 
-    @GetMapping(path = "/spots/{spotId}/menus", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<MenuListResponse> getMenus(
+    @GetMapping(path = "/spots/{spotId}/menuboards", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<MenuboardImageListResponse> getMenuboardList(
             @NotNull(message = "spotId는 필수입니다.")
             @Positive(message = "spotId는 양수여야 합니다.")
             @PathVariable(name = "spotId") final Long spotId
     ) {
         return ResponseEntity.ok(
-                spotService.fetchMenus(spotId)
+                spotService.fetchMenuboards(spotId)
         );
     }
 
