@@ -57,7 +57,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -155,21 +154,9 @@ public class MemberService {
 
         MemberEntity member = memberRepository
                 .findBySocialTypeAndSocialId(socialType, socialId)
-                .orElseGet(() -> tryCreateMember(socialType, socialId));
+                .orElseGet(() -> createMember(socialType, socialId));
 
         return MemberIdentifiersVO.of(member);
-    }
-
-    private MemberEntity tryCreateMember(
-            final SocialType socialType,
-            final String socialId
-    ) {
-        try {
-            return createMember(socialType, socialId);
-        } catch (DataIntegrityViolationException e) {
-            return memberRepository.findBySocialTypeAndSocialId(socialType, socialId)
-                    .orElseThrow(() -> new BusinessException(ErrorType.DUPLICATE_MEMBER_ERROR));
-        }
     }
 
     private MemberEntity createMember(
@@ -304,21 +291,21 @@ public class MemberService {
 
         long memberId = fetchMemberId();
 
-        try {
-            guidedSpotRepository.save(
-                    GuidedSpotEntity.builder()
-                            .memberId(memberId)
-                            .spotId(spotId)
-                            .build()
-            );
-        } catch (DataIntegrityViolationException e) {
-            GuidedSpotEntity guidedSpotEntity =
-                    guidedSpotRepository.findByMemberIdAndSpotId(memberId, spotId).orElseThrow();
-            GuidedSpot guidedSpot = guidedSpotMapper.toDomain(guidedSpotEntity);
-            guidedSpot.setUpdatedAtNow();
+        guidedSpotRepository.findByMemberIdAndSpotId(memberId, spotId)
+                .ifPresentOrElse(
+                        guidedSpotEntity -> {
+                            GuidedSpot guidedSpot = guidedSpotMapper.toDomain(guidedSpotEntity);
+                            guidedSpot.setUpdatedAtNow();
 
-            guidedSpotRepository.save(guidedSpotMapper.toEntity(guidedSpot));
-        }
+                            guidedSpotRepository.save(guidedSpotMapper.toEntity(guidedSpot));
+                        },
+                        () -> guidedSpotRepository.save(
+                                GuidedSpotEntity.builder()
+                                        .memberId(memberId)
+                                        .spotId(spotId)
+                                        .build()
+                        )
+                );
     }
 
     @Transactional
@@ -330,16 +317,16 @@ public class MemberService {
         // TODO: memberId만 사용할 경우 아래처럼 리팩토링하기, 그리고 메서드로 빼기
         long memberId = fetchMemberId();
 
-        try {
-            savedSpotRepository.save(
-                    SavedSpotEntity.builder()
-                            .memberId(memberId)
-                            .spotId(spotId)
-                            .build()
-            );
-        } catch (DataIntegrityViolationException ignored) {
-
+        if (savedSpotRepository.existsByMemberIdAndSpotId(memberId, spotId)) {
+            return;
         }
+
+        savedSpotRepository.save(
+                SavedSpotEntity.builder()
+                        .memberId(memberId)
+                        .spotId(spotId)
+                        .build()
+        );
     }
 
     @Transactional
