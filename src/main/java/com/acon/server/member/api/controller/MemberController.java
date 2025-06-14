@@ -188,7 +188,7 @@ public class MemberController {
             @Valid @RequestBody final ReplaceVerifiedAreaRequest request
     ) {
         memberService.replaceVerifiedArea(
-                request.verifiedAreaId(),
+                request.previousVerifiedAreaId(),
                 request.latitude(),
                 request.longitude()
         );
