@@ -47,7 +47,7 @@ public class SpotNativeQueryRepository {
                         .append("        JOIN category c ON c.id = o.category_id\n")
                         .append("        WHERE so.spot_id = s.id\n")
                         .append("          AND c.name = :cat_").append(i).append("\n")
-                        .append("          AND o.name IN (:opt_").append(i).append("\n")
+                        .append("          AND o.name IN (:opt_").append(i).append(")\n")
                         .append("   )\n");
             }
         }
