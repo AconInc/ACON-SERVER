@@ -25,7 +25,6 @@ public class SpotNativeQueryRepository {
             List<Filter> filterList,
             double radius
     ) {
-        // 1) 기본 쿼리
         StringBuilder sqlValue = new StringBuilder();
         sqlValue.append("SELECT s.* \n")
                 .append("FROM spot s \n")

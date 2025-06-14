@@ -606,7 +606,7 @@ public class MemberService {
         // TODO: 리팩토링
         Long memberId = jwtTokenProvider.validateRefreshToken(refreshToken);
 
-        if (memberRepository.existsById(memberId)) {
+        if (!memberRepository.existsById(memberId)) {
             throw new BusinessException(ErrorType.NOT_FOUND_MEMBER_ERROR);
         }
 

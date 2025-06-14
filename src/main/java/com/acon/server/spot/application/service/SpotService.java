@@ -305,7 +305,7 @@ public class SpotService {
         LocalDateTime now = LocalDateTime.now();
         List<Tag> tagList = new ArrayList<>();
 
-        if (now.isAfter(spotEntity.getCreatedAt().plusMonths(3))) {
+        if (now.isBefore(spotEntity.getCreatedAt().plusMonths(3))) {
             tagList.add(Tag.NEW);
         }
 
