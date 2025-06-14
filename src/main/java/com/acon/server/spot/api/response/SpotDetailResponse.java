@@ -15,6 +15,8 @@ public record SpotDetailResponse(
         Boolean isOpen,
         String closingTime,
         String nextOpening,
+        Boolean hasMenuboardImage,
+        Boolean isSaved,
         List<MenuResponse> signatureMenuList,
         Double latitude,
         Double longitude

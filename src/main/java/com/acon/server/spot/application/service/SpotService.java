@@ -11,6 +11,7 @@ import com.acon.server.member.infra.entity.PreferenceEntity;
 import com.acon.server.member.infra.repository.GuidedSpotCustomRepository;
 import com.acon.server.member.infra.repository.MemberRepository;
 import com.acon.server.member.infra.repository.PreferenceRepository;
+import com.acon.server.member.infra.repository.SavedSpotRepository;
 import com.acon.server.review.infra.repository.ReviewRepository;
 import com.acon.server.spot.api.request.SpotListRequest;
 import com.acon.server.spot.api.response.MenuResponse;
@@ -89,6 +90,7 @@ public class SpotService {
 
     private final NaverMapsAdapter naverMapsAdapter;
     private final ReviewRepository reviewRepository;
+    private final SavedSpotRepository savedSpotRepository;
 
     @Value("${google.test-account-1}")
     private String testAccount1;
@@ -428,10 +430,22 @@ public class SpotService {
                 true,
                 "23:00",
                 "10:00", // TODO: 영업시간 정보 추가
+                menuboardImageRepository.existsBySpotId(spotId),
+                savedSpotRepository.existsByMemberIdAndSpotId(fetchMemberId(), spotId),
                 fetchMenus(spotId),
                 spotEntity.getLatitude(),
                 spotEntity.getLongitude()
         );
+    }
+
+    private long fetchMemberId() {
+        long memberId = principalHandler.getMemberIdFromPrincipal();
+
+        if (!memberRepository.existsById(memberId)) {
+            throw new BusinessException(ErrorType.NOT_FOUND_MEMBER_ERROR);
+        }
+
+        return memberId;
     }
 
     private List<MenuResponse> fetchMenus(final Long spotId) {
