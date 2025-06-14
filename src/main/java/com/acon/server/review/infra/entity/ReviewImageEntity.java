@@ -27,7 +27,7 @@ public class ReviewImageEntity {
     @Column(name = "review_id", nullable = false)
     private Long reviewId;
 
-    @Column(name = "image", nullable = false)
+    @Column(name = "image", columnDefinition = "text", nullable = false)
     private String image;
 
     @Builder

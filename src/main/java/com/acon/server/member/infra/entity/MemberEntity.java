@@ -47,7 +47,7 @@ public class MemberEntity {
     @Column(name = "external_uuid", length = 50, nullable = false, unique = true)
     private String externalUUID;
 
-    @Column(name = "profile_image", nullable = false)
+    @Column(name = "profile_image", columnDefinition = "text", nullable = false)
     private String profileImage;
 
     @Column(name = "nickname", length = 20, nullable = false, unique = true)

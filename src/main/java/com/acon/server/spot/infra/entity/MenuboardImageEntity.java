@@ -24,7 +24,7 @@ public class MenuboardImageEntity {
     @Column(name = "spot_id", nullable = false)
     private Long spotId;
 
-    @Column(name = "image", nullable = false)
+    @Column(name = "image", columnDefinition = "text", nullable = false)
     private String image;
 
     @Builder
