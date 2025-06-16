@@ -290,8 +290,8 @@ public class SpotService {
                 "23:00",
                 "10:00", // TODO: 영업시간 정보 추가
                 calculateMovingTime(spotEntity.getId(), latitude, longitude, transportMode),
-                latitude,
-                longitude
+                spotEntity.getLatitude(),
+                spotEntity.getLongitude()
         );
     }
 
