@@ -416,7 +416,7 @@ public class SpotService {
     public SpotDetailResponse fetchSpotDetail(final Long spotId) {
         SpotEntity spotEntity = spotRepository.findByIdOrElseThrow(spotId);
 
-        List<SpotImageEntity> spotImageEntityList = spotImageRepository.findAllBySpotId(spotId);
+        List<SpotImageEntity> spotImageEntityList = spotImageRepository.findAllBySpotIdOrderById(spotId);
         List<String> imageList = spotImageEntityList.stream()
                 .map(SpotImageEntity::getImage)
                 .toList();
@@ -466,7 +466,7 @@ public class SpotService {
             throw new BusinessException(ErrorType.NOT_FOUND_SPOT_ERROR);
         }
 
-        List<String> menuboardImageList = menuboardImageRepository.findAllBySpotId(spotId).stream()
+        List<String> menuboardImageList = menuboardImageRepository.findAllBySpotIdOrderById(spotId).stream()
                 .map(MenuboardImageEntity::getImage)
                 .toList();
 

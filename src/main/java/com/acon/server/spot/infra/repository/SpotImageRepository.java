@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface SpotImageRepository extends JpaRepository<SpotImageEntity, Long> {
 
-    List<SpotImageEntity> findAllBySpotId(Long spotId);
+    List<SpotImageEntity> findAllBySpotIdOrderById(Long spotId);
 
     Optional<SpotImageEntity> findTop1BySpotIdOrderById(Long spotId);
 

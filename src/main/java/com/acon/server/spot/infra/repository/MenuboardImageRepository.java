@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MenuboardImageRepository extends JpaRepository<MenuboardImageEntity, Long> {
 
-    List<MenuboardImageEntity> findAllBySpotId(Long spotId);
+    List<MenuboardImageEntity> findAllBySpotIdOrderById(Long spotId);
 
     boolean existsBySpotId(Long spotId);
 }
