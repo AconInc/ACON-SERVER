@@ -59,10 +59,12 @@ public class SpotController {
     public ResponseEntity<SpotDetailResponse> getSpotDetail(
             @NotNull(message = "spotId는 필수입니다.")
             @Positive(message = "spotId는 양수여야 합니다.")
-            @PathVariable(name = "spotId") final Long spotId
+            @PathVariable(name = "spotId") final Long spotId,
+            @NotNull(message = "isDeepLink는 필수입니다.")
+            @RequestParam(name = "isDeepLink") final Boolean isDeepLink
     ) {
         return ResponseEntity.ok(
-                spotService.fetchSpotDetail(spotId)
+                spotService.fetchSpotDetail(spotId, isDeepLink)
         );
     }
 

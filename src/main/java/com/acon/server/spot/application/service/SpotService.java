@@ -414,7 +414,10 @@ public class SpotService {
     // TODO: 트랜잭션 범위 고민하기
     // 메서드 설명: spotId에 해당하는 Spot의 상세 정보를 조회한다. (메뉴, 이미지, 영업 여부 등)
     @Transactional
-    public SpotDetailResponse fetchSpotDetail(final Long spotId) {
+    public SpotDetailResponse fetchSpotDetail(
+            final long spotId,
+            final boolean isDeepLink
+    ) {
         SpotEntity spotEntity = spotRepository.findByIdOrElseThrow(spotId);
 
         List<SpotImageEntity> spotImageEntityList = spotImageRepository.findAllBySpotIdOrderById(spotId);
@@ -432,11 +435,26 @@ public class SpotService {
                 "23:00",
                 "10:00", // TODO: 영업시간 정보 추가
                 menuboardImageRepository.existsBySpotId(spotId),
-                savedSpotRepository.existsByMemberIdAndSpotId(fetchMemberId(), spotId),
+                checkIsSaved(spotId, isDeepLink),
                 fetchMenus(spotId),
                 spotEntity.getLatitude(),
                 spotEntity.getLongitude()
         );
+    }
+
+    private boolean checkIsSaved(
+            final long spotId,
+            final boolean isDeepLink
+    ) {
+        if (principalHandler.isGuestUser()) {
+            if (!isDeepLink) {
+                throw new BusinessException(ErrorType.GUEST_USER_SPOT_DETAIL_ERROR);
+            }
+
+            return false;
+        }
+
+        return savedSpotRepository.existsByMemberIdAndSpotId(fetchMemberId(), spotId);
     }
 
     private long fetchMemberId() {
