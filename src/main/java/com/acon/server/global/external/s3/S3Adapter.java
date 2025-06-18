@@ -56,7 +56,7 @@ public class S3Adapter {
     }
 
     private String getPreSignedUrl(String path, String fileName) {
-        if (!path.isEmpty()) {
+        if (path != null && !path.isEmpty()) {
             fileName = path + fileName;
         }
 
