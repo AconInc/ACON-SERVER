@@ -181,7 +181,8 @@ public class SpotService {
                                     transportMode
                             )
                     )
-                    .limit(5)
+//                    .filter(spot -> !filterOpenAfter10PM || isSpotOpenAfter10PM(spot.spotId()))
+                    .limit(15)
                     .toList();
 
             return new SpotListResponse(transportMode, spotList);
