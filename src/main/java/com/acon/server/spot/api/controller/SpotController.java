@@ -126,4 +126,19 @@ public class SpotController {
                 new VerifiedSpotResponse(spotService.verifySpot(spotId, latitude, longitude))
         );
     }
+
+    @GetMapping(path = "/spots/{spotId}/distance", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Double> calculateDistance(
+            @NotNull(message = "spotId는 필수입니다.")
+            @Positive(message = "spotId는 양수여야 합니다.")
+            @PathVariable(name = "spotId") final Long spotId,
+            @NotNull(message = "위도는 필수입니다.")
+            @RequestParam(name = "latitude") final Double latitude,
+            @NotNull(message = "경도는 필수입니다.")
+            @RequestParam(name = "longitude") final Double longitude
+    ) {
+        return ResponseEntity.ok(
+                spotService.calculateDistance(spotId, latitude, longitude)
+        );
+    }
 }
