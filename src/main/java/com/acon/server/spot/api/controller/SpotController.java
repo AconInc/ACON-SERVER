@@ -45,7 +45,7 @@ public class SpotController {
         if (!principalHandler.isGuestUser() && spotService.checkTestUser()) {
             return ResponseEntity.ok(
                     spotService.fetchRecommendedSpotList(
-                            new SpotListRequest(37.559115, 126.921976, request.condition())
+                            new SpotListRequest(37.4940494, 127.030027, request.condition())
                     )
             );
         }

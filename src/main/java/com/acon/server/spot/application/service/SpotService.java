@@ -62,7 +62,7 @@ public class SpotService {
     private final PreferenceRepository preferenceRepository;
 
     // TODO: 매직 넘버 yml로 옮기기
-    private static final double WALKING_RADIUS = 1000.0; // 시속 3km
+    private static final double WALKING_RADIUS = 1500.0; // 시속 3km
     private static final double BIKING_RADIUS = 4000.0; // 시속 12km
     private static final int SUGGESTION_RADIUS = 250;
     private static final int SUGGESTION_LIMIT = 5;
@@ -337,8 +337,8 @@ public class SpotService {
     ) {
         // TODO: 타입 확인 및 매직 넘버 yml로 옮기기
         double movingTimeMinutes = 0.0;
-        double walkingSpeedMetersPerMinute = (3.6 * 1000.0) / 60.0;
-        double bikingSpeedMetersPerMinute = (14.4 * 1000.0) / 60.0;
+        double walkingSpeedMetersPerMinute = (3 * 1000.0) / 60.0;
+        double bikingSpeedMetersPerMinute = (12 * 1000.0) / 60.0;
 
         if (transportMode.equals("WALKING")) {
             movingTimeMinutes = distanceMeter / walkingSpeedMetersPerMinute;
