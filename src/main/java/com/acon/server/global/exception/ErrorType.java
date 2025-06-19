@@ -75,9 +75,7 @@ public enum ErrorType {
     INVALID_PRICE_ERROR(HttpStatus.BAD_REQUEST, 40020, "유효하지 않은 price입니다."),
     INVALID_SPOT_TYPE_CATEGORY_ERROR(HttpStatus.BAD_REQUEST, 40021, "spotType에 해당하지 않는 카테고리입니다."),
     INVALID_CATEGORY_OPTION_ERROR(HttpStatus.BAD_REQUEST, 40022, "category에 해당하지 않는 option입니다."),
-    GUEST_USER_CAFE_RECOMMENDATION_ERROR(HttpStatus.BAD_REQUEST, 40023, "비회원은 카페 추천을 받을 수 없습니다. 로그인 후 이용해 주세요."),
     INVALID_TAG_ERROR(HttpStatus.BAD_REQUEST, 40024, "유효하지 않은 tag입니다."),
-    GUEST_USER_SPOT_DETAIL_ERROR(HttpStatus.BAD_REQUEST, 40025, "비회원은 장소 상세 정보를 조회할 수 없습니다. 로그인 후 이용해 주세요."),
 
     /* 404 Not Found */
     NOT_FOUND_SPOT_ERROR(HttpStatus.NOT_FOUND, 40403, "존재하지 않는 장소입니다."),

@@ -159,7 +159,7 @@ public class SpotService {
         // TODO: 장소는 최대 15개까지만 노출
         if (principalHandler.isGuestUser()) { // TODO: 메서드화 (게스트 유저와 온보딩 건너뛴 유저)
             if (SpotType.CAFE.equals(SpotType.fromValue(request.condition().spotType()))) {
-                throw new BusinessException(ErrorType.GUEST_USER_CAFE_RECOMMENDATION_ERROR);
+                throw new BusinessException(ErrorType.NO_PRINCIPAL_ERROR);
             }
 
             String transportMode; // TODO: 추후 enum 처리
@@ -452,7 +452,7 @@ public class SpotService {
     ) {
         if (principalHandler.isGuestUser()) {
             if (!isDeepLink) {
-                throw new BusinessException(ErrorType.GUEST_USER_SPOT_DETAIL_ERROR);
+                throw new BusinessException(ErrorType.NO_PRINCIPAL_ERROR);
             }
 
             return false;
