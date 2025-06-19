@@ -442,9 +442,13 @@ public class MemberService {
 
         if (birthDate == null || birthDate.isEmpty()) {
             member.setBirthDate(null);
-        } else if (!member.getBirthDate().toString().equals(birthDate)) {
-            LocalDate parsedBirthDate = validateAndParseBirthDate(birthDate);
-            member.setBirthDate(parsedBirthDate);
+        } else {
+            LocalDate currentBirthDate = member.getBirthDate();
+            
+            if (currentBirthDate == null || !birthDate.equals(currentBirthDate.toString())) {
+                LocalDate parsedBirthDate = validateAndParseBirthDate(birthDate);
+                member.setBirthDate(parsedBirthDate);
+            }
         }
 
         memberRepository.save(
