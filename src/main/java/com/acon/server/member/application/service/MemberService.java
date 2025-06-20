@@ -158,7 +158,7 @@ public class MemberService {
     }
 
     private static boolean isBetween(String target, String from, String to) {
-        return compare(target, from) >= 0 && compare(target, to) <= 0;
+        return compare(target, from) >= 0 && compare(target, to) < 0;
     }
 
     private static int compare(String a, String b) {
