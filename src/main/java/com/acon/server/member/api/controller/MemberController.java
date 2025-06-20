@@ -11,6 +11,7 @@ import com.acon.server.member.api.request.SavedSpotRequest;
 import com.acon.server.member.api.request.VerifiedAreaRequest;
 import com.acon.server.member.api.request.WithdrawalReasonRequest;
 import com.acon.server.member.api.response.AcornCountResponse;
+import com.acon.server.member.api.response.AppUpdateResponse;
 import com.acon.server.member.api.response.LoginResponse;
 import com.acon.server.member.api.response.PreSignedUrlResponse;
 import com.acon.server.member.api.response.ProfileResponse;
@@ -20,10 +21,12 @@ import com.acon.server.member.api.response.VerifiedAreaListResponse;
 import com.acon.server.member.application.service.MemberService;
 import com.acon.server.member.domain.enums.DislikeFood;
 import com.acon.server.member.domain.enums.ImageType;
+import com.acon.server.member.domain.enums.Platform;
 import com.acon.server.member.domain.enums.SocialType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +51,19 @@ import org.springframework.web.bind.annotation.RestController;
 public class MemberController {
 
     private final MemberService memberService;
+
+    @GetMapping(path = "/app-updates", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<AppUpdateResponse> getForceUpdateRequired(
+            @RequestParam(name = "platform") final String platformString,
+            @Pattern(regexp = "^\\d+(\\.\\d+){0,2}$", message = "유효하지 않은 version입니다.")
+            @RequestParam(name = "version") final String version
+    ) {
+        Platform platform = Platform.fromValue(platformString);
+
+        return ResponseEntity.ok(
+                memberService.fetchForceUpdateRequired(platform, version)
+        );
+    }
 
     @PostMapping(
             path = "/auth/login",

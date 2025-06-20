@@ -44,6 +44,7 @@ public enum ErrorType {
     INVALID_DISLIKE_FOOD_ERROR(HttpStatus.BAD_REQUEST, 40013, "유효하지 않은 dislikeFood입니다."),
     INVALID_VERIFIED_AREA_COUNT_ERROR(HttpStatus.BAD_REQUEST, 40032, "인증 지역은 최소 1개 ~ 최대 3개까지 가능합니다."),
     INVALID_IMAGE_TYPE_ERROR(HttpStatus.BAD_REQUEST, 40045, "유효하지 않은 imageType입니다."),
+    INVALID_PLATFORM_ERROR(HttpStatus.BAD_REQUEST, 40046, "유효하지 않은 platform입니다."),
     INVALID_NICKNAME_ERROR(HttpStatus.BAD_REQUEST, 40051, "닉네임이 조건을 만족하지 않습니다."),
     INVALID_BIRTH_DATE_ERROR(HttpStatus.BAD_REQUEST, 40053, "유효하지 않은 생년월일입니다."),
     INVALID_VERIFIED_AREA_ERROR(HttpStatus.BAD_REQUEST, 40054, "유효하지 않은 인증 지역입니다."),
