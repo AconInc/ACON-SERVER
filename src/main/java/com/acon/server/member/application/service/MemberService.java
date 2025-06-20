@@ -8,6 +8,7 @@ import com.acon.server.global.exception.ErrorType;
 import com.acon.server.global.external.maps.NaverMapsAdapter;
 import com.acon.server.global.external.s3.S3Adapter;
 import com.acon.server.member.api.response.AcornCountResponse;
+import com.acon.server.member.api.response.AppUpdateResponse;
 import com.acon.server.member.api.response.LoginResponse;
 import com.acon.server.member.api.response.PreSignedUrlResponse;
 import com.acon.server.member.api.response.ProfileResponse;
@@ -22,12 +23,14 @@ import com.acon.server.member.domain.entity.GuidedSpot;
 import com.acon.server.member.domain.entity.Member;
 import com.acon.server.member.domain.enums.DislikeFood;
 import com.acon.server.member.domain.enums.ImageType;
+import com.acon.server.member.domain.enums.Platform;
 import com.acon.server.member.domain.enums.SocialType;
 import com.acon.server.member.domain.vo.MemberIdentifiersVO;
 import com.acon.server.member.infra.entity.GuidedSpotEntity;
 import com.acon.server.member.infra.entity.MemberEntity;
 import com.acon.server.member.infra.entity.PreferenceEntity;
 import com.acon.server.member.infra.entity.SavedSpotEntity;
+import com.acon.server.member.infra.entity.UpdatePolicyEntity;
 import com.acon.server.member.infra.entity.VerifiedAreaEntity;
 import com.acon.server.member.infra.entity.WithdrawalReasonEntity;
 import com.acon.server.member.infra.external.google.GoogleSocialService;
@@ -36,6 +39,7 @@ import com.acon.server.member.infra.repository.GuidedSpotRepository;
 import com.acon.server.member.infra.repository.MemberRepository;
 import com.acon.server.member.infra.repository.PreferenceRepository;
 import com.acon.server.member.infra.repository.SavedSpotRepository;
+import com.acon.server.member.infra.repository.UpdatePolicyRepository;
 import com.acon.server.member.infra.repository.VerifiedAreaRepository;
 import com.acon.server.member.infra.repository.WithdrawalReasonRepository;
 import com.acon.server.spot.infra.entity.SpotEntity;
@@ -54,6 +58,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -75,13 +80,15 @@ public class MemberService {
     private static final double MIN_LONGITUDE = 124.6;
     private static final double MAX_LONGITUDE = 131.9;
     private static final char[] CHARACTERS = "abcdefghijklmnopqrstuvwxyz0123456789_.".toCharArray();
-    private static final String NICKNAME_PATTERN = "^[a-z0-9_.]+$";
+    private static final Pattern VERSION_PATTERN = Pattern.compile("^\\d+(\\.\\d+){0,2}$");
+    private static final Pattern NICKNAME_PATTERN = Pattern.compile("^[a-z0-9_.]+$");
     private static final DateTimeFormatter BIRTH_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy.MM.dd");
 
     private final GuidedSpotRepository guidedSpotRepository;
     private final MemberRepository memberRepository;
     private final PreferenceRepository preferenceRepository;
     private final SavedSpotRepository savedSpotRepository;
+    private final UpdatePolicyRepository updatePolicyRepository;
     private final VerifiedAreaRepository verifiedAreaRepository;
     private final WithdrawalReasonRepository withdrawalReasonRepository;
 
@@ -111,6 +118,73 @@ public class MemberService {
 
     @Value("${google.test-account-4}")
     private String testAccount4;
+
+    @Transactional(readOnly = true)
+    public AppUpdateResponse fetchForceUpdateRequired(
+            final Platform platform,
+            final String version
+    ) {
+        // TODO: 정규식 검증 추후 이동
+//        if (!VERSION_PATTERN.matcher(version).matches()) {
+//            throw new BusinessException(ErrorType.INVALID_VERSION_ERROR);
+//        }
+
+        List<UpdatePolicyEntity> updatePolicyEntityList = updatePolicyRepository.findAllByPlatformOrderById(platform);
+        String normalizedVersion = normalize(version);
+
+        boolean needForceUpdate = updatePolicyEntityList.stream()
+                .anyMatch(p -> isBetween(
+                        normalizedVersion,
+                        p.getFromVersion(),
+                        p.getToVersion()
+                ));
+
+        return new AppUpdateResponse(needForceUpdate);
+    }
+
+    private static String normalize(String version) {
+        String[] p = version.split("\\.");
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < 3; i++) {
+            sb.append(i < p.length ? Integer.parseInt(p[i]) : 0);
+
+            if (i < 2) {
+                sb.append('.');
+            }
+        }
+
+        return sb.toString();
+    }
+
+    private static boolean isBetween(String target, String from, String to) {
+        return compare(target, from) >= 0 && compare(target, to) <= 0;
+    }
+
+    private static int compare(String a, String b) {
+        int[] v1 = parse(a);
+        int[] v2 = parse(b);
+
+        for (int i = 0; i < 3; i++) {
+            int diff = v1[i] - v2[i];
+
+            if (diff != 0) {
+                return diff;
+            }
+        }
+
+        return 0;
+    }
+
+    private static int[] parse(String v) {
+        String[] p = v.split("\\.");
+
+        return new int[]{
+                Integer.parseInt(p[0]),
+                Integer.parseInt(p[1]),
+                Integer.parseInt(p[2])
+        };
+    }
 
     // TODO: 메서드 순서 정리, TRANSACTION 설정, mapper 사용
     // TODO: @Valid 거친 건 원시타입으로 받기
@@ -444,7 +518,7 @@ public class MemberService {
             member.setBirthDate(null);
         } else {
             LocalDate currentBirthDate = member.getBirthDate();
-            
+
             if (currentBirthDate == null || !birthDate.equals(currentBirthDate.toString())) {
                 LocalDate parsedBirthDate = validateAndParseBirthDate(birthDate);
                 member.setBirthDate(parsedBirthDate);
@@ -478,7 +552,7 @@ public class MemberService {
     }
 
     private void validateNicknamePattern(final String nickname) {
-        if (!nickname.matches(NICKNAME_PATTERN)) {
+        if (!NICKNAME_PATTERN.matcher(nickname).matches()) {
             throw new BusinessException(ErrorType.INVALID_NICKNAME_ERROR);
         }
     }
