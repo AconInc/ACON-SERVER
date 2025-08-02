@@ -557,6 +557,7 @@ public class MemberService {
         }
     }
 
+    // TODO: 패턴이랑 하나로 통일
     private void validateNicknameLength(final String nickname) {
         if (nickname.length() < MIN_NICKNAME_LENGTH || nickname.length() > MAX_NICKNAME_LENGTH) {
             throw new BusinessException(ErrorType.INVALID_NICKNAME_ERROR);
