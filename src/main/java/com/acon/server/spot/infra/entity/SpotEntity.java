@@ -54,7 +54,7 @@ public class SpotEntity {
     private String name;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "spot_type", length = 10, nullable = false)
+    @Column(name = "spot_type", length = 20, nullable = false)
     private SpotType spotType;
 
     @Column(name = "local_acorn_count", nullable = false)
@@ -63,7 +63,7 @@ public class SpotEntity {
     @Column(name = "basic_acorn_count", nullable = false)
     private Integer basicAcornCount;
 
-    @Column(name = "address", nullable = false)
+    @Column(name = "address", length = 100, nullable = false)
     private String address;
 
     @Column(name = "latitude")
