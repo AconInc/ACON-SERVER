@@ -33,6 +33,9 @@ public class ReviewEntity {
     @Column(name = "member_id", nullable = false)
     private Long memberId;
 
+    @Column(name = "recommended_menu", length = 50, nullable = false)
+    private String recommendedMenu;
+
     @Column(name = "acorn_count", nullable = false)
     private int acornCount;
 

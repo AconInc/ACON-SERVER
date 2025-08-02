@@ -10,6 +10,7 @@ public class Review {
     private final Long id;
     private final Long spotId;
     private final Long memberId;
+    private final String recommendedMenu;
     private final int acornCount;
     private final boolean localAcorn;
 
@@ -21,6 +22,7 @@ public class Review {
             Long id,
             Long spotId,
             Long memberId,
+            String recommendedMenu,
             int acornCount,
             boolean localAcorn,
             LocalDateTime createdAt,
@@ -29,6 +31,7 @@ public class Review {
         this.id = id;
         this.spotId = spotId;
         this.memberId = memberId;
+        this.recommendedMenu = recommendedMenu;
         this.acornCount = acornCount;
         this.localAcorn = localAcorn;
         this.createdAt = createdAt;

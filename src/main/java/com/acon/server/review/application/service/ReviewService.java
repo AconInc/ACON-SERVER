@@ -10,6 +10,7 @@ import com.acon.server.member.infra.repository.MemberRepository;
 import com.acon.server.member.infra.repository.VerifiedAreaRepository;
 import com.acon.server.review.api.response.ReviewAvailabilityResponse;
 import com.acon.server.review.application.mapper.ReviewMapper;
+import com.acon.server.review.application.model.ReviewContext;
 import com.acon.server.review.domain.entity.Review;
 import com.acon.server.review.infra.repository.ReviewRepository;
 import com.acon.server.spot.application.mapper.SpotMapper;
@@ -105,10 +106,42 @@ public class ReviewService {
         MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
         SpotEntity spotEntity = spotRepository.findByIdOrElseThrow(spotId);
 
-//        validateDropAcornAvailability(memberEntity.getLeftAcornCount(), acornCount); // Acon 2.0 정책: 도토리 무제한
+        Member member = memberMapper.toDomain(memberEntity);
+        Spot spot = spotMapper.toDomain(spotEntity);
+
+        ReviewContext context = buildReviewContext(member, spot, acornCount, null);
+
+        memberRepository.save(memberMapper.toEntity(context.member()));
+        spotRepository.save(spotMapper.toEntity(context.spot()));
+        reviewRepository.save(reviewMapper.toEntity(context.review()));
+    }
+
+    @Transactional
+    public void createReview(
+            final long spotId,
+            final String recommendedMenu,
+            final int acornCount
+    ) {
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
+        SpotEntity spotEntity = spotRepository.findByIdOrElseThrow(spotId);
 
         Member member = memberMapper.toDomain(memberEntity);
         Spot spot = spotMapper.toDomain(spotEntity);
+
+        ReviewContext context = buildReviewContext(member, spot, acornCount, recommendedMenu);
+
+        memberRepository.save(memberMapper.toEntity(context.member()));
+        spotRepository.save(spotMapper.toEntity(context.spot()));
+        reviewRepository.save(reviewMapper.toEntity(context.review()));
+    }
+
+    private ReviewContext buildReviewContext(
+            Member member,
+            Spot spot,
+            int acornCount,
+            String recommendedMenu
+    ) {
+//        validateDropAcornAvailability(memberEntity.getLeftAcornCount(), acornCount); // Acon 2.0 정책: 도토리 무제한
 
         boolean isLocal = isVerifiedArea(member.getId(), spot.getLegalDong());
 
@@ -116,15 +149,14 @@ public class ReviewService {
         spot.addAcorn(acornCount, isLocal);
 
         Review review = Review.builder()
-                .spotId(spotId)
-                .memberId(memberEntity.getId())
+                .spotId(spot.getId())
+                .memberId(member.getId())
                 .acornCount(acornCount)
+                .recommendedMenu(recommendedMenu)
                 .localAcorn(isLocal)
                 .build();
 
-        memberRepository.save(memberMapper.toEntity(member));
-        spotRepository.save(spotMapper.toEntity(spot));
-        reviewRepository.save(reviewMapper.toEntity(review));
+        return ReviewContext.of(member, spot, review);
     }
 
     private void validateDropAcornAvailability(int leftAcornCount, int acornCount) {
