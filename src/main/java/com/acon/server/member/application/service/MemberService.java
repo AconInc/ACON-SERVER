@@ -119,6 +119,15 @@ public class MemberService {
     @Value("${google.test-account-4}")
     private String testAccount4;
 
+    // TODO: 순환 참조 방지를 위해 같은 메서드를 재선언했으므로, 추후 Facade 패턴을 통한 리팩토링 필요
+    @Transactional(readOnly = true)
+    public boolean checkTestUser() {
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
+
+        return memberEntity.getSocialId().equals(testAccount1) || memberEntity.getSocialId().equals(testAccount2)
+                || memberEntity.getSocialId().equals(testAccount3) || memberEntity.getSocialId().equals(testAccount4);
+    }
+
     @Transactional(readOnly = true)
     public AppUpdateResponse fetchForceUpdateRequired(
             final Platform platform,
@@ -296,15 +305,6 @@ public class MemberService {
         if (!verifiedAreaRepository.existsByMemberIdAndName(memberId, legalDong)) {
             createVerifiedArea(memberId, legalDong);
         }
-    }
-
-    // TODO: 순환 참조 방지를 위해 같은 메서드를 재선언했으므로, 추후 Facade 패턴을 통한 리팩토링 필요
-    @Transactional(readOnly = true)
-    public boolean checkTestUser() {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
-
-        return memberEntity.getSocialId().equals(testAccount1) || memberEntity.getSocialId().equals(testAccount2)
-                || memberEntity.getSocialId().equals(testAccount3) || memberEntity.getSocialId().equals(testAccount4);
     }
 
     // TODO: 공통 메서드로 빼기

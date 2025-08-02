@@ -3,10 +3,10 @@ package com.acon.server.spot.api.controller;
 import com.acon.server.global.auth.PrincipalHandler;
 import com.acon.server.spot.api.request.SpotListRequest;
 import com.acon.server.spot.api.response.MenuboardImageListResponse;
-import com.acon.server.spot.api.response.SearchSpotListResponse;
 import com.acon.server.spot.api.response.SearchSuggestionListResponse;
 import com.acon.server.spot.api.response.SpotDetailResponse;
 import com.acon.server.spot.api.response.SpotListResponse;
+import com.acon.server.spot.api.response.SpotSearchListResponse;
 import com.acon.server.spot.api.response.VerifiedSpotResponse;
 import com.acon.server.spot.application.service.SpotService;
 import jakarta.validation.Valid;
@@ -80,7 +80,7 @@ public class SpotController {
     }
 
     @GetMapping(path = "/search-suggestions", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<SearchSuggestionListResponse> getSearchSuggestions(
+    public ResponseEntity<SearchSuggestionListResponse> getSearchSuggestionList(
             @NotNull(message = "위도는 필수입니다.")
             @RequestParam(name = "latitude") Double latitude,
             @NotNull(message = "경도는 필수입니다.")
@@ -96,9 +96,8 @@ public class SpotController {
         );
     }
 
-    // TODO: 메서드 네이밍 수정 필요
     @GetMapping(path = "/spots/search", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<SearchSpotListResponse> searchSpot(
+    public ResponseEntity<SpotSearchListResponse> getSpotSearchList(
             @RequestParam(value = "keyword", required = false) final String keyword
     ) {
         return ResponseEntity.ok(

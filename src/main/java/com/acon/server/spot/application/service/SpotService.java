@@ -16,13 +16,13 @@ import com.acon.server.review.infra.repository.ReviewRepository;
 import com.acon.server.spot.api.request.SpotListRequest;
 import com.acon.server.spot.api.response.MenuResponse;
 import com.acon.server.spot.api.response.MenuboardImageListResponse;
-import com.acon.server.spot.api.response.SearchSpotListResponse;
-import com.acon.server.spot.api.response.SearchSpotResponse;
 import com.acon.server.spot.api.response.SearchSuggestionListResponse;
 import com.acon.server.spot.api.response.SearchSuggestionResponse;
 import com.acon.server.spot.api.response.SpotDetailResponse;
 import com.acon.server.spot.api.response.SpotListResponse;
 import com.acon.server.spot.api.response.SpotListResponse.RecommendedSpot;
+import com.acon.server.spot.api.response.SpotSearchListResponse;
+import com.acon.server.spot.api.response.SpotSearchListResponse.SearchedSpot;
 import com.acon.server.spot.application.mapper.SpotMapper;
 import com.acon.server.spot.domain.entity.Spot;
 import com.acon.server.spot.domain.enums.SpotType;
@@ -103,6 +103,14 @@ public class SpotService {
 
     @Value("${google.test-account-4}")
     private String testAccount4;
+
+    @Transactional(readOnly = true)
+    public boolean checkTestUser() {
+        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
+
+        return memberEntity.getSocialId().equals(testAccount1) || memberEntity.getSocialId().equals(testAccount2)
+                || memberEntity.getSocialId().equals(testAccount3) || memberEntity.getSocialId().equals(testAccount4);
+    }
 
     // 메서드 설명: 위치 정보가 없는 Spot들의 위치 정보를 업데이트한다.
     @Transactional
@@ -242,14 +250,6 @@ public class SpotService {
         return new SpotListResponse(transportMode, spotList);
     }
 
-    @Transactional(readOnly = true)
-    public boolean checkTestUser() {
-        MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
-
-        return memberEntity.getSocialId().equals(testAccount1) || memberEntity.getSocialId().equals(testAccount2)
-                || memberEntity.getSocialId().equals(testAccount3) || memberEntity.getSocialId().equals(testAccount4);
-    }
-
     private boolean isOutOfServiceArea(
             final double latitude,
             final double longitude
@@ -326,7 +326,7 @@ public class SpotService {
             final Double longitude,
             final String transportMode
     ) {
-        Double distanceMeter = spotRepository.calculateDistanceFromSpot(spotId, longitude, latitude);
+        Double distanceMeter = spotRepository.calculateDistanceToSpot(spotId, longitude, latitude);
 
         return calculateMovingTimeFromDistance(distanceMeter, transportMode);
     }
@@ -555,9 +555,9 @@ public class SpotService {
     }
 
     @Transactional(readOnly = true)
-    public SearchSpotListResponse searchSpot(final String keyword) {
+    public SpotSearchListResponse searchSpot(final String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) {
-            return new SearchSpotListResponse(Collections.emptyList());
+            return new SpotSearchListResponse(Collections.emptyList());
         }
 
         List<SpotEntity> spotEntityList = spotRepository.findTop10ByNameStartingWithIgnoreCase(keyword);
@@ -579,8 +579,8 @@ public class SpotService {
         }
 
         // TODO: mapper로 변경
-        List<SearchSpotResponse> spotList = spotEntityList.stream()
-                .map(spotEntity -> SearchSpotResponse.builder()
+        List<SearchedSpot> spotList = spotEntityList.stream()
+                .map(spotEntity -> SearchedSpot.builder()
                         .spotId(spotEntity.getId())
                         .name(spotEntity.getName())
                         .address(spotEntity.getAddress())
@@ -588,7 +588,7 @@ public class SpotService {
                         .build())
                 .toList();
 
-        return new SearchSpotListResponse(spotList);
+        return new SpotSearchListResponse(spotList);
     }
 
     @Transactional(readOnly = true)
@@ -621,6 +621,6 @@ public class SpotService {
             final Double latitude,
             final Double longitude
     ) {
-        return spotRepository.calculateDistanceFromSpot(spotId, longitude, latitude);
+        return spotRepository.calculateDistanceToSpot(spotId, longitude, latitude);
     }
 }
