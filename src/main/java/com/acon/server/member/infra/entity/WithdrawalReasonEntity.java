@@ -26,7 +26,7 @@ public class WithdrawalReasonEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "reason", nullable = false)
+    @Column(name = "reason", length = 100, nullable = false)
     private String reason;
 
     @CreatedDate

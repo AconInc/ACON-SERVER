@@ -16,6 +16,7 @@ import com.acon.server.review.infra.repository.ReviewRepository;
 import com.acon.server.spot.api.request.SpotListRequest;
 import com.acon.server.spot.api.response.MenuResponse;
 import com.acon.server.spot.api.response.MenuboardImageListResponse;
+import com.acon.server.spot.api.response.ReviewAvailabilityResponse;
 import com.acon.server.spot.api.response.SearchSuggestionListResponse;
 import com.acon.server.spot.api.response.SearchSuggestionResponse;
 import com.acon.server.spot.api.response.SpotDetailResponse;
@@ -66,7 +67,6 @@ public class SpotService {
     private static final double BIKING_RADIUS = 3300.0; // 시속 9.9km
     private static final int SUGGESTION_RADIUS = 250;
     private static final int SUGGESTION_LIMIT = 5;
-    private static final int VERIFICATION_DISTANCE = 250;
     private static final int SEARCH_LIMIT = 10;
     private static final double MIN_LATITUDE = 33.1;
     private static final double MAX_LATITUDE = 38.6;
@@ -281,6 +281,7 @@ public class SpotService {
     ) {
         Long spotId = spotEntity.getId();
 
+        // TODO: Builder로 전환
         return new RecommendedSpot(
                 spotId,
                 fetchSpotImage(spotId),
@@ -592,11 +593,13 @@ public class SpotService {
     }
 
     @Transactional(readOnly = true)
-    public boolean verifySpot(
+    public ReviewAvailabilityResponse verifyReviewAvailability(
             final long spotId,
             final double latitude,
             final double longitude
     ) {
+        boolean success;
+
         if (isOutOfServiceArea(latitude, longitude)) {
             throw new BusinessException(ErrorType.UNAVAILABLE_SERVICE_AREA_ERROR);
         }
@@ -605,14 +608,16 @@ public class SpotService {
             throw new BusinessException(ErrorType.NOT_FOUND_SPOT_ERROR);
         }
 
-        Double distance = spotRepository.calculateDistanceFromSpot(spotId, longitude, latitude);
+        Double distance = spotRepository.calculateDistanceToSpot(spotId, longitude, latitude);
 
         if (distance == null) {
-            return false;
+            success = false;
+        } else {
+//            available = distance <= VERIFICATION_DISTANCE;
+            success = true; // TODO: 앱 출시 초기 단계에서 리뷰 작성 시 거리 제한 미적용, 추후 다시 도입 예정
         }
 
-//        return distance <= VERIFICATION_DISTANCE;
-        return true; // TODO: 앱 출시 초기 단계에서 리뷰 작성 시 거리 제한 미적용, 추후 다시 도입 예정
+        return ReviewAvailabilityResponse.of(success);
     }
 
     @Transactional(readOnly = true)

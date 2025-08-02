@@ -6,13 +6,13 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import java.util.List;
 import lombok.Builder;
 
-@Builder
 @JsonInclude(Include.NON_NULL)
 public record SpotListResponse(
         String transportMode,
         List<RecommendedSpot> spotList
 ) {
 
+    @Builder
     public record RecommendedSpot(
             Long spotId,
             String image,

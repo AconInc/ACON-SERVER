@@ -26,13 +26,14 @@ public class SpotNativeQueryRepository {
             double radius
     ) {
         StringBuilder sqlValue = new StringBuilder();
-        sqlValue.append("SELECT s.* \n")
-                .append("FROM spot s \n")
+        sqlValue.append("SELECT s.*\n")
+                .append("FROM spot s\n")
                 .append("WHERE ST_DWithin(\n")
                 .append("        s.geom::geography,\n")
                 .append("        ST_SetSRID(ST_MakePoint(:lng, :lat),4326)::geography,\n")
-                .append("        :radius) \n")
-                .append("  AND s.spot_type = :spotType \n");
+                .append("        :radius\n")
+                .append(")\n")
+                .append("  AND s.spot_type = :spotType\n");
 
         if (filterList != null && !filterList.isEmpty()) {
             for (int i = 0; i < filterList.size(); i++) {
@@ -41,19 +42,20 @@ public class SpotNativeQueryRepository {
                 }
 
                 sqlValue.append("  AND EXISTS (\n")
-                        .append("        SELECT 1 FROM spot_option so\n")
+                        .append("        SELECT 1\n")
+                        .append("        FROM spot_option so\n")
                         .append("        JOIN \"option\" o ON o.id = so.option_id\n")
                         .append("        JOIN category c ON c.id = o.category_id\n")
                         .append("        WHERE so.spot_id = s.id\n")
                         .append("          AND c.name = :cat_").append(i).append("\n")
                         .append("          AND o.name IN (:opt_").append(i).append(")\n")
-                        .append("   )\n");
+                        .append("  )\n");
             }
         }
 
         sqlValue.append("ORDER BY ST_Distance(\n")
-                .append("            s.geom::geography,\n")
-                .append("            ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography\n")
+                .append("           s.geom::geography,\n")
+                .append("           ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography\n")
                 .append(") ASC");
 
         Query query = entityManager.createNativeQuery(sqlValue.toString(), SpotEntity.class);

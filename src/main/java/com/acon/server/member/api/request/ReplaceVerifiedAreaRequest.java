@@ -7,8 +7,10 @@ public record ReplaceVerifiedAreaRequest(
         @NotNull(message = "previousVerifiedAreaId는 필수입니다.")
         @Positive(message = "previousVerifiedAreaId는 양수여야 합니다.")
         Long previousVerifiedAreaId,
+
         @NotNull(message = "위도는 필수입니다.")
         Double latitude,
+
         @NotNull(message = "경도는 필수입니다.")
         Double longitude
 ) {
