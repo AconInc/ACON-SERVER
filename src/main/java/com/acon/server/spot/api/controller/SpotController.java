@@ -7,7 +7,6 @@ import com.acon.server.spot.api.response.SearchSuggestionListResponse;
 import com.acon.server.spot.api.response.SpotDetailResponse;
 import com.acon.server.spot.api.response.SpotListResponse;
 import com.acon.server.spot.api.response.SpotSearchListResponse;
-import com.acon.server.spot.api.response.VerifiedSpotResponse;
 import com.acon.server.spot.application.service.SpotService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -26,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/spots")
 @Validated
 public class SpotController {
 
@@ -34,7 +33,6 @@ public class SpotController {
     private final PrincipalHandler principalHandler;
 
     @PostMapping(
-            path = "/spots",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
@@ -55,7 +53,7 @@ public class SpotController {
         );
     }
 
-    @GetMapping(path = "/spots/{spotId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/{spotId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SpotDetailResponse> getSpotDetail(
             @NotNull(message = "spotId는 필수입니다.")
             @Positive(message = "spotId는 양수여야 합니다.")
@@ -68,7 +66,7 @@ public class SpotController {
         );
     }
 
-    @GetMapping(path = "/spots/{spotId}/menuboards", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/{spotId}/menuboards", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<MenuboardImageListResponse> getMenuboardList(
             @NotNull(message = "spotId는 필수입니다.")
             @Positive(message = "spotId는 양수여야 합니다.")
@@ -96,7 +94,7 @@ public class SpotController {
         );
     }
 
-    @GetMapping(path = "/spots/search", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SpotSearchListResponse> getSpotSearchList(
             @RequestParam(value = "keyword", required = false) final String keyword
     ) {
@@ -105,29 +103,8 @@ public class SpotController {
         );
     }
 
-    // TODO: 메서드 네이밍 수정 필요
-    @GetMapping(path = "/spots/verify", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<VerifiedSpotResponse> verifySpot(
-            @NotNull(message = "spotId는 필수입니다.")
-            @Positive(message = "spotId는 양수여야 합니다.")
-            @RequestParam(name = "spotId") final Long spotId,
-            @NotNull(message = "위도는 필수입니다.")
-            @RequestParam(name = "latitude") Double latitude,
-            @NotNull(message = "경도는 필수입니다.")
-            @RequestParam(name = "longitude") Double longitude
-    ) {
-        if (spotService.checkTestUser()) {
-            latitude = 37.559115;
-            longitude = 126.921976;
-        }
-
-        return ResponseEntity.ok(
-                new VerifiedSpotResponse(spotService.verifySpot(spotId, latitude, longitude))
-        );
-    }
-
-    @GetMapping(path = "/spots/{spotId}/distance", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Double> calculateDistance(
+    @GetMapping(path = "/{spotId}/distance", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Double> getDistanceToSpot(
             @NotNull(message = "spotId는 필수입니다.")
             @Positive(message = "spotId는 양수여야 합니다.")
             @PathVariable(name = "spotId") final Long spotId,
