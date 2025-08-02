@@ -71,7 +71,7 @@ public class MemberService {
 
     private static final int MIN_NICKNAME_LENGTH = 1;
     private static final int MAX_NICKNAME_LENGTH = 14;
-    private static final int MIN_VERIFIED_AREA_COUNT = 1;
+    private static final int MIN_VERIFIED_AREA_COUNT = 0;
     private static final int MAX_VERIFIED_AREA_COUNT = 3;
     private static final int DELETE_RESTRICTION_START_WEEK = 1;
     private static final int DELETE_RESTRICTION_END_MONTH = 3;
