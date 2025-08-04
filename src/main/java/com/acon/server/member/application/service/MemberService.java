@@ -220,13 +220,15 @@ public class MemberService {
         String refreshToken = jwtTokenProvider.issueRefreshToken(memberIdsVO.memberId());
 
         boolean hasVerifiedArea = verifiedAreaRepository.existsByMemberId(memberIdsVO.memberId());
+        boolean hasPreference = preferenceRepository.existsById(memberIdsVO.memberId());
 
         // TODO: dto 파라미터 개수에 따른 컨벤션 고민 필요
         return LoginResponse.of(
                 memberIdsVO.externalUUID(),
                 accessToken,
                 refreshToken,
-                hasVerifiedArea
+                hasVerifiedArea,
+                hasPreference
         );
     }
 
