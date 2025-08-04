@@ -33,7 +33,7 @@ public class ReviewEntity {
     @Column(name = "member_id", nullable = false)
     private Long memberId;
 
-    @Column(name = "recommended_menu", length = 50, nullable = false)
+    @Column(name = "recommended_menu", length = 50)
     private String recommendedMenu;
 
     @Column(name = "acorn_count", nullable = false)
@@ -55,6 +55,7 @@ public class ReviewEntity {
             Long id,
             Long spotId,
             Long memberId,
+            String recommendedMenu,
             int acornCount,
             boolean localAcorn,
             LocalDateTime createdAt,
@@ -63,6 +64,7 @@ public class ReviewEntity {
         this.id = id;
         this.spotId = spotId;
         this.memberId = memberId;
+        this.recommendedMenu = recommendedMenu;
         this.acornCount = acornCount;
         this.localAcorn = localAcorn;
         this.createdAt = createdAt;
