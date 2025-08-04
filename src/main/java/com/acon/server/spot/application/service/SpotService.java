@@ -13,6 +13,7 @@ import com.acon.server.member.infra.repository.MemberRepository;
 import com.acon.server.member.infra.repository.PreferenceRepository;
 import com.acon.server.member.infra.repository.SavedSpotRepository;
 import com.acon.server.review.infra.repository.ReviewRepository;
+import com.acon.server.spot.api.request.ApplySpotRequest;
 import com.acon.server.spot.api.request.SpotListRequest;
 import com.acon.server.spot.api.response.MenuResponse;
 import com.acon.server.spot.api.response.MenuboardImageListResponse;
@@ -26,16 +27,23 @@ import com.acon.server.spot.api.response.SpotSearchListResponse;
 import com.acon.server.spot.api.response.SpotSearchListResponse.SearchedSpot;
 import com.acon.server.spot.application.mapper.SpotMapper;
 import com.acon.server.spot.domain.entity.Spot;
+import com.acon.server.spot.domain.enums.SpotApplicationStatus;
 import com.acon.server.spot.domain.enums.SpotType;
 import com.acon.server.spot.domain.enums.Tag;
+import com.acon.server.spot.infra.entity.ApplySpotEntity;
+import com.acon.server.spot.infra.entity.ApplySpotOptionEntity;
 import com.acon.server.spot.infra.entity.MenuEntity;
 import com.acon.server.spot.infra.entity.MenuboardImageEntity;
 import com.acon.server.spot.infra.entity.OpeningHourEntity;
 import com.acon.server.spot.infra.entity.SpotEntity;
 import com.acon.server.spot.infra.entity.SpotImageEntity;
+import com.acon.server.spot.infra.repository.ApplySpotOptionRepository;
+import com.acon.server.spot.infra.repository.ApplySpotRepository;
+import com.acon.server.spot.infra.repository.CategoryRepository;
 import com.acon.server.spot.infra.repository.MenuRepository;
 import com.acon.server.spot.infra.repository.MenuboardImageRepository;
 import com.acon.server.spot.infra.repository.OpeningHourRepository;
+import com.acon.server.spot.infra.repository.OptionRepository;
 import com.acon.server.spot.infra.repository.SpotImageRepository;
 import com.acon.server.spot.infra.repository.SpotNativeQueryRepository;
 import com.acon.server.spot.infra.repository.SpotOptionRepository;
@@ -75,10 +83,17 @@ public class SpotService {
 
     private final GuidedSpotCustomRepository guidedSpotCustomRepository;
     private final MemberRepository memberRepository;
+    private final SavedSpotRepository savedSpotRepository;
 
+    private final ReviewRepository reviewRepository;
+
+    private final ApplySpotRepository applySpotRepository;
+    private final ApplySpotOptionRepository applySpotOptionRepository;
+    private final CategoryRepository categoryRepository;
     private final MenuboardImageRepository menuboardImageRepository;
     private final MenuRepository menuRepository;
     private final OpeningHourRepository openingHourRepository;
+    private final OptionRepository optionRepository;
     private final SpotImageRepository spotImageRepository;
     private final SpotNativeQueryRepository spotNativeQueryRepository;
     private final SpotOptionRepository spotOptionRepository;
@@ -89,8 +104,6 @@ public class SpotService {
     private final PrincipalHandler principalHandler;
 
     private final NaverMapsAdapter naverMapsAdapter;
-    private final ReviewRepository reviewRepository;
-    private final SavedSpotRepository savedSpotRepository;
 
     @Value("${google.test-account-1}")
     private String testAccount1;
@@ -590,6 +603,47 @@ public class SpotService {
                 .toList();
 
         return new SpotSearchListResponse(spotList);
+    }
+
+    @Transactional
+    public void applySpot(final ApplySpotRequest request) {
+        if (principalHandler.isGuestUser()) {
+            throw new BusinessException(ErrorType.UN_LOGIN_ERROR);
+        }
+
+        long memberId = fetchMemberId();
+
+        ApplySpotEntity applySpotEntity = ApplySpotEntity.builder()
+                .memberId(memberId)
+                .name(request.spotName())
+                .address(request.address())
+                .spotType(SpotType.fromValue(request.spotType()))
+                .recommendedMenu(request.recommendedMenu())
+                .imageList(request.imageList())
+                .spotApplicationStatus(SpotApplicationStatus.PENDING)
+                .build();
+
+        applySpotRepository.save(applySpotEntity);
+
+        List<ApplySpotOptionEntity> applySpotOptionEntityList = new ArrayList<>();
+
+        for (ApplySpotRequest.Feature feature : request.featureList()) {
+            String categoryName = feature.category();
+            Long categoryId = categoryRepository.findIdByNameOrElseThrow(categoryName);
+
+            for (String optionName : feature.optionList()) {
+                Long optionId = optionRepository.findIdByCategoryIdAndNameOrElseThrow(categoryId, optionName);
+
+                applySpotOptionEntityList.add(
+                        ApplySpotOptionEntity.builder()
+                                .applySpotId(applySpotEntity.getId())
+                                .optionId(optionId)
+                                .build()
+                );
+            }
+        }
+
+        applySpotOptionRepository.saveAll(applySpotOptionEntityList);
     }
 
     @Transactional(readOnly = true)
