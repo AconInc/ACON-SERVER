@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 public enum Price {
 
     VALUE_FOR_MONEY,
+    AVERAGE_VALUE,
+    LOW_VALUE,
     ;
 
     private static final Map<String, Price> PRICE_MAP = new HashMap<>();

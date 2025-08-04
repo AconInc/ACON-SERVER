@@ -21,7 +21,6 @@ public enum RestaurantFeature {
     BUNSIK,
     BUFFET,
     DRINKING_PLACE,
-    EXCLUDE_FRANCHISE,
     ;
 
     private static final Map<String, RestaurantFeature> RESTAURANT_FEATURE_MAP = new HashMap<>();
