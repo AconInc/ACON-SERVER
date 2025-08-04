@@ -8,10 +8,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CategoryRepository extends JpaRepository<CategoryEntity, Long> {
 
-    Optional<Long> findIdByName(String name);
+    Optional<CategoryEntity> findByName(String name);
 
-    default Long findIdByNameOrElseThrow(String name) {
-        return findIdByName(name).orElseThrow(
+    default CategoryEntity findByNameOrElseThrow(String name) {
+        return findByName(name).orElseThrow(
                 () -> new BusinessException(ErrorType.INVALID_CATEGORY_NAME_ERROR)
         );
     }

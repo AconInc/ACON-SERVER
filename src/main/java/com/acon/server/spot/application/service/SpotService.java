@@ -629,10 +629,10 @@ public class SpotService {
 
         for (ApplySpotRequest.Feature feature : request.featureList()) {
             String categoryName = feature.category();
-            Long categoryId = categoryRepository.findIdByNameOrElseThrow(categoryName);
+            Long categoryId = categoryRepository.findByNameOrElseThrow(categoryName).getId();
 
             for (String optionName : feature.optionList()) {
-                Long optionId = optionRepository.findIdByCategoryIdAndNameOrElseThrow(categoryId, optionName);
+                Long optionId = optionRepository.findByCategoryIdAndNameOrElseThrow(categoryId, optionName).getId();
 
                 applySpotOptionEntityList.add(
                         ApplySpotOptionEntity.builder()

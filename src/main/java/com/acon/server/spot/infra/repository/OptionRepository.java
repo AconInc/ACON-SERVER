@@ -8,10 +8,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface OptionRepository extends JpaRepository<OptionEntity, Long> {
 
-    Optional<Long> findIdByCategoryIdAndName(Long categoryId, String name);
+    Optional<OptionEntity> findByCategoryIdAndName(Long categoryId, String name);
 
-    default Long findIdByCategoryIdAndNameOrElseThrow(Long categoryId, String name) {
-        return findIdByCategoryIdAndName(categoryId, name).orElseThrow(
+    default OptionEntity findByCategoryIdAndNameOrElseThrow(Long categoryId, String name) {
+        return findByCategoryIdAndName(categoryId, name).orElseThrow(
                 () -> new BusinessException(ErrorType.INVALID_CATEGORY_OPTION_ERROR)
         );
     }
