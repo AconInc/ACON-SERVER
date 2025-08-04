@@ -613,17 +613,17 @@ public class SpotService {
 
         long memberId = fetchMemberId();
 
-        ApplySpotEntity applySpotEntity = ApplySpotEntity.builder()
-                .memberId(memberId)
-                .name(request.spotName())
-                .address(request.address())
-                .spotType(SpotType.fromValue(request.spotType()))
-                .recommendedMenu(request.recommendedMenu())
-                .imageList(request.imageList())
-                .spotApplicationStatus(SpotApplicationStatus.PENDING)
-                .build();
-
-        applySpotRepository.save(applySpotEntity);
+        ApplySpotEntity savedApplySpotEntity = applySpotRepository.save(
+                ApplySpotEntity.builder()
+                        .memberId(memberId)
+                        .name(request.spotName())
+                        .address(request.address())
+                        .spotType(SpotType.fromValue(request.spotType()))
+                        .recommendedMenu(request.recommendedMenu())
+                        .imageList(request.imageList())
+                        .spotApplicationStatus(SpotApplicationStatus.PENDING)
+                        .build()
+        );
 
         List<ApplySpotOptionEntity> applySpotOptionEntityList = new ArrayList<>();
 
@@ -636,7 +636,7 @@ public class SpotService {
 
                 applySpotOptionEntityList.add(
                         ApplySpotOptionEntity.builder()
-                                .applySpotId(applySpotEntity.getId())
+                                .applySpotId(savedApplySpotEntity.getId())
                                 .optionId(optionId)
                                 .build()
                 );
