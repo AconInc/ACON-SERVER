@@ -1,6 +1,7 @@
 package com.acon.server.spot.api.controller;
 
 import com.acon.server.global.auth.PrincipalHandler;
+import com.acon.server.spot.api.request.ApplySpotRequest;
 import com.acon.server.spot.api.request.SpotListRequest;
 import com.acon.server.spot.api.response.MenuboardImageListResponse;
 import com.acon.server.spot.api.response.ReviewAvailabilityResponse;
@@ -120,6 +121,15 @@ public class SpotController {
         return ResponseEntity.ok(
                 spotService.searchSpot(keyword)
         );
+    }
+
+    @PostMapping(path = "/spots/apply", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> postSpotApply(
+            @Valid @RequestBody final ApplySpotRequest request
+    ) {
+        spotService.applySpot(request);
+
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping(path = "/spots/verify", produces = MediaType.APPLICATION_JSON_VALUE)

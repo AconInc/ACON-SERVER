@@ -11,8 +11,8 @@ import lombok.RequiredArgsConstructor;
 public enum ImageType {
 
     PROFILE,
-    REVIEW,
     SPOT,
+    MENUBOARD,
     ;
 
     private static final Map<String, ImageType> IMAGE_TYPE_MAP = new HashMap<>();

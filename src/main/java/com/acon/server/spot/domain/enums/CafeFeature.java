@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 public enum CafeFeature {
 
     WORK_FRIENDLY,
-    EXCLUDE_FRANCHISE,
     ;
 
     private static final Map<String, CafeFeature> CAFE_FEATURE_MAP = new HashMap<>();
