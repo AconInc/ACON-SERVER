@@ -538,8 +538,7 @@ public class MemberService {
 
         String preSignedUrl = switch (imageType) {
             case PROFILE -> s3Adapter.getPreSignedUrlForProfileImage(fileName);
-//            case REVIEW -> s3Adapter.getPreSignedUrlForReviewImage(fileName);
-//            case SPOT -> s3Adapter.getPreSignedUrlForSpotImage(fileName);
+            case SPOT -> s3Adapter.getPreSignedUrlForApplySpotImage(fileName);
             default -> throw new BusinessException(ErrorType.INVALID_IMAGE_TYPE_ERROR);
         };
 

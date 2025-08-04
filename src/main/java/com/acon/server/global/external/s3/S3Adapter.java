@@ -34,11 +34,8 @@ public class S3Adapter {
     @Value("${cloud.aws.s3.path.basic-profile-image-url}")
     private String basicProfileImageUrl;
 
-    @Value("${cloud.aws.s3.path.review-image}")
-    private String reviewImagePath;
-
-    @Value("${cloud.aws.s3.path.spot-image}")
-    private String spotImagePath;
+    @Value("${cloud.aws.s3.path.apply-spot-image}")
+    private String applySpotImagePath;
 
     private final AmazonS3 amazonS3;
 
@@ -47,12 +44,8 @@ public class S3Adapter {
     }
 
     // TODO: spotId 별로 directory 구분하도록 path 수정
-    public String getPreSignedUrlForReviewImage(String fileName) {
-        return getPreSignedUrl(reviewImagePath, fileName);
-    }
-
-    public String getPreSignedUrlForSpotImage(String fileName) {
-        return getPreSignedUrl(spotImagePath, fileName);
+    public String getPreSignedUrlForApplySpotImage(String fileName) {
+        return getPreSignedUrl(applySpotImagePath, fileName);
     }
 
     private String getPreSignedUrl(String path, String fileName) {
