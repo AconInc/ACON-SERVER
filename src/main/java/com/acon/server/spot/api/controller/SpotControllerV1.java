@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1")
 @Validated
-public class SpotController {
+public class SpotControllerV1 {
 
     private final SpotService spotService;
     private final PrincipalHandler principalHandler;
@@ -82,23 +82,6 @@ public class SpotController {
 
     @GetMapping(path = "/search-suggestions", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SearchSuggestionListResponse> getSearchSuggestionListV1(
-            @NotNull(message = "위도는 필수입니다.")
-            @RequestParam(name = "latitude") Double latitude,
-            @NotNull(message = "경도는 필수입니다.")
-            @RequestParam(name = "longitude") Double longitude
-    ) {
-        if (spotService.checkTestUser()) {
-            latitude = 37.559115;
-            longitude = 126.921976;
-        }
-
-        return ResponseEntity.ok(
-                spotService.fetchSearchSuggestions(latitude, longitude)
-        );
-    }
-
-    @GetMapping(path = "/spots/search-suggestions", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<SearchSuggestionListResponse> getSearchSuggestionListV2(
             @NotNull(message = "위도는 필수입니다.")
             @RequestParam(name = "latitude") Double latitude,
             @NotNull(message = "경도는 필수입니다.")
