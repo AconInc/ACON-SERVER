@@ -51,7 +51,7 @@ public class ApplySpotEntity {
     private String recommendedMenu;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "image_list", nullable = false)
+    @Column(name = "image_list")
     private List<String> imageList;
 
     @Enumerated(EnumType.STRING)
