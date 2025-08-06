@@ -22,6 +22,6 @@ public class CustomJwtAuthenticationEntryPoint implements AuthenticationEntryPoi
     }
 
     private void setResponse(HttpServletResponse response) {
-        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     }
 }
