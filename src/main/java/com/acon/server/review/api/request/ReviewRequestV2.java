@@ -13,7 +13,7 @@ public record ReviewRequestV2(
         Long spotId,
 
         @NotBlank(message = "recommendedMenu는 공백일 수 없습니다.")
-        @Size(min = 1, max = 50, message = "recommendedMenu는 1자 이상 50자 이하여야 합니다.")
+        @Size(min = 1, max = 30, message = "recommendedMenu는 1자 이상 30자 이하여야 합니다.")
         String recommendedMenu,
 
         @NotNull(message = "acornCount는 필수입니다.")
