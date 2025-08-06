@@ -3,8 +3,9 @@ package com.acon.server.global.auth.filter;
 import static com.acon.server.global.auth.jwt.JwtValidationType.VALID_JWT;
 
 import com.acon.server.global.auth.MemberAuthentication;
+import com.acon.server.global.auth.jwt.JwtAuthenticationException;
 import com.acon.server.global.auth.jwt.JwtTokenProvider;
-import com.acon.server.global.exception.BusinessException;
+import com.acon.server.global.auth.jwt.JwtValidationType;
 import com.acon.server.global.exception.ErrorType;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -26,6 +27,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final CustomJwtAuthenticationEntryPoint authenticationEntryPoint;
 
     // 각 HTTP 요청에 대해 토큰이 유효한지 확인하고, 유효하다면 해당 사용자를 인증 설정하는 필터링 로직
     @Override
@@ -33,39 +35,61 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
         try {
-            final String token = getJwtFromRequest(request);
+            final String token = resolveToken(request);
 
-            if (jwtTokenProvider.validateToken(token) == VALID_JWT) {
+            if (token == null) {
+                filterChain.doFilter(request, response);
+
+                return;
+            }
+
+            JwtValidationType result = jwtTokenProvider.validateToken(token);
+
+            if (result == VALID_JWT) {
                 Long memberId = jwtTokenProvider.getMemberIdFromJwt(token);
 
-                // authentication 객체 생성 -> principal에 유저정보를 담는다.
                 MemberAuthentication authentication = new MemberAuthentication(memberId.toString(), null, null);
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                filterChain.doFilter(request, response);
+
+                return;
             }
-        } catch (Exception exception) {
-            // SecurityConfig에서 permitAll을 적용해도, Spring Security의 필터 체인을 거치므로
-            // 여기서 바로 Exception throw를 하게 되면 permitAll과 상관 없이 ExceptionTranslationFilter로 처리가 넘어간다.
-            // 따라서 예외를 직접 throw로 던져주는 것이 아닌, 발생시키기만 하고 다음 필터 호출로 이어지게끔 해야 하고, (doFilter)
-            // 이렇게 하면 API의 permitAll 적용 여부에 따라 ExceptionTranslationFilter를 거칠지 판단하게 된다.
-            log.error("JwtAuthentication Authentication Exception Occurs! - {}", exception.getMessage());
+
+            throw mapToAuthException(result);
+
+        } catch (JwtAuthenticationException ex) {
+            authenticationEntryPoint.commence(request, response, ex);
         }
-        // 다음 필터로 요청 전달 (호출)
-        filterChain.doFilter(request, response);
     }
 
-    // Authorization 헤더에서 JWT 토큰을 추출
-    private String getJwtFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
+    private String resolveToken(HttpServletRequest request) {
+        String bearer = request.getHeader("Authorization");
 
-        if (!StringUtils.hasText(bearerToken)) {
-//            throw new BusinessException(ErrorType.UN_LOGIN_ERROR);
-        } else if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring("Bearer ".length());
-        } else if (StringUtils.hasText(bearerToken) && !bearerToken.startsWith("Bearer ")) {
-            throw new BusinessException(ErrorType.BEARER_LOST_ERROR);
+        if (!StringUtils.hasText(bearer)) {
+            return null;
         }
 
-        return null;
+        if (!bearer.startsWith("Bearer ")) {
+            throw new JwtAuthenticationException(ErrorType.BEARER_LOST_ERROR);
+        }
+
+        String token = bearer.substring("Bearer ".length()).trim();
+
+        if (!StringUtils.hasText(token)) {
+            throw new JwtAuthenticationException(ErrorType.INVALID_ACCESS_TOKEN_ERROR);
+        }
+
+        return token;
+    }
+
+    private JwtAuthenticationException mapToAuthException(JwtValidationType v) {
+        return switch (v) {
+            case EXPIRED_JWT_TOKEN -> new JwtAuthenticationException(ErrorType.EXPIRED_ACCESS_TOKEN_ERROR);
+            case INVALID_JWT_SIGNATURE, INVALID_JWT_TOKEN, UNSUPPORTED_JWT_TOKEN, EMPTY_JWT ->
+                    new JwtAuthenticationException(ErrorType.INVALID_ACCESS_TOKEN_ERROR);
+            case VALID_JWT -> throw new IllegalStateException("VALID_JWT should not reach mapToAuthException");
+        };
     }
 }

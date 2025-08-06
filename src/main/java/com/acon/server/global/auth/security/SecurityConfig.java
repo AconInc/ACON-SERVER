@@ -23,8 +23,8 @@ public class SecurityConfig {
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     private static final String[] AUTH_WHITE_LIST = {
-            "/api/v1/**",
-            "/api/v1/auth/**"
+            "/api/v1/auth/**",
+            "/api/v2/auth/**"
     };
 
     @Bean
@@ -32,18 +32,15 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> {
-                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-                })
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exception -> {
                     exception.authenticationEntryPoint(customJwtAuthenticationEntryPoint);
                     exception.accessDeniedHandler(customAccessDeniedHandler);
-                });
-
-        http.authorizeHttpRequests(auth -> {
-                    auth.requestMatchers(AUTH_WHITE_LIST).permitAll();
-                    auth.anyRequest().authenticated();
                 })
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(AUTH_WHITE_LIST).permitAll()
+                        .anyRequest().authenticated()
+                )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
