@@ -466,7 +466,7 @@ public class SpotService {
     ) {
         if (principalHandler.isGuestUser()) {
             if (!isDeepLink) {
-                throw new BusinessException(ErrorType.NO_PRINCIPAL_ERROR);
+                throw new BusinessException(ErrorType.UN_LOGIN_ERROR);
             }
 
             return false;
