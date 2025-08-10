@@ -15,6 +15,7 @@ import java.io.IOException;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -65,17 +66,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String resolveToken(HttpServletRequest request) {
-        String bearer = request.getHeader("Authorization");
+        String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        if (!StringUtils.hasText(bearer)) {
+        if (!StringUtils.hasText(authorization)) {
             return null;
         }
 
-        if (!bearer.startsWith("Bearer ")) {
+        if (authorization.equalsIgnoreCase("Bearer")) {
+            throw new JwtAuthenticationException(ErrorType.INVALID_ACCESS_TOKEN_ERROR);
+        }
+
+        final String scheme = "Bearer ";
+
+        if (!authorization.regionMatches(true, 0, scheme, 0, scheme.length())) {
             throw new JwtAuthenticationException(ErrorType.BEARER_LOST_ERROR);
         }
 
-        String token = bearer.substring("Bearer ".length()).trim();
+        String token = authorization.substring(scheme.length()).strip();
 
         if (!StringUtils.hasText(token)) {
             throw new JwtAuthenticationException(ErrorType.INVALID_ACCESS_TOKEN_ERROR);
@@ -89,7 +96,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             case EXPIRED_JWT_TOKEN -> new JwtAuthenticationException(ErrorType.EXPIRED_ACCESS_TOKEN_ERROR);
             case INVALID_JWT_SIGNATURE, INVALID_JWT_TOKEN, UNSUPPORTED_JWT_TOKEN, EMPTY_JWT ->
                     new JwtAuthenticationException(ErrorType.INVALID_ACCESS_TOKEN_ERROR);
-            case VALID_JWT -> throw new IllegalStateException("VALID_JWT should not reach mapToAuthException");
+            case VALID_JWT -> throw new IllegalStateException("VALID_JWT must not reach mapToAuthException");
         };
     }
 }
