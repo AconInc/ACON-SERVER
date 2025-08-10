@@ -6,12 +6,15 @@ import com.acon.server.global.auth.filter.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.servlet.util.matcher.MvcRequestMatcher;
+import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
 @Configuration
 @RequiredArgsConstructor
@@ -23,12 +26,17 @@ public class SecurityConfig {
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     private static final String[] AUTH_WHITE_LIST = {
-            "/api/v1/auth/**",
-            "/api/v2/auth/**"
+            "/api/v1/auth/login",
+            "/api/v1/auth/reissue"
     };
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    MvcRequestMatcher.Builder mvc(HandlerMappingIntrospector introspector) {
+        return new MvcRequestMatcher.Builder(introspector);
+    }
+
+    @Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http, MvcRequestMatcher.Builder mvc) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
@@ -39,6 +47,12 @@ public class SecurityConfig {
                 })
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(AUTH_WHITE_LIST).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/app-updates").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/spots").permitAll()
+                        .requestMatchers(
+                                mvc.pattern(HttpMethod.GET, "/api/v1/spots/{spotId:\\d+}"),
+                                mvc.pattern(HttpMethod.GET, "/api/v1/spots/{spotId:\\d+}/menuboards")
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
