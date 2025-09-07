@@ -16,5 +16,8 @@ out/
 ### Mac OS ###
 .DS_Store
 
+### Claude Code ###
+CLAUDE.md
+
 *.yml
 application.properties
