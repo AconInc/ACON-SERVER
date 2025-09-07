@@ -1,8 +1,6 @@
-package com.acon.server.global.handler;
+package com.acon.server.global.exception;
 
 import com.acon.server.global.dto.ErrorResponse;
-import com.acon.server.global.exception.BusinessException;
-import com.acon.server.global.exception.ErrorType;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
