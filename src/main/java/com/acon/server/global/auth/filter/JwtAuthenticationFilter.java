@@ -28,7 +28,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
-    private final CustomJwtAuthenticationEntryPoint authenticationEntryPoint;
+    private final JwtAuthenticationEntryPoint authenticationEntryPoint;
 
     // 각 HTTP 요청에 대해 토큰이 유효한지 확인하고, 유효하다면 해당 사용자를 인증 설정하는 필터링 로직
     @Override

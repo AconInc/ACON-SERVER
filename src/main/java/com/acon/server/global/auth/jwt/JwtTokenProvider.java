@@ -68,10 +68,7 @@ public class JwtTokenProvider {
         return refreshToken;
     }
 
-    public String generateToken(
-            Authentication authentication,
-            Long tokenExpirationTime
-    ) {
+    public String generateToken(Authentication authentication, Long tokenExpirationTime) {
         final Date now = new Date();
 
         final Claims claims = Jwts.claims()
@@ -164,5 +161,4 @@ public class JwtTokenProvider {
         validateRefreshToken(refreshToken);
         cache.evict(refreshToken);
     }
-
 }

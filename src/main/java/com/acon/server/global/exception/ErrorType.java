@@ -27,7 +27,7 @@ public enum ErrorType {
     /* 401 Unauthorized */
     EXPIRED_ACCESS_TOKEN_ERROR(HttpStatus.UNAUTHORIZED, 40101, "만료된 accessToken입니다."),
     NO_PRINCIPAL_ERROR(HttpStatus.UNAUTHORIZED, 40102, "Principal 객체가 없습니다."),
-    UN_LOGIN_ERROR(HttpStatus.UNAUTHORIZED, 40103, "로그인 후 진행해 주세요."),
+    UNAUTHORIZED_ERROR(HttpStatus.UNAUTHORIZED, 40103, "접근 권한이 없습니다. 로그인 후 이용해 주세요."),
     BEARER_LOST_ERROR(HttpStatus.UNAUTHORIZED, 40104, "요청한 토큰이 Bearer 토큰이 아닙니다."),
 
     /* 404 Not Found */
@@ -36,6 +36,15 @@ public enum ErrorType {
 
     /* 500 Internal Server Error */
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 50001, "예상치 못한 서버 에러가 발생했습니다."),
+
+    /* Admin Error */
+    /* 401 Unauthorized */
+    INVALID_ID_OR_PASSWORD_ERROR(HttpStatus.UNAUTHORIZED, 40105, "아이디 또는 비밀번호가 일치하지 않습니다."),
+
+    /* 403 Forbidden */
+    ACCESS_DENIED_ERROR(HttpStatus.FORBIDDEN, 40301, "권한이 없거나 보안 정책에 의해 요청이 차단되었습니다."),
+    MISSING_CSRF_TOKEN_ERROR(HttpStatus.FORBIDDEN, 40302, "CSRF 토큰이 누락되었습니다."),
+    INVALID_CSRF_TOKEN_ERROR(HttpStatus.FORBIDDEN, 40303, "유효하지 않은 CSRF 토큰입니다."),
 
     /* Member Error */
     /* 400 Bad Request */

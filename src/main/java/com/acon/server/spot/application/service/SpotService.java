@@ -466,7 +466,7 @@ public class SpotService {
     ) {
         if (principalHandler.isGuestUser()) {
             if (!isDeepLink) {
-                throw new BusinessException(ErrorType.UN_LOGIN_ERROR);
+                throw new BusinessException(ErrorType.UNAUTHORIZED_ERROR);
             }
 
             return false;
@@ -608,7 +608,7 @@ public class SpotService {
     @Transactional
     public void applySpot(final ApplySpotRequest request) {
         if (principalHandler.isGuestUser()) {
-            throw new BusinessException(ErrorType.UN_LOGIN_ERROR);
+            throw new BusinessException(ErrorType.UNAUTHORIZED_ERROR);
         }
 
         long memberId = fetchMemberId();
