@@ -37,10 +37,10 @@ public class ReviewEntity {
     private String recommendedMenu;
 
     @Column(name = "acorn_count", nullable = false)
-    private int acornCount;
+    private Integer acornCount;
 
     @Column(name = "local_acorn", nullable = false)
-    private boolean localAcorn;
+    private Boolean localAcorn;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -56,8 +56,8 @@ public class ReviewEntity {
             Long spotId,
             Long memberId,
             String recommendedMenu,
-            int acornCount,
-            boolean localAcorn,
+            Integer acornCount,
+            Boolean localAcorn,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {
