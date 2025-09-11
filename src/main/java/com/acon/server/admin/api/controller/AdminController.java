@@ -13,6 +13,7 @@ import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -216,6 +217,15 @@ public class AdminController {
     public ResponseEntity<Void> updateSpotDetail(
             @PathVariable Long spotId,
             @RequestBody Map<String, Object> updateRequest) {
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(path = "/spots/{spotId}",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> updateSpotStatus(
+            @PathVariable Long spotId,
+            @RequestBody Map<String, String> statusRequest) {
         return ResponseEntity.ok().build();
     }
 }
