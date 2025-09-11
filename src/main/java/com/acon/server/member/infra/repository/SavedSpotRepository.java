@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface SavedSpotRepository extends JpaRepository<SavedSpotEntity, Long> {
 
+    void deleteAllByMemberId(Long memberId);
+
     void deleteByMemberIdAndSpotId(Long memberId, Long spotId);
 
     boolean existsByMemberIdAndSpotId(Long memberId, Long spotId);

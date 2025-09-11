@@ -26,6 +26,7 @@ public record ApplySpotRequest(
         @Size(min = 1, max = 30, message = "recommendedMenu는 1자 이상 30자 이하이어야 합니다.")
         String recommendedMenu,
 
+        @Size(max = 10, message = "image는 최대 10장까지 업로드 가능합니다.")
         List<@NotBlank(message = "imageUrl은 공백일 수 없습니다.") String> imageList
 ) {
 

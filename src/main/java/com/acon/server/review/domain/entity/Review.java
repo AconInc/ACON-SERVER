@@ -11,8 +11,8 @@ public class Review {
     private final Long spotId;
     private final Long memberId;
     private final String recommendedMenu;
-    private final int acornCount;
-    private final boolean localAcorn;
+    private final Integer acornCount;
+    private final Boolean localAcorn;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -23,8 +23,8 @@ public class Review {
             Long spotId,
             Long memberId,
             String recommendedMenu,
-            int acornCount,
-            boolean localAcorn,
+            Integer acornCount,
+            Boolean localAcorn,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {

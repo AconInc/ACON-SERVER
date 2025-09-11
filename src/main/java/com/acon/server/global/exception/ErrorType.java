@@ -36,6 +36,8 @@ public enum ErrorType {
 
     /* 500 Internal Server Error */
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 50001, "예상치 못한 서버 에러가 발생했습니다."),
+    FAILED_GET_PRE_SIGNED_URL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 50005, "PreSigned URL 획득에 실패하였습니다."),
+    S3_FILE_OPERATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 50006, "S3 파일 작업 도중 에러가 발생했습니다."),
 
     /* Admin Error */
     /* 401 Unauthorized */
@@ -69,7 +71,6 @@ public enum ErrorType {
 
     /* 500 Internal Server Error */
     FAILED_DOWNLOAD_GOOGLE_PUBLIC_KEY_ERROR(HttpStatus.BAD_REQUEST, 50002, "구글 공개키 다운로드에 실패하였습니다."),
-    FAILED_GET_PRE_SIGNED_URL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 50005, "PreSigned URL 획득에 실패하였습니다."),
 
     /* Review Error */
     /* 400 Bad Request */
@@ -86,7 +87,7 @@ public enum ErrorType {
     INVALID_SPOT_TYPE_CATEGORY_ERROR(HttpStatus.BAD_REQUEST, 40021, "spotType에 해당하지 않는 카테고리입니다."),
     INVALID_CATEGORY_OPTION_ERROR(HttpStatus.BAD_REQUEST, 40022, "category에 해당하지 않는 option입니다."),
     INVALID_TAG_ERROR(HttpStatus.BAD_REQUEST, 40024, "유효하지 않은 tag입니다."),
-    INVALID_SPOT_APPLICATION_STATUS_ERROR(HttpStatus.BAD_REQUEST, 40025, "유효하지 않은 spotApplicationStatus입니다."),
+    INVALID_SPOT_STATUS_ERROR(HttpStatus.BAD_REQUEST, 40025, "유효하지 않은 spotStatus입니다."),
 
     /* 404 Not Found */
     NOT_FOUND_SPOT_ERROR(HttpStatus.NOT_FOUND, 40403, "존재하지 않는 장소입니다."),
