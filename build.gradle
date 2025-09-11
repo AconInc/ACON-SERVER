@@ -75,8 +75,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'com.github.ben-manes.caffeine:caffeine'
     
-    // AWS
-    implementation 'io.awspring.cloud:spring-cloud-starter-aws:2.4.4'
+    // AWS S3
+    implementation 'software.amazon.awssdk:s3:2.32.9'
 }
 
 tasks.named('test') {

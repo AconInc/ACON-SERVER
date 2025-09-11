@@ -1,12 +1,13 @@
 package com.acon.server.global.external.s3;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 @Configuration
 public class S3Config {
@@ -21,12 +22,30 @@ public class S3Config {
     private String secretKey;
 
     @Bean
-    public AmazonS3 amazonS3() {
-        BasicAWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
+    public Region awsRegion() {
+        return Region.of(region);
+    }
 
-        return AmazonS3ClientBuilder.standard()
-                .withRegion(region)
-                .withCredentials(new AWSStaticCredentialsProvider(credentials))
+    @Bean
+    public StaticCredentialsProvider staticCredentialsProvider() {
+        return StaticCredentialsProvider.create(
+                AwsBasicCredentials.create(accessKey, secretKey)
+        );
+    }
+
+    @Bean
+    public S3Presigner s3Presigner(Region awsRegion, StaticCredentialsProvider credentialsProvider) {
+        return S3Presigner.builder()
+                .region(awsRegion)
+                .credentialsProvider(credentialsProvider)
+                .build();
+    }
+
+    @Bean
+    public S3Client s3Client(Region awsRegion, StaticCredentialsProvider credentialsProvider) {
+        return S3Client.builder()
+                .region(awsRegion)
+                .credentialsProvider(credentialsProvider)
                 .build();
     }
 }

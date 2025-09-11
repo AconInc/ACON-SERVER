@@ -503,11 +503,10 @@ public class MemberService {
                 String basicProfileImageUrl = s3Adapter.getBasicProfileImageUrl();
                 member.setProfileImage(basicProfileImageUrl);
             } else {
-                s3Adapter.validateProfileImageExists(profileImage);
-                String imageUrl = s3Adapter.getProfileImageUrl(profileImage);
+                s3Adapter.validateImageExists(profileImage);
                 // TODO: 추후 원자성(2PC) 보장을 위해 트랜잭션 커밋된 이후 이벤트/트리거 방식으로 비동기 처리
                 s3Adapter.deleteFile(member.getProfileImage());
-                member.setProfileImage(imageUrl);
+                member.setProfileImage(profileImage);
             }
         }
 
@@ -532,17 +531,24 @@ public class MemberService {
         );
     }
 
-    public PreSignedUrlResponse fetchPreSignedUrl(final ImageType imageType) {
-        // TODO: 확장자 방식 고민하기
-        String fileName = UUID.randomUUID() + ".jpg";
+    public PreSignedUrlResponse createPreSignedUrl(final ImageType imageType, final String originalFileName) {
+        if (!imageType.isAllowedExtension(originalFileName)) {
+            throw new BusinessException(ErrorType.INVALID_IMAGE_TYPE_ERROR);
+        }
+
+        String extension = originalFileName.substring(originalFileName.lastIndexOf("."));
+        String fileName = UUID.randomUUID() + extension;
+        String contentType = imageType.getContentType(originalFileName);
 
         String preSignedUrl = switch (imageType) {
-            case PROFILE -> s3Adapter.getPreSignedUrlForProfileImage(fileName);
-            case APPLY_SPOT -> s3Adapter.getPreSignedUrlForApplySpotImage(fileName);
-            default -> throw new BusinessException(ErrorType.INVALID_IMAGE_TYPE_ERROR);
+            case PROFILE -> s3Adapter.getPreSignedUrlForProfileImage(fileName, contentType);
+            case SPOT -> s3Adapter.getPreSignedUrlForSpotImage(fileName, contentType);
+            case MENUBOARD -> s3Adapter.getPreSignedUrlForMenuboardImage(fileName, contentType);
         };
 
-        return PreSignedUrlResponse.of(fileName, preSignedUrl);
+        String fileUrl = s3Adapter.getFileUrl(imageType, fileName);
+
+        return PreSignedUrlResponse.of(fileUrl, preSignedUrl);
     }
 
     @Transactional(readOnly = true)

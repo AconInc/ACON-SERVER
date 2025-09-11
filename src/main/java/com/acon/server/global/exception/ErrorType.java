@@ -36,6 +36,8 @@ public enum ErrorType {
 
     /* 500 Internal Server Error */
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 50001, "예상치 못한 서버 에러가 발생했습니다."),
+    FAILED_GET_PRE_SIGNED_URL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 50005, "PreSigned URL 획득에 실패하였습니다."),
+    S3_FILE_OPERATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 50006, "S3 파일 작업 도중 에러가 발생했습니다."),
 
     /* Admin Error */
     /* 401 Unauthorized */
@@ -69,7 +71,6 @@ public enum ErrorType {
 
     /* 500 Internal Server Error */
     FAILED_DOWNLOAD_GOOGLE_PUBLIC_KEY_ERROR(HttpStatus.BAD_REQUEST, 50002, "구글 공개키 다운로드에 실패하였습니다."),
-    FAILED_GET_PRE_SIGNED_URL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 50005, "PreSigned URL 획득에 실패하였습니다."),
 
     /* Review Error */
     /* 400 Bad Request */

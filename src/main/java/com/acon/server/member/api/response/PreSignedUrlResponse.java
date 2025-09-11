@@ -1,11 +1,11 @@
 package com.acon.server.member.api.response;
 
 public record PreSignedUrlResponse(
-        String fileName,
+        String fileUrl,
         String preSignedUrl
 ) {
 
-    public static PreSignedUrlResponse of(String fileName, String preSignedUrl) {
-        return new PreSignedUrlResponse(fileName, preSignedUrl);
+    public static PreSignedUrlResponse of(String fileUrl, String preSignedUrl) {
+        return new PreSignedUrlResponse(fileUrl, preSignedUrl);
     }
 }

@@ -3,6 +3,7 @@ package com.acon.server.member.api.controller;
 import com.acon.server.member.api.request.GuidedSpotRequest;
 import com.acon.server.member.api.request.LoginRequest;
 import com.acon.server.member.api.request.LogoutRequest;
+import com.acon.server.member.api.request.PreSignedUrlRequest;
 import com.acon.server.member.api.request.PreferenceRequest;
 import com.acon.server.member.api.request.ProfileRequest;
 import com.acon.server.member.api.request.ReissueTokenRequest;
@@ -159,15 +160,18 @@ public class MemberController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping(path = "/images/presigned-url", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<PreSignedUrlResponse> getPreSignedUrl(
-            @NotBlank(message = "imageType은 공백일 수 없습니다.")
-            @RequestParam(name = "imageType") final String imageTypeString
+    @PostMapping(
+            path = "/images/presigned-url",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<PreSignedUrlResponse> createPreSignedUrl(
+            @Valid @RequestBody final PreSignedUrlRequest request
     ) {
-        ImageType imageType = ImageType.fromValue(imageTypeString);
+        ImageType imageType = ImageType.fromValue(request.imageType());
 
         return ResponseEntity.ok(
-                memberService.fetchPreSignedUrl(imageType)
+                memberService.createPreSignedUrl(imageType, request.originalFileName())
         );
     }
 
