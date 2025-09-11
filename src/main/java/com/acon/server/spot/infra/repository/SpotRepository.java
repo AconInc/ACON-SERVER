@@ -2,6 +2,7 @@ package com.acon.server.spot.infra.repository;
 
 import com.acon.server.global.exception.BusinessException;
 import com.acon.server.global.exception.ErrorType;
+import com.acon.server.spot.domain.enums.SpotStatus;
 import com.acon.server.spot.infra.entity.SpotEntity;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,6 +13,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface SpotRepository extends JpaRepository<SpotEntity, Long> {
+
+    long countBySpotStatus(SpotStatus spotStatus);
 
     List<SpotEntity> findTop10ByNameStartingWithIgnoreCase(String keyword);
 
