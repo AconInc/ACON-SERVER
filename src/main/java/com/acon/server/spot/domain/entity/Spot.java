@@ -1,5 +1,6 @@
 package com.acon.server.spot.domain.entity;
 
+import com.acon.server.spot.domain.enums.SpotStatus;
 import com.acon.server.spot.domain.enums.SpotType;
 import java.time.LocalDateTime;
 import lombok.Builder;
@@ -17,6 +18,7 @@ public class Spot {
     private final String name;
     private final SpotType spotType;
     private final String address;
+    private final Long appliedMemberId;
 
     private Integer localAcornCount;
     private Integer basicAcornCount;
@@ -24,6 +26,7 @@ public class Spot {
     private Double longitude;
     private Point geom;
     private String legalDong;
+    private SpotStatus spotStatus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -33,12 +36,14 @@ public class Spot {
             String name,
             SpotType spotType,
             String address,
+            Long appliedMemberId,
             Integer localAcornCount,
             Integer basicAcornCount,
             Double latitude,
             Double longitude,
             Point geom,
             String legalDong,
+            SpotStatus spotStatus,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {
@@ -46,12 +51,14 @@ public class Spot {
         this.name = name;
         this.spotType = spotType;
         this.address = address;
+        this.appliedMemberId = appliedMemberId;
         this.localAcornCount = localAcornCount;
         this.basicAcornCount = basicAcornCount;
         this.latitude = latitude;
         this.longitude = longitude;
         this.geom = geom;
         this.legalDong = legalDong;
+        this.spotStatus = spotStatus;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }

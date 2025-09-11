@@ -1,6 +1,7 @@
 package com.acon.server.spot.infra.entity;
 
 import com.acon.server.spot.api.response.SearchSuggestionResponse;
+import com.acon.server.spot.domain.enums.SpotStatus;
 import com.acon.server.spot.domain.enums.SpotType;
 import jakarta.persistence.Column;
 import jakarta.persistence.ColumnResult;
@@ -79,6 +80,13 @@ public class SpotEntity {
     @Column(name = "legal_dong")
     private String legalDong;
 
+    @Column(name = "applied_member_id")
+    private Long appliedMemberId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "spot_status", length = 20, nullable = false)
+    private SpotStatus spotStatus;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -99,6 +107,8 @@ public class SpotEntity {
             Double longitude,
             Point geom,
             String legalDong,
+            Long appliedMemberId,
+            SpotStatus spotStatus,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {
@@ -113,6 +123,8 @@ public class SpotEntity {
         this.longitude = longitude;
         this.geom = geom;
         this.legalDong = legalDong;
+        this.appliedMemberId = appliedMemberId;
+        this.spotStatus = spotStatus;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }

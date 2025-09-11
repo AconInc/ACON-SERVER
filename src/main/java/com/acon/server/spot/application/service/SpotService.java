@@ -5,6 +5,7 @@ import com.acon.server.global.exception.BusinessException;
 import com.acon.server.global.exception.ErrorType;
 import com.acon.server.global.external.maps.GeoCodingResponse;
 import com.acon.server.global.external.maps.NaverMapsAdapter;
+import com.acon.server.global.external.s3.S3Adapter;
 import com.acon.server.member.domain.enums.DislikeFood;
 import com.acon.server.member.infra.entity.MemberEntity;
 import com.acon.server.member.infra.entity.PreferenceEntity;
@@ -12,6 +13,7 @@ import com.acon.server.member.infra.repository.GuidedSpotCustomRepository;
 import com.acon.server.member.infra.repository.MemberRepository;
 import com.acon.server.member.infra.repository.PreferenceRepository;
 import com.acon.server.member.infra.repository.SavedSpotRepository;
+import com.acon.server.review.infra.entity.ReviewEntity;
 import com.acon.server.review.infra.repository.ReviewRepository;
 import com.acon.server.spot.api.request.ApplySpotRequest;
 import com.acon.server.spot.api.request.SpotListRequest;
@@ -27,18 +29,15 @@ import com.acon.server.spot.api.response.SpotSearchListResponse;
 import com.acon.server.spot.api.response.SpotSearchListResponse.SearchedSpot;
 import com.acon.server.spot.application.mapper.SpotMapper;
 import com.acon.server.spot.domain.entity.Spot;
-import com.acon.server.spot.domain.enums.SpotApplicationStatus;
+import com.acon.server.spot.domain.enums.SpotStatus;
 import com.acon.server.spot.domain.enums.SpotType;
 import com.acon.server.spot.domain.enums.Tag;
-import com.acon.server.spot.infra.entity.ApplySpotEntity;
-import com.acon.server.spot.infra.entity.ApplySpotOptionEntity;
 import com.acon.server.spot.infra.entity.MenuEntity;
 import com.acon.server.spot.infra.entity.MenuboardImageEntity;
 import com.acon.server.spot.infra.entity.OpeningHourEntity;
 import com.acon.server.spot.infra.entity.SpotEntity;
 import com.acon.server.spot.infra.entity.SpotImageEntity;
-import com.acon.server.spot.infra.repository.ApplySpotOptionRepository;
-import com.acon.server.spot.infra.repository.ApplySpotRepository;
+import com.acon.server.spot.infra.entity.SpotOptionEntity;
 import com.acon.server.spot.infra.repository.CategoryRepository;
 import com.acon.server.spot.infra.repository.MenuRepository;
 import com.acon.server.spot.infra.repository.MenuboardImageRepository;
@@ -87,8 +86,6 @@ public class SpotService {
 
     private final ReviewRepository reviewRepository;
 
-    private final ApplySpotRepository applySpotRepository;
-    private final ApplySpotOptionRepository applySpotOptionRepository;
     private final CategoryRepository categoryRepository;
     private final MenuboardImageRepository menuboardImageRepository;
     private final MenuRepository menuRepository;
@@ -104,6 +101,7 @@ public class SpotService {
     private final PrincipalHandler principalHandler;
 
     private final NaverMapsAdapter naverMapsAdapter;
+    private final S3Adapter s3Adapter;
 
     @Value("${google.test-account-1}")
     private String testAccount1;
@@ -613,19 +611,19 @@ public class SpotService {
 
         long memberId = fetchMemberId();
 
-        ApplySpotEntity savedApplySpotEntity = applySpotRepository.save(
-                ApplySpotEntity.builder()
-                        .memberId(memberId)
+        SpotEntity appliedSpotEntity = spotRepository.save(
+                SpotEntity.builder()
                         .name(request.spotName())
                         .address(request.address())
                         .spotType(SpotType.fromValue(request.spotType()))
-                        .recommendedMenu(request.recommendedMenu())
-                        .imageList(request.imageList())
-                        .spotApplicationStatus(SpotApplicationStatus.PENDING)
+                        .appliedMemberId(memberId)
+                        .spotStatus(SpotStatus.PENDING)
                         .build()
         );
 
-        List<ApplySpotOptionEntity> applySpotOptionEntityList = new ArrayList<>();
+        long spotId = appliedSpotEntity.getId();
+
+        List<SpotOptionEntity> appliedSpotOptionEntityList = new ArrayList<>();
 
         for (ApplySpotRequest.Feature feature : request.featureList()) {
             String categoryName = feature.category();
@@ -634,16 +632,51 @@ public class SpotService {
             for (String optionName : feature.optionList()) {
                 Long optionId = optionRepository.findByCategoryIdAndNameOrElseThrow(categoryId, optionName).getId();
 
-                applySpotOptionEntityList.add(
-                        ApplySpotOptionEntity.builder()
-                                .applySpotId(savedApplySpotEntity.getId())
+                appliedSpotOptionEntityList.add(
+                        SpotOptionEntity.builder()
+                                .spotId(spotId)
                                 .optionId(optionId)
                                 .build()
                 );
             }
         }
 
-        applySpotOptionRepository.saveAll(applySpotOptionEntityList);
+        spotOptionRepository.saveAll(appliedSpotOptionEntityList);
+
+        reviewRepository.save(
+                ReviewEntity.builder()
+                        .spotId(spotId)
+                        .memberId(memberId)
+                        .recommendedMenu(request.recommendedMenu())
+                        .acornCount(0)
+                        .localAcorn(Boolean.FALSE)
+                        .build()
+        );
+
+        if (request.imageList() != null && !request.imageList().isEmpty()) {
+            for (String imageUrl : request.imageList()) {
+                s3Adapter.validateImageExists(imageUrl);
+            }
+
+            List<String> movedImageList = new ArrayList<>();
+
+            for (String imageUrl : request.imageList()) {
+                String fileName = imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
+                String destinationKey = String.format("spots/%d/spot/%s", spotId, fileName);
+
+                String newImageUrl = s3Adapter.moveFile(imageUrl, destinationKey);
+                movedImageList.add(newImageUrl);
+            }
+
+            List<SpotImageEntity> appliedSpotImageEntityList = movedImageList.stream()
+                    .map(image -> SpotImageEntity.builder()
+                            .spotId(spotId)
+                            .image(image)
+                            .build())
+                    .toList();
+
+            spotImageRepository.saveAll(appliedSpotImageEntityList);
+        }
     }
 
     @Transactional(readOnly = true)
