@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface VerifiedAreaRepository extends JpaRepository<VerifiedAreaEntity, Long> {
 
+    void deleteAllByMemberId(Long memberId);
+
     long countByMemberId(Long memberId);
 
     boolean existsByMemberId(Long memberId);

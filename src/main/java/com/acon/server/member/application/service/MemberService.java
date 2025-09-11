@@ -714,6 +714,12 @@ public class MemberService {
 
         // TODO: memberId 존재하는 테이블에 member row 제거 ( 리뷰 테이블 제외 )
         memberRepository.deleteById(memberId);
+
+        preferenceRepository.deleteById(memberId);
+        guidedSpotRepository.deleteAllByMemberId(memberId);
+        savedSpotRepository.deleteAllByMemberId(memberId);
+        verifiedAreaRepository.deleteAllByMemberId(memberId);
+
         jwtTokenProvider.deleteRefreshToken(refreshToken);
         // TODO: 엑세스 토큰 블랙리스트
 

@@ -6,5 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface GuidedSpotRepository extends JpaRepository<GuidedSpotEntity, Long> {
 
+    void deleteAllByMemberId(Long memberId);
+
     Optional<GuidedSpotEntity> findByMemberIdAndSpotId(Long memberId, Long spotId);
 }
