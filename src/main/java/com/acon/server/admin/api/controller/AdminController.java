@@ -3,6 +3,11 @@ package com.acon.server.admin.api.controller;
 import com.acon.server.admin.api.response.CsrfTokenResponse;
 import com.acon.server.admin.api.response.DashboardResponse;
 import com.acon.server.admin.application.service.AdminService;
+import com.acon.server.member.api.request.PreSignedUrlRequest;
+import com.acon.server.member.api.response.PreSignedUrlResponse;
+import com.acon.server.member.application.service.MemberService;
+import com.acon.server.member.domain.enums.ImageType;
+import jakarta.validation.Valid;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminController {
 
     private final AdminService adminService;
+    private final MemberService memberService;
 
     @GetMapping(path = "/csrf", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CsrfTokenResponse> getCsrfToken(CsrfToken csrfToken) {
@@ -40,6 +46,21 @@ public class AdminController {
     @GetMapping(path = "/dashboard", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<DashboardResponse> getDashboard() {
         return ResponseEntity.ok(adminService.getDashboard());
+    }
+
+    @PostMapping(
+            path = "/images/presigned-url",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<PreSignedUrlResponse> createPreSignedUrl(
+            @Valid @RequestBody final PreSignedUrlRequest request
+    ) {
+        ImageType imageType = ImageType.fromValue(request.imageType());
+
+        return ResponseEntity.ok(
+                memberService.createPreSignedUrl(imageType, request.originalFileName())
+        );
     }
 
     @GetMapping(path = "/spots", produces = MediaType.APPLICATION_JSON_VALUE)
