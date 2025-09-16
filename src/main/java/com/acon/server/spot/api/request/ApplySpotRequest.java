@@ -51,7 +51,7 @@ public record ApplySpotRequest(
     }
 
     private static boolean isCafe(SpotType spotType) {
-        return SpotType.CAFE.name().equalsIgnoreCase(spotType.name());
+        return SpotType.CAFE.equals(spotType);
     }
 
     private static boolean hasElements(List<?> list) {
