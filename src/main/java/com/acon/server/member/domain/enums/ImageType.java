@@ -2,6 +2,7 @@ package com.acon.server.member.domain.enums;
 
 import com.acon.server.global.exception.BusinessException;
 import com.acon.server.global.exception.ErrorType;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +29,7 @@ public enum ImageType {
         }
     }
 
+    @JsonCreator
     public static ImageType fromValue(String value) {
         ImageType imageType = IMAGE_TYPE_MAP.get(value.toUpperCase());
 

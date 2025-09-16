@@ -20,16 +20,12 @@ import com.acon.server.member.api.response.ReissueTokenResponse;
 import com.acon.server.member.api.response.SavedSpotListResponse;
 import com.acon.server.member.api.response.VerifiedAreaListResponse;
 import com.acon.server.member.application.service.MemberService;
-import com.acon.server.member.domain.enums.DislikeFood;
-import com.acon.server.member.domain.enums.ImageType;
 import com.acon.server.member.domain.enums.Platform;
-import com.acon.server.member.domain.enums.SocialType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -74,10 +70,9 @@ public class MemberController {
     public ResponseEntity<LoginResponse> login(
             @Valid @RequestBody final LoginRequest request
     ) {
-        SocialType socialType = SocialType.fromValue(request.socialType());
 
         return ResponseEntity.ok(
-                memberService.login(socialType, request.idToken())
+                memberService.login(request.socialType(), request.idToken())
         );
     }
 
@@ -98,8 +93,7 @@ public class MemberController {
     public ResponseEntity<Void> putPreference(
             @Valid @RequestBody final PreferenceRequest request
     ) {
-        List<DislikeFood> dislikeFoodList = request.dislikeFoodList().stream().map(DislikeFood::fromValue).toList();
-        memberService.upsertPreference(dislikeFoodList);
+        memberService.upsertPreference(request.dislikeFoodList());
 
         return ResponseEntity.ok().build();
     }
@@ -168,10 +162,8 @@ public class MemberController {
     public ResponseEntity<PreSignedUrlResponse> createPreSignedUrl(
             @Valid @RequestBody final PreSignedUrlRequest request
     ) {
-        ImageType imageType = ImageType.fromValue(request.imageType());
-
         return ResponseEntity.ok(
-                memberService.createPreSignedUrl(imageType, request.originalFileName())
+                memberService.createPreSignedUrl(request.imageType(), request.originalFileName())
         );
     }
 

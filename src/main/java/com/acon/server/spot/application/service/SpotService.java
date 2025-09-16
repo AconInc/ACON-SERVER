@@ -177,7 +177,7 @@ public class SpotService {
         // TODO: 토글, 상세필터, 상세페이지, 길찾기 다 게스트 유저 접근 불가
         // TODO: 장소는 최대 15개까지만 노출
         if (principalHandler.isGuestUser()) { // TODO: 메서드화 (게스트 유저와 온보딩 건너뛴 유저)
-            if (SpotType.CAFE.equals(SpotType.fromValue(request.condition().spotType()))) {
+            if (SpotType.CAFE.equals(request.condition().spotType())) {
                 throw new BusinessException(ErrorType.NO_PRINCIPAL_ERROR);
             }
 
@@ -277,7 +277,7 @@ public class SpotService {
         return spotNativeQueryRepository.findSpotList(
                 request.latitude(),
                 request.longitude(),
-                SpotType.fromValue(request.condition().spotType()),
+                request.condition().spotType(),
                 request.condition().filterList(),
                 radius
         );
@@ -615,7 +615,7 @@ public class SpotService {
                 SpotEntity.builder()
                         .name(request.spotName())
                         .address(request.address())
-                        .spotType(SpotType.fromValue(request.spotType()))
+                        .spotType(request.spotType())
                         .appliedMemberId(memberId)
                         .spotStatus(SpotStatus.PENDING)
                         .build()

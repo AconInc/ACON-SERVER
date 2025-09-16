@@ -2,6 +2,7 @@ package com.acon.server.spot.domain.enums;
 
 import com.acon.server.global.exception.BusinessException;
 import com.acon.server.global.exception.ErrorType;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.AccessLevel;
@@ -24,6 +25,7 @@ public enum SpotType {
         }
     }
 
+    @JsonCreator
     public static SpotType fromValue(String value) {
         SpotType spotType = SPOT_TYPE_MAP.get(value.toUpperCase());
 

@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 
@@ -17,8 +18,8 @@ public record ApplySpotRequest(
         @Size(min = 1, max = 100, message = "address는 1자 이상 100자 이하이어야 합니다.")
         String address,
 
-        @NotBlank(message = "spotType은 공백일 수 없습니다.")
-        String spotType,
+        @NotNull(message = "spotType은 필수입니다.")
+        SpotType spotType,
 
         @Valid List<Feature> featureList,
 
@@ -49,8 +50,8 @@ public record ApplySpotRequest(
         return hasElements(featureList);
     }
 
-    private static boolean isCafe(String value) {
-        return SpotType.CAFE.name().equalsIgnoreCase(value);
+    private static boolean isCafe(SpotType spotType) {
+        return SpotType.CAFE.equals(spotType);
     }
 
     private static boolean hasElements(List<?> list) {

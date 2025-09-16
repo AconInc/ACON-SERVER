@@ -2,6 +2,7 @@ package com.acon.server.member.domain.enums;
 
 import com.acon.server.global.exception.BusinessException;
 import com.acon.server.global.exception.ErrorType;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.AccessLevel;
@@ -24,6 +25,7 @@ public enum SocialType {
         }
     }
 
+    @JsonCreator
     public static SocialType fromValue(String value) {
         SocialType socialType = SOCIAL_TYPE_MAP.get(value.toUpperCase());
 
