@@ -2,6 +2,7 @@ package com.acon.server.member.domain.enums;
 
 import com.acon.server.global.exception.BusinessException;
 import com.acon.server.global.exception.ErrorType;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.AccessLevel;
@@ -36,6 +37,7 @@ public enum DislikeFood {
         }
     }
 
+    @JsonCreator
     public static DislikeFood fromValue(String value) {
         DislikeFood dislikeFood = DISLIKE_FOOD_MAP.get(value.toUpperCase());
 

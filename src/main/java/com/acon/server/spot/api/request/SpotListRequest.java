@@ -1,7 +1,7 @@
 package com.acon.server.spot.api.request;
 
+import com.acon.server.spot.domain.enums.SpotType;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
@@ -17,8 +17,8 @@ public record SpotListRequest(
 ) {
 
     public record Condition(
-            @NotBlank(message = "spotType은 공백일 수 없습니다.")
-            String spotType,
+            @NotNull(message = "spotType는 필수입니다.")
+            SpotType spotType,
 
             @Valid List<Filter> filterList
     ) {

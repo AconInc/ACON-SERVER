@@ -6,7 +6,7 @@ import com.acon.server.admin.application.service.AdminService;
 import com.acon.server.member.api.request.PreSignedUrlRequest;
 import com.acon.server.member.api.response.PreSignedUrlResponse;
 import com.acon.server.member.application.service.MemberService;
-import com.acon.server.member.domain.enums.ImageType;
+import com.acon.server.spot.domain.enums.SpotStatus;
 import jakarta.validation.Valid;
 import java.util.HashMap;
 import java.util.List;
@@ -56,10 +56,8 @@ public class AdminController {
     public ResponseEntity<PreSignedUrlResponse> createPreSignedUrl(
             @Valid @RequestBody final PreSignedUrlRequest request
     ) {
-        ImageType imageType = ImageType.fromValue(request.imageType());
-
         return ResponseEntity.ok(
-                memberService.createPreSignedUrl(imageType, request.originalFileName())
+                memberService.createPreSignedUrl(request.imageType(), request.originalFileName())
         );
     }
 
