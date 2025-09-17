@@ -91,12 +91,8 @@ public class SpotEntity {
     @Column(name = "legal_dong")
     private String legalDong;
 
-    @Column(name = "applied_member_id", insertable = false, updatable = false)
+    @Column(name = "applied_member_id")
     private Long appliedMemberId;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "applied_member_id", referencedColumnName = "id")
-    private MemberEntity appliedMember;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "spot_status", length = 20, nullable = false)
