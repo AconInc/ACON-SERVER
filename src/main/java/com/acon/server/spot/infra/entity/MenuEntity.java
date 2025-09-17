@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,7 +16,11 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
-        name = "menu"
+        name = "menu",
+        uniqueConstraints = @UniqueConstraint(
+                name = "unique_menu_spot_id_name",
+                columnNames = {"spot_id", "name"}
+        )
 //        indexes = @Index(
 //                name = "idx_menu_spot_id",
 //                columnList = "spot_id"
