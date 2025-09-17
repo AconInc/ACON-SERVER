@@ -1,5 +1,6 @@
 package com.acon.server.spot.infra.entity;
 
+import com.acon.server.member.infra.entity.MemberEntity;
 import com.acon.server.spot.api.response.SearchSuggestionResponse;
 import com.acon.server.spot.domain.enums.SpotStatus;
 import com.acon.server.spot.domain.enums.SpotType;
@@ -10,11 +11,15 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SqlResultSetMapping;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -43,7 +48,13 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Getter
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "spot")
+@Table(
+        name = "spot",
+        uniqueConstraints = @UniqueConstraint(
+                name = "unique_spot_name_address",
+                columnNames = {"name", "address"}
+        )
+)
 // TODO: 공간 인덱스 설정
 public class SpotEntity {
 
@@ -80,8 +91,12 @@ public class SpotEntity {
     @Column(name = "legal_dong")
     private String legalDong;
 
-    @Column(name = "applied_member_id")
+    @Column(name = "applied_member_id", insertable = false, updatable = false)
     private Long appliedMemberId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "applied_member_id", referencedColumnName = "id")
+    private MemberEntity appliedMember;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "spot_status", length = 20, nullable = false)
