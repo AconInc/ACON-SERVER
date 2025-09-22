@@ -38,24 +38,39 @@ public class OpeningHourEntity {
     @Column(name = "day_of_week", length = 10, nullable = false)
     private DayOfWeek dayOfWeek;
 
-    @Column(name = "start_time", nullable = false)
+    @Column(name = "closed", nullable = false)
+    private Boolean closed;
+
+    @Column(name = "start_time")
     private LocalTime startTime;
 
-    @Column(name = "end_time", nullable = false)
+    @Column(name = "end_time")
     private LocalTime endTime;
+
+    @Column(name = "break_start_time")
+    private LocalTime breakStartTime;
+
+    @Column(name = "break_end_time")
+    private LocalTime breakEndTime;
 
     @Builder
     public OpeningHourEntity(
             Long id,
             Long spotId,
             DayOfWeek dayOfWeek,
+            Boolean closed,
             LocalTime startTime,
-            LocalTime endTime
+            LocalTime endTime,
+            LocalTime breakStartTime,
+            LocalTime breakEndTime
     ) {
         this.id = id;
         this.spotId = spotId;
         this.dayOfWeek = dayOfWeek;
+        this.closed = closed;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.breakStartTime = breakStartTime;
+        this.breakEndTime = breakEndTime;
     }
 }

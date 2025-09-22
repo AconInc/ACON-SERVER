@@ -1,5 +1,6 @@
 package com.acon.server.admin.api.controller;
 
+import com.acon.server.admin.api.request.CreateSpotRequest;
 import com.acon.server.admin.api.response.CsrfTokenResponse;
 import com.acon.server.admin.api.response.DashboardResponse;
 import com.acon.server.admin.api.response.SpotListResponse;
@@ -37,7 +38,9 @@ public class AdminController {
     private final MemberService memberService;
 
     @GetMapping(path = "/csrf", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CsrfTokenResponse> getCsrfToken(CsrfToken csrfToken) {
+    public ResponseEntity<CsrfTokenResponse> getCsrfToken(
+            final CsrfToken csrfToken
+    ) {
         return ResponseEntity.ok(
                 CsrfTokenResponse.of(
                         csrfToken.getHeaderName(),
@@ -67,10 +70,10 @@ public class AdminController {
 
     @GetMapping(path = "/spots", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SpotListResponse> getSpots(
-            @RequestParam(required = false) String query,
-            @RequestParam(name = "queryTarget", required = false) String queryTargetString,
-            @RequestParam(name = "status", required = false) List<String> status,
-            @RequestParam(name = "missingField", required = false) String missingFieldString
+            @RequestParam(required = false) final String query,
+            @RequestParam(name = "queryTarget", required = false) final String queryTargetString,
+            @RequestParam(name = "status", required = false) final List<String> status,
+            @RequestParam(name = "missingField", required = false) final String missingFieldString
     ) {
         QueryTarget queryTarget = queryTargetString != null ? QueryTarget.fromValue(queryTargetString) : null;
         List<SpotStatus> spotStatusList = (status != null)
@@ -84,6 +87,15 @@ public class AdminController {
         return ResponseEntity.ok(
                 adminService.getSpots(query, queryTarget, spotStatusList, missingField)
         );
+    }
+
+    @PostMapping(path = "/spots", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> postSpot(
+            @Valid @RequestBody final CreateSpotRequest request
+    ) {
+        adminService.createSpot(request);
+
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping(path = "/spots/{spotId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -196,8 +208,7 @@ public class AdminController {
     }
 
     @PostMapping(path = "/spots/{spotId}",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE)
+            consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> updateSpotStatus(
             @PathVariable Long spotId,
             @RequestBody Map<String, String> statusRequest) {

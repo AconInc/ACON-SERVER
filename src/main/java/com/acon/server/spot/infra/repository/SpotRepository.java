@@ -16,6 +16,8 @@ public interface SpotRepository extends JpaRepository<SpotEntity, Long> {
 
     long countBySpotStatus(SpotStatus spotStatus);
 
+    boolean existsByNameAndAddressAndSpotStatus(String name, String address, SpotStatus spotStatus);
+
     List<SpotEntity> findTop10ByNameStartingWithIgnoreCase(String keyword);
 
     List<SpotEntity> findAllByLatitudeIsNullOrLongitudeIsNullOrGeomIsNullOrLegalDongIsNull();
