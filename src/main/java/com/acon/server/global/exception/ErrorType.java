@@ -40,6 +40,10 @@ public enum ErrorType {
     S3_FILE_OPERATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 50006, "S3 파일 작업 도중 에러가 발생했습니다."),
 
     /* Admin Error */
+    /* 400 Bad Request */
+    INVALID_QUERY_TARGET_ERROR(HttpStatus.BAD_REQUEST, 40057, "유효하지 않은 queryTarget입니다."),
+    INVALID_MISSING_FIELD_ERROR(HttpStatus.BAD_REQUEST, 40058, "유효하지 않은 missingField입니다."),
+
     /* 401 Unauthorized */
     INVALID_ID_OR_PASSWORD_ERROR(HttpStatus.UNAUTHORIZED, 40105, "아이디 또는 비밀번호가 일치하지 않습니다."),
 
