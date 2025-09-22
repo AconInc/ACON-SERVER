@@ -14,6 +14,7 @@ import jakarta.validation.Valid;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -71,11 +72,14 @@ public class AdminController {
             @RequestParam(name = "status", required = false) List<String> status,
             @RequestParam(name = "missingField", required = false) String missingFieldString
     ) {
-        QueryTarget queryTarget = QueryTarget.fromValue(queryTargetString);
-        List<SpotStatus> spotStatusList = status.stream()
+        QueryTarget queryTarget = queryTargetString != null ? QueryTarget.fromValue(queryTargetString) : null;
+        List<SpotStatus> spotStatusList = (status != null)
+                ? status.stream()
+                .filter(Objects::nonNull)
                 .map(SpotStatus::fromValue)
-                .toList();
-        MissingField missingField = MissingField.fromValue(missingFieldString);
+                .toList()
+                : List.of();
+        MissingField missingField = missingFieldString != null ? MissingField.fromValue(missingFieldString) : null;
 
         return ResponseEntity.ok(
                 adminService.getSpots(query, queryTarget, spotStatusList, missingField)
