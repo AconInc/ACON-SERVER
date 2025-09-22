@@ -2,7 +2,10 @@ package com.acon.server.admin.api.controller;
 
 import com.acon.server.admin.api.response.CsrfTokenResponse;
 import com.acon.server.admin.api.response.DashboardResponse;
+import com.acon.server.admin.api.response.SpotListResponse;
 import com.acon.server.admin.application.service.AdminService;
+import com.acon.server.admin.domain.enums.MissingField;
+import com.acon.server.admin.domain.enums.QueryTarget;
 import com.acon.server.member.api.request.PreSignedUrlRequest;
 import com.acon.server.member.api.response.PreSignedUrlResponse;
 import com.acon.server.member.application.service.MemberService;
@@ -11,6 +14,7 @@ import jakarta.validation.Valid;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -62,72 +66,24 @@ public class AdminController {
     }
 
     @GetMapping(path = "/spots", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String, Object>> getSpots(
+    public ResponseEntity<SpotListResponse> getSpots(
             @RequestParam(required = false) String query,
-            @RequestParam(required = false) String queryTarget,
-            @RequestParam(required = false) List<String> status,
-            @RequestParam(required = false) String missingField) {
+            @RequestParam(name = "queryTarget", required = false) String queryTargetString,
+            @RequestParam(name = "status", required = false) List<String> status,
+            @RequestParam(name = "missingField", required = false) String missingFieldString
+    ) {
+        QueryTarget queryTarget = queryTargetString != null ? QueryTarget.fromValue(queryTargetString) : null;
+        List<SpotStatus> spotStatusList = (status != null)
+                ? status.stream()
+                .filter(Objects::nonNull)
+                .map(SpotStatus::fromValue)
+                .toList()
+                : List.of();
+        MissingField missingField = missingFieldString != null ? MissingField.fromValue(missingFieldString) : null;
 
-        List<Map<String, Object>> spotList = List.of(
-                Map.of(
-                        "id", 1L,
-                        "userNickname", "김성민",
-                        "spotName", "커피 리브레 서교동",
-                        "spotStatus", "PENDING",
-                        "spotType", "CAFE",
-                        "updatedAt", "2025-08-06T10:00:00"
-                ),
-                Map.of(
-                        "id", 2L,
-                        "userNickname", "김시은",
-                        "spotName", "프릳츠 커피 컴퍼니 도화점",
-                        "spotStatus", "PENDING",
-                        "spotType", "CAFE",
-                        "updatedAt", "2025-08-06T10:15:00"
-                ),
-                Map.of(
-                        "id", 3L,
-                        "userNickname", "김유림",
-                        "spotName", "빈브라더스 성수동",
-                        "spotStatus", "PENDING",
-                        "spotType", "CAFE",
-                        "updatedAt", "2025-08-06T10:30:00"
-                ),
-                Map.of(
-                        "id", 4L,
-                        "userNickname", "김창균",
-                        "spotName", "스시효 청담",
-                        "spotStatus", "PENDING",
-                        "spotType", "RESTAURANT",
-                        "updatedAt", "2025-08-06T10:45:00"
-                ),
-                Map.of(
-                        "id", 5L,
-                        "userNickname", "박지현",
-                        "spotName", "홍연참치 논현",
-                        "spotStatus", "PENDING",
-                        "spotType", "RESTAURANT",
-                        "updatedAt", "2025-08-06T11:00:00"
-                ),
-                Map.of(
-                        "id", 6L,
-                        "userNickname", "이상일",
-                        "spotName", "리틀넥 성수 브런치",
-                        "spotStatus", "PENDING",
-                        "spotType", "RESTAURANT",
-                        "updatedAt", "2025-08-06T11:15:00"
-                ),
-                Map.of(
-                        "id", 7L,
-                        "userNickname", "이수민",
-                        "spotName", "로리스 더 프라임 립 강남",
-                        "spotStatus", "PENDING",
-                        "spotType", "RESTAURANT",
-                        "updatedAt", "2025-08-06T11:30:00"
-                )
+        return ResponseEntity.ok(
+                adminService.getSpots(query, queryTarget, spotStatusList, missingField)
         );
-
-        return ResponseEntity.ok(Map.of("spotList", spotList));
     }
 
     @GetMapping(path = "/spots/{spotId}", produces = MediaType.APPLICATION_JSON_VALUE)

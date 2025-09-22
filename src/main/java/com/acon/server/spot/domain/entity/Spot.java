@@ -18,7 +18,8 @@ public class Spot {
     private final String name;
     private final SpotType spotType;
     private final String address;
-    private final Long appliedMemberId;
+    private final Long appliedUserId;
+    private final Boolean appliedByMember;
 
     private Integer localAcornCount;
     private Integer basicAcornCount;
@@ -36,7 +37,8 @@ public class Spot {
             String name,
             SpotType spotType,
             String address,
-            Long appliedMemberId,
+            Long appliedUserId,
+            Boolean appliedByMember,
             Integer localAcornCount,
             Integer basicAcornCount,
             Double latitude,
@@ -51,7 +53,8 @@ public class Spot {
         this.name = name;
         this.spotType = spotType;
         this.address = address;
-        this.appliedMemberId = appliedMemberId;
+        this.appliedUserId = appliedUserId;
+        this.appliedByMember = appliedByMember;
         this.localAcornCount = localAcornCount;
         this.basicAcornCount = basicAcornCount;
         this.latitude = latitude;

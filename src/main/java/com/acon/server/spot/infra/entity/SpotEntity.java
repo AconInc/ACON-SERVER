@@ -87,8 +87,11 @@ public class SpotEntity {
     @Column(name = "legal_dong")
     private String legalDong;
 
-    @Column(name = "applied_member_id")
-    private Long appliedMemberId;
+    @Column(name = "applied_user_id")
+    private Long appliedUserId;
+
+    @Column(name = "applied_by_member", nullable = false)
+    private Boolean appliedByMember;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "spot_status", length = 20, nullable = false)
@@ -114,7 +117,8 @@ public class SpotEntity {
             Double longitude,
             Point geom,
             String legalDong,
-            Long appliedMemberId,
+            Long appliedUserId,
+            Boolean appliedByMember,
             SpotStatus spotStatus,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
@@ -130,7 +134,8 @@ public class SpotEntity {
         this.longitude = longitude;
         this.geom = geom;
         this.legalDong = legalDong;
-        this.appliedMemberId = appliedMemberId;
+        this.appliedUserId = appliedUserId;
+        this.appliedByMember = appliedByMember;
         this.spotStatus = spotStatus;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;

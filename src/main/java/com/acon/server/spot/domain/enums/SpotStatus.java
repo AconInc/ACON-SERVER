@@ -22,8 +22,8 @@ public enum SpotStatus {
     private static final Map<String, SpotStatus> SPOT_STATUS_MAP = new HashMap<>();
 
     static {
-        for (SpotStatus status : SpotStatus.values()) {
-            SPOT_STATUS_MAP.put(status.name(), status);
+        for (SpotStatus spotStatus : SpotStatus.values()) {
+            SPOT_STATUS_MAP.put(spotStatus.name(), spotStatus);
         }
     }
 
