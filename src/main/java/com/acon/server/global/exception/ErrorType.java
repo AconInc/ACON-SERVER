@@ -88,14 +88,19 @@ public enum ErrorType {
     INVALID_CAFE_FEATURE_ERROR(HttpStatus.BAD_REQUEST, 40018, "유효하지 않은 cafeFeature입니다."),
     INVALID_OPENING_HOUR_ERROR(HttpStatus.BAD_REQUEST, 40019, "유효하지 않은 openingHour입니다."),
     INVALID_PRICE_ERROR(HttpStatus.BAD_REQUEST, 40020, "유효하지 않은 price입니다."),
-    INVALID_SPOT_TYPE_CATEGORY_ERROR(HttpStatus.BAD_REQUEST, 40021, "spotType에 해당하지 않는 카테고리입니다."),
+    INVALID_SPOT_TYPE_CATEGORY_ERROR(HttpStatus.BAD_REQUEST, 40021, "spotType에 해당하지 않는 category입니다."),
     INVALID_CATEGORY_OPTION_ERROR(HttpStatus.BAD_REQUEST, 40022, "category에 해당하지 않는 option입니다."),
     INVALID_TAG_ERROR(HttpStatus.BAD_REQUEST, 40024, "유효하지 않은 tag입니다."),
     INVALID_SPOT_STATUS_ERROR(HttpStatus.BAD_REQUEST, 40025, "유효하지 않은 spotStatus입니다."),
+    INVALID_SPOT_FEATURE_ERROR(HttpStatus.BAD_REQUEST, 40059, "유효하지 않은 spotFeature입니다."),
+    INVALID_PRICE_FEATURE_ERROR(HttpStatus.BAD_REQUEST, 40060, "유효하지 않은 priceFeature입니다."),
+    MISSING_REQUIRED_FIELDS_ERROR(HttpStatus.BAD_REQUEST, 40075, "필수 정보 중 비어있는 필드가 있어 장소를 활성화할 수 없습니다."),
 
     /* 404 Not Found */
     NOT_FOUND_SPOT_ERROR(HttpStatus.NOT_FOUND, 40403, "존재하지 않는 장소입니다."),
     UNAVAILABLE_SERVICE_AREA_ERROR(HttpStatus.NOT_FOUND, 40405, "서비스를 제공하지 않는 지역입니다."),
+
+    DUPLICATE_ACTIVE_SPOT_ERROR(HttpStatus.BAD_REQUEST, 40076, "동일한 장소명과 주소를 가진 장소가 이미 활성화되어 있습니다."),
 
     /* 500 Internal Server Error */
     NAVER_MAPS_GEOCODING_API_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 50003, "Naver Maps GeoCoding API 호출에 실패했습니다."),
