@@ -53,7 +53,7 @@ public class AdminSpotRepository {
                         builder.and(spot.id.eq(spotId));
                     } catch (NumberFormatException e) {
                         // ID 파싱 실패 시 검색 결과 없음
-                        builder.and(spot.id.eq(-1L)); // 불가능한 ID로 결과 없게 함
+                        builder.and(spot.id.isNull().and(spot.id.isNotNull())); // 결과 없게 함 (항상 false)
                     }
                 }
                 case SPOT_NAME -> builder.and(spot.name.containsIgnoreCase(query));
@@ -76,7 +76,7 @@ public class AdminSpotRepository {
                         // ADMIN 키워드가 있으면 appliedByMember가 false인 것만 검색
                         builder.and(spot.appliedByMember.eq(false));
                     } else {
-                        builder.and(spot.appliedUserId.eq(-1L)); // 결과 없게 함
+                        builder.and(spot.id.isNull().and(spot.id.isNotNull())); // 결과 없게 함 (항상 false)
                     }
                 }
             }
