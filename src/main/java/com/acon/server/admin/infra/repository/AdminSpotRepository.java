@@ -19,6 +19,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
+// TODO: pagination 적용
 public class AdminSpotRepository {
 
     private final JPAQueryFactory queryFactory;
