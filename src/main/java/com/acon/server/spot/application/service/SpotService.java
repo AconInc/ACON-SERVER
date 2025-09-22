@@ -616,7 +616,8 @@ public class SpotService {
                         .name(request.spotName())
                         .address(request.address())
                         .spotType(request.spotType())
-                        .appliedMemberId(memberId)
+                        .appliedUserId(memberId)
+                        .appliedByMember(true)
                         .spotStatus(SpotStatus.PENDING)
                         .build()
         );
