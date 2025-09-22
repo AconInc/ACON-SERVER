@@ -86,6 +86,15 @@ public class AdminController {
         );
     }
 
+    @PostMapping(path = "/spots", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> postSpot(
+            @Valid @RequestBody final CreateSpotRequest request
+    ) {
+        adminService.createSpot(request);
+
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping(path = "/spots/{spotId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, Object>> getSpotDetail(@PathVariable Long spotId) {
 
