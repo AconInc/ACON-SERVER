@@ -2,12 +2,12 @@ package com.acon.server.spot.api.controller;
 
 import com.acon.server.global.auth.PrincipalHandler;
 import com.acon.server.spot.api.request.ApplySpotRequest;
-import com.acon.server.spot.api.request.SpotListRequest;
+import com.acon.server.spot.api.request.RecommendedSpotListRequest;
 import com.acon.server.spot.api.response.MenuboardImageListResponse;
+import com.acon.server.spot.api.response.RecommendedSpotListResponse;
 import com.acon.server.spot.api.response.ReviewAvailabilityResponse;
 import com.acon.server.spot.api.response.SearchSuggestionListResponse;
 import com.acon.server.spot.api.response.SpotDetailResponse;
-import com.acon.server.spot.api.response.SpotListResponse;
 import com.acon.server.spot.api.response.SpotSearchListResponse;
 import com.acon.server.spot.application.service.SpotService;
 import jakarta.validation.Valid;
@@ -39,14 +39,14 @@ public class SpotControllerV1 {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<SpotListResponse> getRecommendedSpotList(
-            @Valid @RequestBody final SpotListRequest request
+    public ResponseEntity<RecommendedSpotListResponse> getRecommendedSpotList(
+            @Valid @RequestBody final RecommendedSpotListRequest request
     ) {
         // TODO: 추후 서비스단에서 검증하도록 변경 요망
         if (!principalHandler.isGuestUser() && spotService.checkTestUser()) {
             return ResponseEntity.ok(
                     spotService.fetchRecommendedSpotList(
-                            new SpotListRequest(37.4940494, 127.030027, request.condition())
+                            new RecommendedSpotListRequest(37.4940494, 127.030027, request.condition())
                     )
             );
         }

@@ -1,6 +1,6 @@
 package com.acon.server.spot.infra.repository;
 
-import com.acon.server.spot.api.request.SpotListRequest.Condition.Filter;
+import com.acon.server.spot.api.request.RecommendedSpotListRequest.Condition.Filter;
 import com.acon.server.spot.domain.enums.SpotType;
 import com.acon.server.spot.infra.entity.SpotEntity;
 import jakarta.persistence.EntityManager;

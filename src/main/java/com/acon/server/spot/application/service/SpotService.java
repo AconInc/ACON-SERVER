@@ -16,15 +16,15 @@ import com.acon.server.member.infra.repository.SavedSpotRepository;
 import com.acon.server.review.infra.entity.ReviewEntity;
 import com.acon.server.review.infra.repository.ReviewRepository;
 import com.acon.server.spot.api.request.ApplySpotRequest;
-import com.acon.server.spot.api.request.SpotListRequest;
+import com.acon.server.spot.api.request.RecommendedSpotListRequest;
 import com.acon.server.spot.api.response.MenuResponse;
 import com.acon.server.spot.api.response.MenuboardImageListResponse;
+import com.acon.server.spot.api.response.RecommendedSpotListResponse;
+import com.acon.server.spot.api.response.RecommendedSpotListResponse.RecommendedSpot;
 import com.acon.server.spot.api.response.ReviewAvailabilityResponse;
 import com.acon.server.spot.api.response.SearchSuggestionListResponse;
 import com.acon.server.spot.api.response.SearchSuggestionResponse;
 import com.acon.server.spot.api.response.SpotDetailResponse;
-import com.acon.server.spot.api.response.SpotListResponse;
-import com.acon.server.spot.api.response.SpotListResponse.RecommendedSpot;
 import com.acon.server.spot.api.response.SpotSearchListResponse;
 import com.acon.server.spot.api.response.SpotSearchListResponse.SearchedSpot;
 import com.acon.server.spot.application.mapper.SpotMapper;
@@ -169,7 +169,7 @@ public class SpotService {
     // TODO: 변수명 정리
 
     @Transactional(readOnly = true)
-    public SpotListResponse fetchRecommendedSpotList(final SpotListRequest request) {
+    public RecommendedSpotListResponse fetchRecommendedSpotList(final RecommendedSpotListRequest request) {
         if (isOutOfServiceArea(request.latitude(), request.longitude())) {
             throw new BusinessException(ErrorType.UNAVAILABLE_SERVICE_AREA_ERROR);
         }
@@ -204,7 +204,7 @@ public class SpotService {
                     .limit(15)
                     .toList();
 
-            return new SpotListResponse(transportMode, spotList);
+            return new RecommendedSpotListResponse(transportMode, spotList);
         }
 
         MemberEntity memberEntity = memberRepository.findByIdOrElseThrow(principalHandler.getMemberIdFromPrincipal());
@@ -238,7 +238,7 @@ public class SpotService {
                     .limit(15)
                     .toList();
 
-            return new SpotListResponse(transportMode, spotList);
+            return new RecommendedSpotListResponse(transportMode, spotList);
         }
 
         // ========== [ CASE 2: preferenceEntity가 있는 사용자 ] ==========
@@ -258,7 +258,7 @@ public class SpotService {
                 .limit(15)
                 .toList();
 
-        return new SpotListResponse(transportMode, spotList);
+        return new RecommendedSpotListResponse(transportMode, spotList);
     }
 
     private boolean isOutOfServiceArea(
@@ -271,7 +271,7 @@ public class SpotService {
 
     // TODO: 카테고리 필터 enum 처리 급해요
     private List<SpotEntity> filterSpotList(
-            final SpotListRequest request,
+            final RecommendedSpotListRequest request,
             final double radius
     ) {
         return spotNativeQueryRepository.findSpotList(

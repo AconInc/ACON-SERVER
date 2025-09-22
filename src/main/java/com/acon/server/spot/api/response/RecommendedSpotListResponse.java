@@ -7,7 +7,7 @@ import java.util.List;
 import lombok.Builder;
 
 @JsonInclude(Include.NON_NULL)
-public record SpotListResponse(
+public record RecommendedSpotListResponse(
         String transportMode,
         List<RecommendedSpot> spotList
 ) {
