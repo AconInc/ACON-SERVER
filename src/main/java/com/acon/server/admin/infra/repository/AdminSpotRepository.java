@@ -2,6 +2,7 @@ package com.acon.server.admin.infra.repository;
 
 import com.acon.server.admin.domain.enums.MissingField;
 import com.acon.server.admin.domain.enums.QueryTarget;
+import com.acon.server.admin.infra.entity.QAdminEntity;
 import com.acon.server.member.infra.entity.QMemberEntity;
 import com.acon.server.spot.domain.enums.SpotStatus;
 import com.acon.server.spot.infra.entity.QMenuEntity;
@@ -31,11 +32,12 @@ public class AdminSpotRepository {
             MissingField missingField
     ) {
         QSpotEntity spot = QSpotEntity.spotEntity;
+        QAdminEntity admin = QAdminEntity.adminEntity;
         QMemberEntity member = QMemberEntity.memberEntity;
-        QSpotImageEntity spotImage = QSpotImageEntity.spotImageEntity;
         QOpeningHourEntity openingHour = QOpeningHourEntity.openingHourEntity;
-        QMenuboardImageEntity menuboardImage = QMenuboardImageEntity.menuboardImageEntity;
         QMenuEntity menu = QMenuEntity.menuEntity;
+        QMenuboardImageEntity menuboardImage = QMenuboardImageEntity.menuboardImageEntity;
+        QSpotImageEntity spotImage = QSpotImageEntity.spotImageEntity;
 
         BooleanBuilder builder = new BooleanBuilder();
 
@@ -58,25 +60,49 @@ public class AdminSpotRepository {
                 }
                 case SPOT_NAME -> builder.and(spot.name.containsIgnoreCase(query));
                 case USER_NICKNAME -> {
-                    // appliedUserId를 통해 Member 또는 Admin 조인하여 nickname 검색
-                    // 1. Member에서 검색
+                    // appliedUserId를 통해 Member 또는 Admin 검색
+                    BooleanBuilder userSearchBuilder = new BooleanBuilder();
+
+                    // 1. Member에서 nickname으로 검색
                     List<Long> memberIds = queryFactory
                             .select(member.id)
                             .from(member)
                             .where(member.nickname.containsIgnoreCase(query))
                             .fetch();
 
-                    // 2. Admin에서 검색 (ADMIN 포함된 검색어 처리)
-                    // AdminEntity를 사용하여 검색하는 로직은 AdminService에서 처리
-                    // 여기서는 Member 검색만 수행
+                    // 2. Admin에서 username으로 검색
+                    List<Long> adminIds = queryFactory
+                            .select(admin.id)
+                            .from(admin)
+                            .where(admin.username.containsIgnoreCase(query))
+                            .fetch();
 
+                    // Member가 신청한 장소들
                     if (!memberIds.isEmpty()) {
-                        builder.and(spot.appliedUserId.in(memberIds).and(spot.appliedByMember.eq(true)));
-                    } else if (query.toUpperCase().contains("ADMIN")) {
-                        // ADMIN 키워드가 있으면 appliedByMember가 false인 것만 검색
-                        builder.and(spot.appliedByMember.eq(false));
+                        userSearchBuilder.or(
+                                spot.appliedUserId.in(memberIds)
+                                        .and(spot.appliedByMember.eq(true))
+                        );
+                    }
+
+                    // Admin이 등록한 장소들
+                    if (!adminIds.isEmpty()) {
+                        userSearchBuilder.or(
+                                spot.appliedUserId.in(adminIds)
+                                        .and(spot.appliedByMember.eq(false))
+                        );
+                    }
+
+                    // appliedUserId가 null인 경우 (ADMIN으로 표시되는 케이스)
+                    if (query.toUpperCase().contains("ADMIN")) {
+                        userSearchBuilder.or(spot.appliedUserId.isNull());
+                    }
+
+                    // 검색 결과가 하나도 없으면
+                    if (memberIds.isEmpty() && adminIds.isEmpty() && !query.toUpperCase().contains("ADMIN")) {
+                        builder.and(spot.id.isNull().and(spot.id.isNotNull())); // 결과 없게 함
                     } else {
-                        builder.and(spot.id.isNull().and(spot.id.isNotNull())); // 결과 없게 함 (항상 false)
+                        builder.and(userSearchBuilder);
                     }
                 }
             }
