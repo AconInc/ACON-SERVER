@@ -11,11 +11,12 @@ public class OpeningHour {
     private final Long id;
     private final Long spotId;
     private final DayOfWeek dayOfWeek;
-    private final Boolean closed;
-    private final LocalTime startTime;
-    private final LocalTime endTime;
-    private final LocalTime breakStartTime;
-    private final LocalTime breakEndTime;
+
+    private Boolean closed;
+    private LocalTime startTime;
+    private LocalTime endTime;
+    private LocalTime breakStartTime;
+    private LocalTime breakEndTime;
 
     @Builder
     public OpeningHour(
@@ -35,6 +36,26 @@ public class OpeningHour {
         this.startTime = startTime;
         this.endTime = endTime;
         this.breakStartTime = breakStartTime;
+        this.breakEndTime = breakEndTime;
+    }
+
+    public void updateClosed(Boolean closed) {
+        this.closed = closed;
+    }
+
+    public void updateStartTime(LocalTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public void updateEndTime(LocalTime endTime) {
+        this.endTime = endTime;
+    }
+
+    public void updateBreakStartTime(LocalTime breakStartTime) {
+        this.breakStartTime = breakStartTime;
+    }
+
+    public void updateBreakEndTime(LocalTime breakEndTime) {
         this.breakEndTime = breakEndTime;
     }
 }
