@@ -17,6 +17,10 @@ import com.acon.server.global.external.s3.S3Adapter;
 import com.acon.server.member.infra.entity.MemberEntity;
 import com.acon.server.member.infra.repository.MemberRepository;
 import com.acon.server.review.infra.repository.ReviewRepository;
+import com.acon.server.spot.application.mapper.OpeningHourMapper;
+import com.acon.server.spot.application.mapper.SpotMapper;
+import com.acon.server.spot.domain.entity.OpeningHour;
+import com.acon.server.spot.domain.entity.Spot;
 import com.acon.server.spot.domain.enums.SpotStatus;
 import com.acon.server.spot.domain.enums.SpotType;
 import com.acon.server.spot.infra.entity.MenuEntity;
@@ -34,11 +38,6 @@ import com.acon.server.spot.infra.repository.OptionRepository;
 import com.acon.server.spot.infra.repository.SpotImageRepository;
 import com.acon.server.spot.infra.repository.SpotOptionRepository;
 import com.acon.server.spot.infra.repository.SpotRepository;
-import com.acon.server.spot.application.mapper.SpotMapper;
-import com.acon.server.spot.application.mapper.OpeningHourMapper;
-import com.acon.server.spot.domain.entity.Spot;
-import com.acon.server.spot.domain.entity.OpeningHour;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -444,16 +443,7 @@ public class AdminService {
             Long featureCategoryId = categoryRepository.findByNameOrElseThrow(featureCategoryName).getId();
 
             // 기존 feature spotOption 삭제
-            List<SpotOptionEntity> existingFeatures = spotOptionRepository.findAllBySpotId(spotId).stream()
-                    .filter(so -> {
-                        OptionEntity option = optionRepository.findById(so.getOptionId())
-                                .orElse(null);
-
-                        return option != null && option.getCategoryId().equals(featureCategoryId);
-                    })
-                    .toList();
-
-            spotOptionRepository.deleteAll(existingFeatures);
+            spotOptionRepository.deleteBySpotIdAndCategoryId(spotId, featureCategoryId);
 
             // 새로운 feature 추가
             List<SpotOptionEntity> newFeatures = new ArrayList<>();
@@ -483,16 +473,7 @@ public class AdminService {
             Long priceCategoryId = categoryRepository.findByNameOrElseThrow("PRICE").getId();
 
             // 기존 price spotOption 삭제
-            List<SpotOptionEntity> existingPrice = spotOptionRepository.findAllBySpotId(spotId).stream()
-                    .filter(so -> {
-                        OptionEntity option = optionRepository.findById(so.getOptionId())
-                                .orElse(null);
-
-                        return option != null && option.getCategoryId().equals(priceCategoryId);
-                    })
-                    .toList();
-
-            spotOptionRepository.deleteAll(existingPrice);
+            spotOptionRepository.deleteBySpotIdAndCategoryId(spotId, priceCategoryId);
 
             // 새로운 price 추가
             OptionEntity optionEntity;

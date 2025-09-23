@@ -3,6 +3,7 @@ package com.acon.server.spot.infra.repository;
 import com.acon.server.spot.infra.entity.SpotOptionEntity;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -38,4 +39,16 @@ public interface SpotOptionRepository extends JpaRepository<SpotOptionEntity, Lo
             LIMIT 1
             """, nativeQuery = true)
     String findPriceFeatureBySpotId(@Param("spotId") Long spotId);
+
+    @Modifying
+    @Query(value = """
+            DELETE FROM spot_option
+            WHERE spot_id = :spotId
+              AND option_id IN (
+                SELECT o.id
+                FROM "option" o
+                WHERE o.category_id = :categoryId
+              )
+            """, nativeQuery = true)
+    void deleteBySpotIdAndCategoryId(@Param("spotId") Long spotId, @Param("categoryId") Long categoryId);
 }
