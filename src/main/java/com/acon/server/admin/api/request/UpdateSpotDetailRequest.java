@@ -78,13 +78,13 @@ public record UpdateSpotDetailRequest(
             if (!Boolean.TRUE.equals(closed)) {
                 // 휴무일이 아닌 경우 startTime과 endTime 필수 검증
                 if (startTime == null || endTime == null) {
-                    throw new IllegalArgumentException("휴무일이 아닌 경우 영업 시작/종료 시간은 필수입니다.");
+                    throw new BusinessException(ErrorType.MISSING_REQUIRED_FIELDS_ERROR);
                 }
 
                 // break time 검증 (둘 다 있거나 둘 다 없어야 함)
                 if ((breakStartTime == null && breakEndTime != null) ||
                         (breakStartTime != null && breakEndTime == null)) {
-                    throw new IllegalArgumentException("브레이크 타임은 시작과 종료 시간이 모두 있거나 모두 없어야 합니다.");
+                    throw new BusinessException(ErrorType.MISSING_REQUIRED_FIELDS_ERROR);
                 }
             }
         }
