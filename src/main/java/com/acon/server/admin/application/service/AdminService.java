@@ -1,6 +1,7 @@
 package com.acon.server.admin.application.service;
 
 import com.acon.server.admin.api.request.CreateSpotRequest;
+import com.acon.server.admin.api.response.AdminSpotDetailResponse;
 import com.acon.server.admin.api.response.DashboardResponse;
 import com.acon.server.admin.api.response.SpotListResponse;
 import com.acon.server.admin.api.response.SpotListResponse.SpotItem;
@@ -14,8 +15,10 @@ import com.acon.server.global.exception.ErrorType;
 import com.acon.server.global.external.s3.S3Adapter;
 import com.acon.server.member.infra.entity.MemberEntity;
 import com.acon.server.member.infra.repository.MemberRepository;
+import com.acon.server.review.infra.repository.ReviewRepository;
 import com.acon.server.spot.domain.enums.SpotStatus;
 import com.acon.server.spot.domain.enums.SpotType;
+import com.acon.server.spot.infra.entity.CategoryEntity;
 import com.acon.server.spot.infra.entity.MenuEntity;
 import com.acon.server.spot.infra.entity.MenuboardImageEntity;
 import com.acon.server.spot.infra.entity.OpeningHourEntity;
@@ -33,6 +36,7 @@ import com.acon.server.spot.infra.repository.SpotOptionRepository;
 import com.acon.server.spot.infra.repository.SpotRepository;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -54,6 +58,7 @@ public class AdminService {
     private final MenuRepository menuRepository;
     private final MenuboardImageRepository menuboardImageRepository;
     private final SpotImageRepository spotImageRepository;
+    private final ReviewRepository reviewRepository;
     private final S3Adapter s3Adapter;
 
     @Transactional(readOnly = true)
@@ -65,10 +70,10 @@ public class AdminService {
 
     @Transactional(readOnly = true)
     public SpotListResponse getSpots(
-            String query,
-            QueryTarget queryTarget,
-            List<SpotStatus> spotStatusList,
-            MissingField missingField
+            final String query,
+            final QueryTarget queryTarget,
+            final List<SpotStatus> spotStatusList,
+            final MissingField missingField
     ) {
         List<SpotEntity> spotEntityList = adminSpotRepository.findSpotsByFilters(
                 query,
@@ -108,7 +113,7 @@ public class AdminService {
     }
 
     @Transactional
-    public void createSpot(CreateSpotRequest request) {
+    public void createSpot(final CreateSpotRequest request) {
         // 1. Admin ID 가져오기
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
@@ -269,5 +274,91 @@ public class AdminService {
 
             spotImageRepository.saveAll(spotImageList);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public AdminSpotDetailResponse getSpotDetail(final Long spotId) {
+        // 1. Spot 조회
+        SpotEntity spot = spotRepository.findByIdOrElseThrow(spotId);
+
+        // 2. 유저 닉네임 조회
+        String userNickname;
+
+        if (spot.getAppliedUserId() == null) {
+            userNickname = "ADMIN";
+        } else if (Boolean.TRUE.equals(spot.getAppliedByMember())) {
+            MemberEntity member = memberRepository.findById(spot.getAppliedUserId())
+                    .orElse(null);
+            userNickname = member != null ? member.getNickname() : "탈퇴한 유저";
+        } else {
+            AdminEntity admin = adminRepository.findById(spot.getAppliedUserId())
+                    .orElse(null);
+            userNickname = admin != null ? admin.getUsername() + "(ADMIN)" : "탈퇴한 어드민";
+        }
+
+        // 3. SpotFeature 조회
+        List<String> spotFeatureList = spotOptionRepository.findSpotFeaturesBySpotId(spotId);
+
+        // 4. PriceFeature 조회
+        String priceFeature = spotOptionRepository.findPriceFeatureBySpotId(spotId);
+
+        // 5. 영업시간 조회
+        List<AdminSpotDetailResponse.OpeningHourItem> openingHourList = openingHourRepository.findAllBySpotId(spotId)
+                .stream()
+                .map(openingHour -> AdminSpotDetailResponse.OpeningHourItem.of(
+                        openingHour.getDayOfWeek(),
+                        openingHour.getClosed(),
+                        openingHour.getStartTime(),
+                        openingHour.getEndTime(),
+                        openingHour.getBreakStartTime(),
+                        openingHour.getBreakEndTime()
+                ))
+                .toList();
+
+        // 6. 대표 메뉴 조회
+        List<AdminSpotDetailResponse.SignatureMenu> signatureMenuList = menuRepository.findAllBySpotId(spotId).stream()
+                .map(menu -> AdminSpotDetailResponse.SignatureMenu.of(
+                        menu.getName(),
+                        menu.getPrice()
+                ))
+                .toList();
+
+        // 7. 추천 메뉴 조회 (리뷰에서 집계)
+        List<AdminSpotDetailResponse.RecommendedMenu> recommendedMenuList = reviewRepository
+                .findTop3RecommendedMenusBySpotId(spotId).stream()
+                .map(projection -> AdminSpotDetailResponse.RecommendedMenu.of(
+                        projection.getMenu(),
+                        projection.getCount().intValue()
+                ))
+                .toList();
+
+        // 8. 메뉴판 이미지 조회
+        List<String> menuboardImageList = menuboardImageRepository.findAllBySpotIdOrderById(spotId).stream()
+                .map(MenuboardImageEntity::getImage)
+                .toList();
+
+        // 9. 장소 이미지 조회
+        List<String> spotImageList = spotImageRepository.findAllBySpotIdOrderById(spotId).stream()
+                .map(SpotImageEntity::getImage)
+                .toList();
+
+        return AdminSpotDetailResponse.of(
+                spot.getSpotStatus().name(),
+                spot.getId(),
+                userNickname,
+                spot.getUpdatedAt(),
+                spot.getName(),
+                spot.getAddress(),
+                spot.getLocalAcornCount(),
+                spot.getBasicAcornCount(),
+                spot.getSpotType().name(),
+                spotFeatureList,
+                openingHourList,
+                signatureMenuList,
+                recommendedMenuList,
+                priceFeature,
+                menuboardImageList,
+                spotImageList
+        );
     }
 }

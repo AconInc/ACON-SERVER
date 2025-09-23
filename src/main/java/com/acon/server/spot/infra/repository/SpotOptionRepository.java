@@ -17,4 +17,25 @@ public interface SpotOptionRepository extends JpaRepository<SpotOptionEntity, Lo
                 WHERE o.name IN :dislikedNames
             """, nativeQuery = true)
     List<Long> findSpotIdsByOptionNames(@Param("dislikedNames") List<String> dislikedNames);
+
+    @Query(value = """
+            SELECT o.name
+            FROM spot_option so
+            JOIN "option" o ON so.option_id = o.id
+            JOIN category c ON o.category_id = c.id
+            WHERE so.spot_id = :spotId
+              AND c.name IN ('RESTAURANT_FEATURE', 'CAFE_FEATURE')
+            """, nativeQuery = true)
+    List<String> findSpotFeaturesBySpotId(@Param("spotId") Long spotId);
+
+    @Query(value = """
+            SELECT o.name
+            FROM spot_option so
+            JOIN "option" o ON so.option_id = o.id
+            JOIN category c ON o.category_id = c.id
+            WHERE so.spot_id = :spotId
+              AND c.name = 'PRICE'
+            LIMIT 1
+            """, nativeQuery = true)
+    String findPriceFeatureBySpotId(@Param("spotId") Long spotId);
 }
