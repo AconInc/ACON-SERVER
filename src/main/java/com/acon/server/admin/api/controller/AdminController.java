@@ -1,6 +1,7 @@
 package com.acon.server.admin.api.controller;
 
 import com.acon.server.admin.api.request.CreateSpotRequest;
+import com.acon.server.admin.api.request.UpdateSpotDetailRequest;
 import com.acon.server.admin.api.response.AdminSpotDetailResponse;
 import com.acon.server.admin.api.response.CsrfTokenResponse;
 import com.acon.server.admin.api.response.DashboardResponse;
@@ -113,12 +114,16 @@ public class AdminController {
         );
     }
 
-    @PatchMapping(path = "/spots/{spotId}",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE)
+    @PatchMapping(path = "/spots/{spotId}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> updateSpotDetail(
-            @PathVariable Long spotId,
-            @RequestBody Map<String, Object> updateRequest) {
+            @NotNull(message = "spotId는 필수입니다.")
+            @Positive(message = "spotId는 양수여야 합니다.")
+            @PathVariable final Long spotId,
+
+            @Valid @RequestBody final UpdateSpotDetailRequest request
+    ) {
+        adminService.updateSpotDetail(spotId, request);
+
         return ResponseEntity.ok().build();
     }
 
