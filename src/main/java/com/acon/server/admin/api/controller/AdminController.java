@@ -2,6 +2,7 @@ package com.acon.server.admin.api.controller;
 
 import com.acon.server.admin.api.request.CreateSpotRequest;
 import com.acon.server.admin.api.request.UpdateSpotDetailRequest;
+import com.acon.server.admin.api.request.UpdateSpotStatusRequest;
 import com.acon.server.admin.api.response.AdminSpotDetailResponse;
 import com.acon.server.admin.api.response.CsrfTokenResponse;
 import com.acon.server.admin.api.response.DashboardResponse;
@@ -17,7 +18,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -130,8 +130,14 @@ public class AdminController {
     @PostMapping(path = "/spots/{spotId}",
             consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> updateSpotStatus(
-            @PathVariable Long spotId,
-            @RequestBody Map<String, String> statusRequest) {
+            @NotNull(message = "spotId는 필수입니다.")
+            @Positive(message = "spotId는 양수여야 합니다.")
+            @PathVariable final Long spotId,
+
+            @Valid @RequestBody final UpdateSpotStatusRequest request
+    ) {
+        adminService.updateSpotStatus(spotId, request);
+
         return ResponseEntity.ok().build();
     }
 }
