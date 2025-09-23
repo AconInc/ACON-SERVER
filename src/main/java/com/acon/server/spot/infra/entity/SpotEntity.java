@@ -44,13 +44,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Getter
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(
-        name = "spot",
-        uniqueConstraints = @UniqueConstraint(
-                name = "unique_spot_name_address",
-                columnNames = {"name", "address"}
-        )
-)
+@Table(name = "spot")
 // TODO: 공간 인덱스 설정
 public class SpotEntity {
 
