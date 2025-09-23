@@ -388,7 +388,8 @@ public class AdminService {
         SpotType originalSpotType = spot.getSpotType();
 
         // 2. 동일한 장소명과 주소를 가진 활성화된 장소가 있는지 확인 (자기 자신 제외)
-        if ((request.spotName() != null || request.address() != null) && spot.getSpotStatus() == SpotStatus.ACTIVE) {
+        if ((request.spotName() != null || request.address() != null) &&
+                spotEntity.getSpotStatus() == SpotStatus.ACTIVE) {
             String newName = request.spotName() != null ? request.spotName() : spot.getName();
             String newAddress = request.address() != null ? request.address() : spot.getAddress();
 
