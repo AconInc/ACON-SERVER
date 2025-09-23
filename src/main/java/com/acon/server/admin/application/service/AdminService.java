@@ -2,6 +2,7 @@ package com.acon.server.admin.application.service;
 
 import com.acon.server.admin.api.request.CreateSpotRequest;
 import com.acon.server.admin.api.request.UpdateSpotDetailRequest;
+import com.acon.server.admin.api.request.UpdateSpotStatusRequest;
 import com.acon.server.admin.api.response.AdminSpotDetailResponse;
 import com.acon.server.admin.api.response.DashboardResponse;
 import com.acon.server.admin.api.response.SpotListResponse;
@@ -662,5 +663,73 @@ public class AdminService {
                 spotImageRepository.saveAll(newSpotImages);
             }
         }
+    }
+
+    @Transactional
+    public void updateSpotStatus(final Long spotId, final UpdateSpotStatusRequest request) {
+        // 1. Spot 존재 확인
+        SpotEntity spotEntity = spotRepository.findByIdOrElseThrow(spotId);
+        Spot spot = spotMapper.toDomain(spotEntity);
+
+        // 2. ACTIVE로 변경하려는 경우 추가 검증
+        if (request.targetStatus() == SpotStatus.ACTIVE) {
+            // 2-1. 필수 정보 확인
+            boolean hasRequiredFields = checkRequiredFieldsForActivation(spotId, spot.getSpotType());
+
+            if (!hasRequiredFields) {
+                throw new BusinessException(ErrorType.MISSING_REQUIRED_FIELDS_ERROR);
+            }
+
+            // 2-2. 동일한 장소명과 주소를 가진 활성화된 장소가 있는지 확인 (자기 자신 제외)
+            boolean exists = spotRepository.existsByNameAndAddressAndSpotStatusAndIdNot(
+                    spot.getName(),
+                    spot.getAddress(),
+                    SpotStatus.ACTIVE,
+                    spotId
+            );
+
+            if (exists) {
+                throw new BusinessException(ErrorType.DUPLICATE_ACTIVE_SPOT_ERROR);
+            }
+        }
+
+        // 3. 상태 업데이트
+        spot.updateSpotStatus(request.targetStatus());
+        spotRepository.save(spotMapper.toEntity(spot));
+    }
+
+    private boolean checkRequiredFieldsForActivation(final Long spotId, final SpotType spotType) {
+        // 1. 영업 시간 확인 (7일 모두 있어야 함)
+        List<OpeningHourEntity> openingHours = openingHourRepository.findAllBySpotId(spotId);
+
+        if (openingHours.size() != 7) {
+            return false;
+        }
+
+        // 2. 대표 메뉴 확인 (최소 1개 이상)
+        List<MenuEntity> menus = menuRepository.findAllBySpotId(spotId);
+
+        if (menus.isEmpty()) {
+            return false;
+        }
+
+        // 3. Restaurant인 경우 spotFeatureList와 priceFeature 필수
+        if (spotType == SpotType.RESTAURANT) {
+            // spotFeatureList 확인
+            List<String> spotFeatures = spotOptionRepository.findSpotFeaturesBySpotId(spotId);
+
+            if (spotFeatures.isEmpty()) {
+                return false;
+            }
+
+            // priceFeature 확인
+            String priceFeature = spotOptionRepository.findPriceFeatureBySpotId(spotId);
+
+            if (priceFeature == null) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

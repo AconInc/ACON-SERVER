@@ -119,4 +119,8 @@ public class Spot {
     public void updateBasicAcornCount(Integer basicAcornCount) {
         this.basicAcornCount = basicAcornCount;
     }
+
+    public void updateSpotStatus(SpotStatus spotStatus) {
+        this.spotStatus = spotStatus;
+    }
 }
