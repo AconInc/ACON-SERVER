@@ -431,8 +431,7 @@ public class AdminService {
         // 3. spotType 변경 처리
         if (request.spotType() != null && originalSpotType != request.spotType()) {
             // 기존 spotOption 삭제 (features와 price)
-            List<SpotOptionEntity> existingOptions = spotOptionRepository.findAllBySpotId(spotId);
-            spotOptionRepository.deleteAll(existingOptions);
+            spotOptionRepository.deleteAllBySpotId(spotId);
         }
 
         // 4. spotFeatureList 업데이트
@@ -547,8 +546,7 @@ public class AdminService {
         // 7. signatureMenuList 업데이트
         if (request.signatureMenuList() != null) {
             // 기존 메뉴 모두 삭제
-            List<MenuEntity> existingMenus = menuRepository.findAllBySpotId(spotId);
-            menuRepository.deleteAll(existingMenus);
+            menuRepository.deleteAllBySpotId(spotId);
 
             // 새로운 메뉴 추가
             List<MenuEntity> newMenus = request.signatureMenuList().stream()

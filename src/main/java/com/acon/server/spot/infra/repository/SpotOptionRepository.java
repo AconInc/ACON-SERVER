@@ -9,6 +9,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface SpotOptionRepository extends JpaRepository<SpotOptionEntity, Long> {
 
+    void deleteAllBySpotId(Long spotId);
+
     List<SpotOptionEntity> findAllBySpotId(Long spotId);
 
     @Query(value = """
