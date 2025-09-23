@@ -15,12 +15,12 @@ public class Spot {
     private static final GeometryFactory geometryFactory = new GeometryFactory();
 
     private final Long id;
-    private final String name;
-    private final SpotType spotType;
-    private final String address;
     private final Long appliedUserId;
     private final Boolean appliedByMember;
 
+    private String name;
+    private SpotType spotType;
+    private String address;
     private Integer localAcornCount;
     private Integer basicAcornCount;
     private Double latitude;
@@ -98,5 +98,25 @@ public class Spot {
         if (latitude != null && longitude != null) {
             this.legalDong = legalDong;
         }
+    }
+
+    public void updateName(String name) {
+        this.name = name;
+    }
+
+    public void updateAddress(String address) {
+        this.address = address;
+    }
+
+    public void updateSpotType(SpotType spotType) {
+        this.spotType = spotType;
+    }
+
+    public void updateLocalAcornCount(Integer localAcornCount) {
+        this.localAcornCount = localAcornCount;
+    }
+
+    public void updateBasicAcornCount(Integer basicAcornCount) {
+        this.basicAcornCount = basicAcornCount;
     }
 }

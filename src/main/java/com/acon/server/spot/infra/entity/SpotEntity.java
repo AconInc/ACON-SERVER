@@ -15,7 +15,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.SqlResultSetMapping;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -44,13 +43,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Getter
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(
-        name = "spot",
-        uniqueConstraints = @UniqueConstraint(
-                name = "unique_spot_name_address",
-                columnNames = {"name", "address"}
-        )
-)
+@Table(name = "spot")
 // TODO: 공간 인덱스 설정
 public class SpotEntity {
 
