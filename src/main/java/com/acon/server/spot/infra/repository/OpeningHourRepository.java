@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface OpeningHourRepository extends JpaRepository<OpeningHourEntity, Long> {
 
     List<OpeningHourEntity> findAllBySpotIdAndDayOfWeek(Long spotId, DayOfWeek dayOfWeek);
+
+    List<OpeningHourEntity> findAllBySpotId(Long spotId);
 }
