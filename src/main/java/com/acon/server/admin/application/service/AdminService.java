@@ -665,6 +665,7 @@ public class AdminService {
         }
     }
 
+    // TODO: 추후 비관적 락 추가, 현재로서는 DB 유니크 제약조건(부분 인덱스)으로 해결
     @Transactional
     public void updateSpotStatus(final Long spotId, final UpdateSpotStatusRequest request) {
         // 1. Spot 존재 확인
