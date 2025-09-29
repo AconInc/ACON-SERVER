@@ -463,10 +463,6 @@ public class SpotService {
             final boolean isDeepLink
     ) {
         if (principalHandler.isGuestUser()) {
-            if (!isDeepLink) {
-                throw new BusinessException(ErrorType.UNAUTHORIZED_ERROR);
-            }
-
             return false;
         }
 
