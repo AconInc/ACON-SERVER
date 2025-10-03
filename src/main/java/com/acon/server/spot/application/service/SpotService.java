@@ -436,6 +436,10 @@ public class SpotService {
     ) {
         SpotEntity spotEntity = spotRepository.findByIdOrElseThrow(spotId);
 
+        if (spotEntity.getSpotStatus() != SpotStatus.ACTIVE) {
+            throw new BusinessException(ErrorType.NOT_FOUND_SPOT_ERROR);
+        }
+
         List<SpotImageEntity> spotImageEntityList = spotImageRepository.findAllBySpotIdOrderById(spotId);
         List<String> imageList = spotImageEntityList.stream()
                 .map(SpotImageEntity::getImage)
