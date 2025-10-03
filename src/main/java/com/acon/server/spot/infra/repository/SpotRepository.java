@@ -54,7 +54,8 @@ public interface SpotRepository extends JpaRepository<SpotEntity, Long> {
     @Query(value = """
             SELECT s.id, s.name
             FROM spot s
-            WHERE ST_DWithin(
+            WHERE s.spot_status = 'ACTIVE'
+              AND ST_DWithin(
                 s.geom,
                 ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326),
                 :radius
