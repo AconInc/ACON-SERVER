@@ -269,6 +269,15 @@ public class SpotService {
                 || longitude < MIN_LONGITUDE || longitude > MAX_LONGITUDE;
     }
 
+    private boolean isOpenBetweenHours() {
+        LocalTime now = LocalTime.now();
+        LocalTime closeTime = LocalTime.of(23, 0);
+        LocalTime openTime = LocalTime.of(10, 0);
+
+        // 10:00 ~ 23:00 사이면 true, 그 외 시간은 false
+        return !now.isBefore(openTime) && now.isBefore(closeTime);
+    }
+
     // TODO: 카테고리 필터 enum 처리 급해요
     private List<SpotEntity> filterSpotList(
             final RecommendedSpotListRequest request,
@@ -299,7 +308,7 @@ public class SpotService {
                 spotEntity.getName(),
                 spotEntity.getLocalAcornCount() + spotEntity.getBasicAcornCount(),
                 fetchSpotTagList(spotEntity),
-                true,
+                isOpenBetweenHours(),
                 "23:00",
                 "10:00", // TODO: 영업시간 정보 추가
                 calculateMovingTime(spotEntity.getId(), latitude, longitude, transportMode),
@@ -451,7 +460,7 @@ public class SpotService {
                 spotEntity.getName(),
                 spotEntity.getLocalAcornCount() + spotEntity.getBasicAcornCount(),
                 fetchSpotTagList(spotEntity),
-                true,
+                isOpenBetweenHours(),
                 "23:00",
                 "10:00", // TODO: 영업시간 정보 추가
                 menuboardImageRepository.existsBySpotId(spotId),
