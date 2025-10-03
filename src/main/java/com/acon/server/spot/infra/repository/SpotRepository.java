@@ -20,7 +20,7 @@ public interface SpotRepository extends JpaRepository<SpotEntity, Long> {
 
     boolean existsByNameAndAddressAndSpotStatusAndIdNot(String name, String address, SpotStatus spotStatus, Long id);
 
-    List<SpotEntity> findTop10ByNameStartingWithIgnoreCase(String keyword);
+    List<SpotEntity> findTop10ByNameStartingWithIgnoreCaseAndSpotStatus(String keyword, SpotStatus spotStatus);
 
     List<SpotEntity> findAllByLatitudeIsNullOrLongitudeIsNullOrGeomIsNullOrLegalDongIsNull();
 
@@ -44,11 +44,13 @@ public interface SpotRepository extends JpaRepository<SpotEntity, Long> {
             SELECT *
             FROM spot
             WHERE name ILIKE %:keyword%
+              AND spot_status = :spotStatus
             LIMIT :limit
             """, nativeQuery = true)
     List<SpotEntity> findByNameContainingWithLimitIgnoreCase(
             @Param("keyword") String keyword,
-            @Param("limit") int limit
+            @Param("limit") int limit,
+            @Param("spotStatus") String spotStatus
     );
 
     @Query(value = """
