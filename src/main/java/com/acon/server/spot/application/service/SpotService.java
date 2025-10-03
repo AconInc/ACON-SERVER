@@ -436,6 +436,10 @@ public class SpotService {
     ) {
         SpotEntity spotEntity = spotRepository.findByIdOrElseThrow(spotId);
 
+        if (spotEntity.getSpotStatus() != SpotStatus.ACTIVE) {
+            throw new BusinessException(ErrorType.NOT_FOUND_SPOT_ERROR);
+        }
+
         List<SpotImageEntity> spotImageEntityList = spotImageRepository.findAllBySpotIdOrderById(spotId);
         List<String> imageList = spotImageEntityList.stream()
                 .map(SpotImageEntity::getImage)
@@ -568,11 +572,11 @@ public class SpotService {
             return new SpotSearchListResponse(Collections.emptyList());
         }
 
-        List<SpotEntity> spotEntityList = spotRepository.findTop10ByNameStartingWithIgnoreCase(keyword);
+        List<SpotEntity> spotEntityList = spotRepository.findTop10ByNameStartingWithIgnoreCaseAndSpotStatus(keyword, SpotStatus.ACTIVE);
 
         if (spotEntityList.size() < SEARCH_LIMIT) {
             List<SpotEntity> additionalSpots = spotRepository.findByNameContainingWithLimitIgnoreCase(
-                    keyword, SEARCH_LIMIT - spotEntityList.size()
+                    keyword, SEARCH_LIMIT - spotEntityList.size(), SpotStatus.ACTIVE.name()
             );
 
             Set<Long> existingSpotIds = spotEntityList.stream()

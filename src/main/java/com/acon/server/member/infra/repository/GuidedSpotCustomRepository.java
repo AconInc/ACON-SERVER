@@ -26,6 +26,7 @@ public class GuidedSpotCustomRepository {
                     FROM guided_spot gs
                     JOIN spot s ON s.id = gs.spot_id
                     WHERE gs.member_id = :memberId
+                      AND s.spot_status = 'ACTIVE'
                       AND ST_DWithin(
                           s.geom::geography,
                           ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography,

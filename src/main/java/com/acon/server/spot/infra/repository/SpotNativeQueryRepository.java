@@ -1,6 +1,7 @@
 package com.acon.server.spot.infra.repository;
 
 import com.acon.server.spot.api.request.RecommendedSpotListRequest.Condition.Filter;
+import com.acon.server.spot.domain.enums.SpotStatus;
 import com.acon.server.spot.domain.enums.SpotType;
 import com.acon.server.spot.infra.entity.SpotEntity;
 import jakarta.persistence.EntityManager;
@@ -33,7 +34,8 @@ public class SpotNativeQueryRepository {
                 .append("        ST_SetSRID(ST_MakePoint(:lng, :lat),4326)::geography,\n")
                 .append("        :radius\n")
                 .append(")\n")
-                .append("  AND s.spot_type = :spotType\n");
+                .append("  AND s.spot_type = :spotType\n")
+                .append("  AND s.spot_status = :spotStatus\n");
 
         if (filterList != null && !filterList.isEmpty()) {
             for (int i = 0; i < filterList.size(); i++) {
@@ -63,6 +65,7 @@ public class SpotNativeQueryRepository {
         query.setParameter("lng", longitude);
         query.setParameter("radius", radius);
         query.setParameter("spotType", spotType.name());
+        query.setParameter("spotStatus", SpotStatus.ACTIVE.name());
 
         if (filterList != null && !filterList.isEmpty()) {
             for (int i = 0; i < filterList.size(); i++) {

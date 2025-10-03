@@ -42,6 +42,7 @@ import com.acon.server.member.infra.repository.SavedSpotRepository;
 import com.acon.server.member.infra.repository.UpdatePolicyRepository;
 import com.acon.server.member.infra.repository.VerifiedAreaRepository;
 import com.acon.server.member.infra.repository.WithdrawalReasonRepository;
+import com.acon.server.spot.domain.enums.SpotStatus;
 import com.acon.server.spot.infra.entity.SpotEntity;
 import com.acon.server.spot.infra.entity.SpotImageEntity;
 import com.acon.server.spot.infra.repository.SpotImageRepository;
@@ -472,7 +473,7 @@ public class MemberService {
                         savedSpotEntity -> {
                             SpotEntity spotEntity = spotMap.get(savedSpotEntity.getSpotId());
 
-                            if (spotEntity == null) {
+                            if (spotEntity == null || spotEntity.getSpotStatus() != SpotStatus.ACTIVE) {
                                 return null;
                             }
 
