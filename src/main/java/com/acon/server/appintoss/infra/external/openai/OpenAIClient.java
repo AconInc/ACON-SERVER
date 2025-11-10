@@ -37,7 +37,18 @@ public class OpenAIClient {
                 .header("Authorization", "Bearer " + apiKey)
                 .bodyValue(OpenAIPromptRequest.of(promptId, promptVersion, userInput))
                 .retrieve()
-                .bodyToMono(OpenAIPromptResponse.class)
+                .bodyToMono(String.class)  // 먼저 String으로 받아서 로그 출력
+                .doOnSuccess(rawResponse -> log.info("OpenAI API 원본 응답: {}", rawResponse))
+                .map(rawResponse -> {
+                    try {
+                        // JSON 파싱 시도
+                        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                        return mapper.readValue(rawResponse, OpenAIPromptResponse.class);
+                    } catch (Exception e) {
+                        log.error("JSON 파싱 실패: {}", rawResponse, e);
+                        throw new RuntimeException("JSON 파싱 실패", e);
+                    }
+                })
                 .timeout(TIMEOUT)
                 .doOnSuccess(response -> log.info("OpenAI API 호출 성공: success={}, spotName={}",
                         response.success(), response.spotName()))
