@@ -2,6 +2,8 @@ package com.acon.server.appintoss.infra.external.openai;
 
 import com.acon.server.appintoss.infra.external.openai.dto.OpenAIPromptRequest;
 import com.acon.server.appintoss.infra.external.openai.dto.OpenAIPromptResponse;
+import com.acon.server.appintoss.infra.external.openai.dto.OpenAIWrapperResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,21 +34,29 @@ public class OpenAIClient {
     public Mono<OpenAIPromptResponse> getSpotRecommendation(String userInput) {
         log.info("OpenAI API 호출 시작: userInput={}", userInput);
 
+        ObjectMapper mapper = new ObjectMapper();
+
         return webClient.post()
                 .uri(OPENAI_API_URL)
                 .header("Authorization", "Bearer " + apiKey)
                 .bodyValue(OpenAIPromptRequest.of(promptId, promptVersion, userInput))
                 .retrieve()
-                .bodyToMono(String.class)  // 먼저 String으로 받아서 로그 출력
-                .doOnSuccess(rawResponse -> log.info("OpenAI API 원본 응답: {}", rawResponse))
-                .map(rawResponse -> {
+                .bodyToMono(OpenAIWrapperResponse.class)
+                .map(wrapperResponse -> {
                     try {
-                        // JSON 파싱 시도
-                        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-                        return mapper.readValue(rawResponse, OpenAIPromptResponse.class);
+                        // output 배열에서 type="message"인 항목의 text 필드 추출
+                        String jsonText = wrapperResponse.output().stream()
+                                .filter(item -> "message".equals(item.type()))
+                                .flatMap(item -> item.content().stream())
+                                .filter(content -> "output_text".equals(content.type()))
+                                .map(OpenAIWrapperResponse.ContentItem::text)
+                                .findFirst()
+                                .orElseThrow(() -> new RuntimeException("output에서 message를 찾을 수 없습니다"));
+
+                        return mapper.readValue(jsonText, OpenAIPromptResponse.class);
                     } catch (Exception e) {
-                        log.error("JSON 파싱 실패: {}", rawResponse, e);
-                        throw new RuntimeException("JSON 파싱 실패", e);
+                        log.error("OpenAI 응답 파싱 실패: userInput={}", userInput, e);
+                        throw new RuntimeException("OpenAI 응답 파싱 실패", e);
                     }
                 })
                 .timeout(TIMEOUT)
