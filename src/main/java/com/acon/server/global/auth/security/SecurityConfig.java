@@ -104,6 +104,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/app-updates").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/spots").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/app-in-toss/spots").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/app-in-toss/spots/rating").permitAll()
                         .requestMatchers(
                                 mvc.pattern(HttpMethod.GET, "/api/v1/spots/{spotId:\\d+}"),
                                 mvc.pattern(HttpMethod.GET, "/api/v1/spots/{spotId:\\d+}/menuboards")

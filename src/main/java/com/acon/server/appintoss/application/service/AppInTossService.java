@@ -1,5 +1,6 @@
 package com.acon.server.appintoss.application.service;
 
+import com.acon.server.appintoss.api.request.AppInTossRatingRequest;
 import com.acon.server.appintoss.api.request.AppInTossSpotRequest;
 import com.acon.server.appintoss.api.response.AppInTossSpotResponse;
 import com.acon.server.appintoss.infra.entity.AppInTossSpotEntity;
@@ -55,5 +56,13 @@ public class AppInTossService {
 
                     return AppInTossSpotResponse.of(savedEntity.getId(), response.spotName(), response.category());
                 });
+    }
+
+    @Transactional
+    public void submitRating(final AppInTossRatingRequest request) {
+        AppInTossSpotEntity entity = appInTossSpotRepository.findById(request.id())
+                .orElseThrow(() -> new BusinessException(ErrorType.NOT_FOUND_APP_IN_TOSS_SPOT_ERROR));
+
+        entity.updateRating(request.rating());
     }
 }

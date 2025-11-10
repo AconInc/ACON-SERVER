@@ -108,6 +108,9 @@ public enum ErrorType {
     /* AppInToss Error */
     /* 400 Bad Request */
     APP_IN_TOSS_SPOT_NOT_FOUND_ERROR(HttpStatus.BAD_REQUEST, 40061, "장소를 찾는 데 실패했습니다."),
+
+    /* 404 Not Found */
+    NOT_FOUND_APP_IN_TOSS_SPOT_ERROR(HttpStatus.NOT_FOUND, 40406, "존재하지 않는 앱인토스 장소입니다."),
     ;
 
     private final HttpStatus httpStatus;

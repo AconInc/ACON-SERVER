@@ -42,4 +42,8 @@ public class AppInTossSpotEntity {
         this.category = category;
         this.rating = rating;
     }
+
+    public void updateRating(Integer rating) {
+        this.rating = rating;
+    }
 }
