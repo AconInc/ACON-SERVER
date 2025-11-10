@@ -104,6 +104,10 @@ public enum ErrorType {
 
     /* 500 Internal Server Error */
     NAVER_MAPS_GEOCODING_API_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 50003, "Naver Maps GeoCoding API 호출에 실패했습니다."),
+
+    /* AppInToss Error */
+    /* 400 Bad Request */
+    APP_IN_TOSS_SPOT_NOT_FOUND_ERROR(HttpStatus.BAD_REQUEST, 40061, "장소를 찾는 데 실패했습니다."),
     ;
 
     private final HttpStatus httpStatus;
